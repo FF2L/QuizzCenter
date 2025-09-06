@@ -18,10 +18,7 @@ export class GiangVien {
     chucVu: string
 
     @Column()
-    chuyenMon: string
-
-    @Column()
-    ngayVaoLam: string
+    chucDanhHocThuat: string
 
     @OneToMany(() => Chuong, (chuong) => chuong.giangVien, { cascade: true, lazy:true })
     chuong: Promise<Chuong[]>;

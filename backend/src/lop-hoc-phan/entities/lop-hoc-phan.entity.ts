@@ -15,10 +15,10 @@ export class LopHocPhan extends BaseEntity{
     tenLopHoc: string
 
     @Column()
-    namBatDau: Date
+    thoiGianBatDau: Date
 
     @Column()
-    namKetThuc: Date
+    thoiGianKetThuc: Date
 
     @ManyToOne(() => MonHoc, (monHoc) => monHoc.lopHocPhan, {lazy: true})
     @JoinColumn({name: 'idMonHoc'})

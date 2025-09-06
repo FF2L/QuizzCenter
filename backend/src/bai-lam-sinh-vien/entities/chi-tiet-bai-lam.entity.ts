@@ -1,9 +1,10 @@
 import { ChiTietCauHoiBaiKiemTra } from "src/bai-kiem-tra/entities/chi-tiet-cau-hoi-bai-kiem-tra";
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique } from "typeorm";
 import { BaiLamSinhVien } from "./bai-lam-sinh-vien.entity";
 import { DapAn } from "src/dap-an/entities/dap-an.entity";
 
 @Entity()
+@Unique(['idBaiLamSinhVien', 'idCauHoiBaiKiemTra', 'dapAn'])
 export class ChiTietBaiLam {
     @PrimaryGeneratedColumn()
     id: number
@@ -19,8 +20,8 @@ export class ChiTietBaiLam {
     @JoinColumn({name: 'idBaiLamSinhVien'})
     idBaiLamSinhVien: Promise<BaiLamSinhVien>
 
-    @ManyToMany(() => DapAn, (dapAn) => dapAn.chiTietBaiLam, {cascade:true, lazy:true})
-    @JoinTable({name: 'ChiTietBaiLam_DapAn'})
+    @ManyToOne(() => DapAn, (dapAn) => dapAn.chiTietBaiLam, {lazy:true})
+    @JoinColumn({name: 'idDapAn'})
     dapAn:Promise<DapAn[]>
 
 }

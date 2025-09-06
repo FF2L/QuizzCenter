@@ -1,5 +1,6 @@
 import { ChiTietCauHoiBaiKiemTra } from "src/bai-kiem-tra/entities/chi-tiet-cau-hoi-bai-kiem-tra";
-import { ChuDe } from "src/chu-de/entities/chu-de.entity";
+
+import { Chuong } from "src/chuong/entities/chuong.entity";
 import { BaseEntity } from "src/common/enitty/base.entity";
 import { DoKho } from "src/common/enum/dokho.enum";
 import { LoaiCauHoi } from "src/common/enum/loaicauhoi.enum";
@@ -35,9 +36,9 @@ export class CauHoi extends BaseEntity{
     })
     tileDiem: number
 
-    @ManyToOne(() => ChuDe, (chuDe) => chuDe.cauHoi, {lazy: true})
-    @JoinColumn({name: 'idChuDe'})
-    idChuDe: Promise<ChuDe>
+    @ManyToOne(() => Chuong, (chuong) => chuong.cauHoi, {lazy: true})
+    @JoinColumn({name: 'idChuong'})
+    idChuong: Promise<Chuong>
 
     @OneToMany(() => DapAn, (dapAn) => dapAn.idCauHoi, {cascade:true, lazy: true})
     dapAn: Promise<DapAn[]>
