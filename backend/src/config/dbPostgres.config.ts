@@ -3,7 +3,6 @@ import { ChiTietCauHoiBaiKiemTra } from "src/bai-kiem-tra/entities/chi-tiet-cau-
 import { BaiLamSinhVien } from "src/bai-lam-sinh-vien/entities/bai-lam-sinh-vien.entity";
 import { ChiTietBaiLam } from "src/bai-lam-sinh-vien/entities/chi-tiet-bai-lam.entity";
 import { CauHoi } from "src/cau-hoi/entities/cau-hoi.entity";
-import { ChuDe } from "src/chu-de/entities/chu-de.entity";
 import { Chuong } from "src/chuong/entities/chuong.entity";
 import { DapAn } from "src/dap-an/entities/dap-an.entity";
 import { FileDinhKem } from "src/file-dinh-kem/entities/file-dinh-kem.entity";
@@ -22,7 +21,7 @@ import { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConne
 export default () :PostgresConnectionOptions => ({ //khai báo hàm trả về instance của PostgresConnectionOptions
       url: process.env.URL_POSTGRES,
     type: 'postgres',
-    entities: [ThongBao, ThongBaoNguoiDung, NguoiDung, SinhVien, GiangVien, Khoa, MonHoc, LopHocPhan, FileDinhKem, DapAn,Chuong, ChuDe, CauHoi, BaiLamSinhVien,ChiTietBaiLam, BaiKiemTra, ChiTietCauHoiBaiKiemTra],
+    entities: [ThongBao, ThongBaoNguoiDung, NguoiDung, SinhVien, GiangVien, Khoa, MonHoc, LopHocPhan, FileDinhKem, DapAn,Chuong, CauHoi, BaiLamSinhVien,ChiTietBaiLam, BaiKiemTra, ChiTietCauHoiBaiKiemTra],
     port: 5432, //cổng kết nối database ko cần cũn dc vì url có rồi
     synchronize: true, //đồng bộ cở sở dữ liệu với database nghĩa là nếu entity mất column nào thì nó sẽ tự xóa cột đó trong database chỉ sử dụng khi dev
       extra: {

@@ -40,8 +40,10 @@ export class NguoiDung  extends BaseEntity{
     @Column()
     ngaySinh: Date
 
-    @Column()
-    ngayVao: string
+    @Column({
+        nullable: true
+    })
+    ngayVao: Date
 
     @Column({type: 'enum',
         enum: Role,

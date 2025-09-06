@@ -1,9 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateNguoiDungDto } from './dto/create-nguoi-dung.dto';
 import { UpdateNguoiDungDto } from './dto/update-nguoi-dung.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { NguoiDung } from './entities/nguoi-dung.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class NguoiDungService {
+
+  constructor(@InjectRepository(NguoiDung) private nguoiDungRepo: Repository<NguoiDung>){}
+
+  async timNguoiDungTheoEmail(email: string){
+    return await this.nguoiDungRepo.findOne({
+      where: {
+        email
+      }
+    })
+  }
+
   create(createNguoiDungDto: CreateNguoiDungDto) {
     return 'This action adds a new nguoiDung';
   }
@@ -12,8 +26,13 @@ export class NguoiDungService {
     return `This action returns all nguoiDung`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} nguoiDung`;
+  async timMotNguoiDungTheoId(idNguoiDung: number) {
+       const nguoiDung = await this.nguoiDungRepo.findOne({
+      where: { id: idNguoiDung}
+    });
+    if(!nguoiDung) 
+      throw new NotFoundException();
+    return nguoiDung
   }
 
   update(id: number, updateNguoiDungDto: UpdateNguoiDungDto) {
@@ -22,5 +41,9 @@ export class NguoiDungService {
 
   remove(id: number) {
     return `This action removes a #${id} nguoiDung`;
+  }
+  //Phục vụ cho xác thực và lưu refesh token mới
+  async timVaUpdateRefeshToken(idNguoiDung: number, hashRefeshToken:string){
+     return await this.nguoiDungRepo.update({id: idNguoiDung},{hashRefeshToken: hashRefeshToken})
   }
 }

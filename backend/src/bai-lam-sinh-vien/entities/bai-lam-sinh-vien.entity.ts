@@ -25,17 +25,17 @@ export class BaiLamSinhVien extends BaseEntity{
     })
     thoiGianBatDau: Date
 
-        @Column({
-        type: 'timestamp'
+    @Column({
+    type: 'timestamp'
     })
     thoiGianketThuc: Date
 
     @Column()
     lanLamThu:number
 
-    @ManyToOne(()=>SinhVien, (sinhVien) => sinhVien.baiKiemTra, {lazy:true})
+    @ManyToOne(()=>SinhVien, (sv) => sv.baiLamSInhVien, {lazy:true})
     @JoinColumn({name: 'idSinhVien'})
-    idSinhVien: Promise<SinhVien>
+    sinhVien: Promise<SinhVien>
 
     @ManyToOne(() => BaiKiemTra, (baiKiemTra) => baiKiemTra.baiLamSinhVien, {lazy:true})
     @JoinColumn({name: 'idBaiKiemTra'})

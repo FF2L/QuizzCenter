@@ -6,10 +6,12 @@ import { Column, Entity, JoinColumn, ManyToMany, OneToMany, OneToOne, PrimaryCol
 @Entity()
 export class SinhVien {
 
-    @PrimaryColumn()
-    @OneToOne(() => NguoiDung, (nguoiDung) => nguoiDung.sinhVien, {lazy:true})
-    @JoinColumn({name: 'idNguoiDung'})
-    idNguoiDung: Promise<NguoiDung>
+    @PrimaryColumn({ name: 'idNguoiDung', type: 'int' })
+    idNguoiDung: number;
+
+    @OneToOne(() => NguoiDung, (nd) => nd.giangVien, { lazy: true })
+    @JoinColumn({ name: 'idNguoiDung', referencedColumnName: 'id' })
+    nguoiDung: Promise<NguoiDung>;
 
     @Column()
     khoaHoc: string
@@ -17,7 +19,7 @@ export class SinhVien {
     @ManyToMany(() => LopHocPhan, (lopHocPhan) => lopHocPhan.sinhVien, {lazy: true})
     lopHocPhan: Promise<LopHocPhan[]>
 
-    @OneToMany(() => BaiLamSinhVien, (baiLamSinhVien) => baiLamSinhVien.idSinhVien, {lazy:true})
-    baiKiemTra: Promise<BaiLamSinhVien[]>
+    @OneToMany(() => BaiLamSinhVien, (baiLamSV) => baiLamSV.sinhVien, {lazy:true})
+    baiLamSInhVien: Promise<BaiLamSinhVien[]>
 
 }

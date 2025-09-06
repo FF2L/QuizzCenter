@@ -1,4 +1,4 @@
-import { ChuDe } from "src/chu-de/entities/chu-de.entity";
+import { CauHoi } from "src/cau-hoi/entities/cau-hoi.entity";
 import { BaseEntity } from "src/common/enitty/base.entity";
 import { GiangVien } from "src/giang-vien/entities/giang-vien.entity";
 import { MonHoc } from "src/mon-hoc/entities/mon-hoc.entity";
@@ -13,6 +13,11 @@ export class Chuong extends BaseEntity{
     @Column()
     thuTu: number
 
+    @Column({
+    default: 0
+    })
+    soLuongCauHoi: number
+
     @ManyToOne(() => GiangVien, (gv) => gv.chuong, { lazy: true, nullable: false })
     @JoinColumn({ name: 'idGiangVien' })          
     giangVien: Promise<GiangVien>;   
@@ -21,8 +26,8 @@ export class Chuong extends BaseEntity{
     @JoinColumn({name: 'idMonHoc'})
     idMonHoc: Promise<MonHoc>
 
-    @OneToMany(() => ChuDe, (chuDe) => chuDe.idChuong, {cascade: true, lazy: true})
-    chuDe: Promise<ChuDe[]>
+    @OneToMany(() => CauHoi, (cauHoi) => cauHoi.idChuong, {cascade: true, lazy:true})
+    cauHoi: Promise<CauHoi[]>
 
 
 }

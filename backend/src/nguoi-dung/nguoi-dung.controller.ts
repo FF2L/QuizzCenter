@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { NguoiDungService } from './nguoi-dung.service';
 import { CreateNguoiDungDto } from './dto/create-nguoi-dung.dto';
 import { UpdateNguoiDungDto } from './dto/update-nguoi-dung.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth/jwt-auth.guard';
 
 @Controller('nguoi-dung')
 export class NguoiDungController {
@@ -12,15 +13,16 @@ export class NguoiDungController {
     return this.nguoiDungService.create(createNguoiDungDto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
-  findAll() {
-    return this.nguoiDungService.findAll();
+  findAll(@Req() req) {
+    return req.user.id
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.nguoiDungService.findOne(+id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.nguoiDungService.findOne(+id);
+  // }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateNguoiDungDto: UpdateNguoiDungDto) {

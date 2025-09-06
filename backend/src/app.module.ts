@@ -1,5 +1,5 @@
 import { ConfigModule } from '@nestjs/config';
-import { Module } from '@nestjs/common';
+import { Module, ValidationPipe } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { NguoiDungModule } from './nguoi-dung/nguoi-dung.module';
@@ -12,12 +12,13 @@ import { ChuongModule } from './chuong/chuong.module';
 import { CauHoiModule } from './cau-hoi/cau-hoi.module';
 import { DapAnModule } from './dap-an/dap-an.module';
 import { FileDinhKemModule } from './file-dinh-kem/file-dinh-kem.module';
-import { ChuDeModule } from './chu-de/chu-de.module';
 import { LopHocPhanModule } from './lop-hoc-phan/lop-hoc-phan.module';
 import { BaiKiemTraModule } from './bai-kiem-tra/bai-kiem-tra.module';
 import { BaiLamSinhVienModule } from './bai-lam-sinh-vien/bai-lam-sinh-vien.module';
 import dbPostgresConfig from './config/dbPostgres.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { APP_PIPE } from '@nestjs/core';
+import { AuthModule } from './auth/auth.module';
 
 
 @Module({
@@ -31,8 +32,20 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       useFactory: dbPostgresConfig, // sử dụng khi dbPostgressCOnfig file trả về một hàm trả về instance của PostgresConnectionOptions
      })
     ,
-    NguoiDungModule, ThongBaoModule, KhoaModule, MonHocModule, GiangVienModule, SinhVienModule, ChuongModule, CauHoiModule, DapAnModule, FileDinhKemModule, ChuDeModule, LopHocPhanModule, BaiKiemTraModule, BaiLamSinhVienModule],
+    NguoiDungModule, ThongBaoModule, KhoaModule, MonHocModule, GiangVienModule, SinhVienModule, ChuongModule, CauHoiModule, DapAnModule, FileDinhKemModule, LopHocPhanModule, BaiKiemTraModule, BaiLamSinhVienModule, AuthModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService,
+    {
+            provide: APP_PIPE, // cung cấp ValidationPipe toàn cục cho user
+      useValue: new ValidationPipe({
+        whitelist: true, //loại bỏ các trường không có trong DTO
+        forbidNonWhitelisted: true, //  trả về lỗi nếu có trường không có trong DTO
+        transform: true, // tự động chuyển đổi kiểu dữ liệu
+        transformOptions:{
+          enableImplicitConversion: true // chuyển đổi ngầm định kiểu dữ liệu, ví dụ: string sang number
+        }
+      })
+    }
+  ],
 })
 export class AppModule {}
