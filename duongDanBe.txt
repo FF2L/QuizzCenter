@@ -1,0 +1,34 @@
+Lưu ý là khi truyền dư hay truyền thiếu trường, sai định dạng trong body gửi 
+đến be thì nó sẽ không nhận và ném lỗi hãy đọc lỗi trước khi nhắn tin
+
+lấy tất cả chương: nó sẽ sắp xếp theo trường  thuTu lúc tạo. Gọi xong sẽ trả về danh sách chương thuộc môn học đó theo thứ tự
+    get: localhost:3000/chuong
+    body cần 
+    {
+        "idMonHoc": 1
+    }
+
+tạo chương: tên chương không bắt buộc phải là chương ghi gì thì nó hiện lên ccái đó, chương 1, chương 2, listen,abc,...
+nếu trong môn học đó 5 chương(nghĩa là đã có trường thuTu 1->5) mà truyền vào chương mới hay gì đó có trường thuTu 1->5 thì các chương
+trước đó trường thuTu sẽ được cộng dồn vd: chương mới có trường thuTu: 3 thì các chương trước đó thuTu:3 sẽ thành 4 tương tự các chương sau.
+Tạo xong sẽ nhận về chương vừa tạo
+    post: localhost:3000/chuong
+    body cần:
+    {
+        "tenChuong": "chương 1: Học cách viết",
+        "thuTu": 2,
+        "idGiangVien": 2,
+        "idMonHoc": 1
+    }
+
+cập nhật chuong: body nó cần là có thể là tất cả các trường hoặc một hoặc nhiều trường trong body của cái tạo chuong, nghĩa là tùy chọn.
+Tương tự như cái tạo chương khi update trường thuTu thì nó sẽ tự cập nhật trường thuTu trong database. Update xong nhận về sẽ là 
+cái chương vừa update
+    patch: localhost:3000/chuong/id 
+    body cần:
+        {
+        "tenChuong": "chương 1: Học cách viết",
+        "thuTu": 2,
+        "idGiangVien": 2,
+        "idMonHoc": 1
+    }

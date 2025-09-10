@@ -18,7 +18,7 @@ export class MonHoc extends BaseEntity{
     @JoinColumn({name: 'idKhoa'})
     idKhoa: Promise<Khoa>
 
-    @OneToMany(() => Chuong, (chuong) => chuong.idMonHoc, {lazy: true})
+    @OneToMany(() => Chuong, (chuong) => chuong.monHoc, {lazy: true})
     chuong: Promise<Chuong[]>
 
     @OneToMany(() => LopHocPhan, (lopHocPhan) => lopHocPhan.idMonHoc, {cascade: true, lazy:true})

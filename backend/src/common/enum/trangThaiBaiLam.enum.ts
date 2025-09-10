@@ -1,7 +1,7 @@
 
 
 export enum TrangThaiBaiLam {
-    ChuaLam,
-    DangLam,
-    DaNop
+    ChuaLam = 'ChuaLam',
+    DangLam = 'DangLam',
+    DaNop = 'DaNop'
 }

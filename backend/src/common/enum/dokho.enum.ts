@@ -1,5 +1,5 @@
 
 export enum DoKho{
-    De,
-    Kho
+    De = 'De',
+    Kho = 'Kho'
 }

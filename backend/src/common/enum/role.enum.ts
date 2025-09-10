@@ -1,7 +1,7 @@
 
 
 export enum Role{
-    GiaoVien,
-    SinhVien, 
-    Admin
+    GiaoVien = 'GiaoVien',
+    SinhVien = 'SinhVien', 
+    Admin = 'Admin'
 }

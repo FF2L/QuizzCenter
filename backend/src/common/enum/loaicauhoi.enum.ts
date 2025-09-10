@@ -1,6 +1,6 @@
 
 
 export enum LoaiCauHoi{
-    MotDung,
-    NhieuDung,
+    MotDung = 'MotDung',
+    NhieuDung = 'NhieuDung',
 }

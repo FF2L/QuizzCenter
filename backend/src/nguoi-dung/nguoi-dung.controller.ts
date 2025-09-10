@@ -15,8 +15,8 @@ export class NguoiDungController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  findAll(@Req() req) {
-    return req.user.id
+ async findAll(@Req() req) {
+    return await this.nguoiDungService.timMotNguoiDungTheoId(req.user.id)
   }
 
   // @Get(':id')
