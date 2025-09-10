@@ -2,19 +2,20 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { ChuongService } from './chuong.service';
 import { CreateChuongDto } from './dto/create-chuong.dto';
 import { UpdateChuongDto } from './dto/update-chuong.dto';
+import { FindAllChuongDto } from './dto/findAll-chuong.dto';
 
 @Controller('chuong')
 export class ChuongController {
   constructor(private readonly chuongService: ChuongService) {}
 
   @Post()
-  create(@Body() createChuongDto: CreateChuongDto) {
-    return this.chuongService.create(createChuongDto);
+  async create(@Body() createChuongDto: CreateChuongDto) {
+    return await this.chuongService.taoMotChuong(createChuongDto);
   }
 
   @Get()
-  findAll() {
-    return this.chuongService.findAll();
+  async findAll(@Body() findAllChuongDto : FindAllChuongDto) {
+    return await this.chuongService.timTatCaChuongTheoIdMonHoc(findAllChuongDto);
   }
 
   @Get(':id')
@@ -23,9 +24,10 @@ export class ChuongController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateChuongDto: UpdateChuongDto) {
-    return this.chuongService.update(+id, updateChuongDto);
+  async update(@Param('id') id: string, @Body() updateChuongDto: UpdateChuongDto) {
+    return await this.chuongService.capNhatChuong(+id, updateChuongDto);
   }
+
 
   @Delete(':id')
   remove(@Param('id') id: string) {

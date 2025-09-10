@@ -1,5 +1,5 @@
 
 export enum LoaiKiemTra {
-    LuyenTap,
-    BaiKiemTra
+    LuyenTap = 'LuyenTap',
+    BaiKiemTra = 'BaiKiemTra'
 }

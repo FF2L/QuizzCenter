@@ -8,5 +8,6 @@ import { NguoiDung } from './entities/nguoi-dung.entity';
   imports:[TypeOrmModule.forFeature([NguoiDung])],
   controllers: [NguoiDungController],
   providers: [NguoiDungService],
+  exports: [NguoiDungService]
 })
 export class NguoiDungModule {}
