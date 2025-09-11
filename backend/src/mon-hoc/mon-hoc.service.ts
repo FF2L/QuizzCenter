@@ -4,6 +4,8 @@ import { UpdateMonHocDto } from './dto/update-mon-hoc.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MonHoc } from './entities/mon-hoc.entity';
+import { Pagination } from 'src/common/dto/pagination.dto';
+import { DEFAULT_PAGE_LIMIT } from 'src/common/utiils/const.globals';
 
 @Injectable()
 export class MonHocService {
@@ -24,8 +26,11 @@ export class MonHocService {
     return 'This action adds a new monHoc';
   }
 
-  findAll() {
-    return `This action returns all monHoc`;
+  async layTatCaMonHoc(pagination: Pagination) {
+    return await this.monHocRepo.find({
+      skip: pagination.skip, //không có biến skip thì lấy từ đầu
+      take: pagination.limit ?? DEFAULT_PAGE_LIMIT // không có biến limit thì mặc định lấy 10
+    });
   }
 
   findOne(id: number) {
