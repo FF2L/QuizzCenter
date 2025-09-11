@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { MonHocService } from './mon-hoc.service';
 import { CreateMonHocDto } from './dto/create-mon-hoc.dto';
 import { UpdateMonHocDto } from './dto/update-mon-hoc.dto';
+import { Pagination } from 'src/common/dto/pagination.dto';
 
 @Controller('mon-hoc')
 export class MonHocController {
@@ -13,8 +14,8 @@ export class MonHocController {
   }
 
   @Get()
-  findAll() {
-    return this.monHocService.findAll();
+  async findAll(@Body() pagination: Pagination) {
+    return await this.monHocService.layTatCaMonHoc(pagination);
   }
 
   @Get(':id')
