@@ -39,12 +39,12 @@ export class ChuongService {
     
   }
 
-  async timTatCaChuongTheoIdMonHoc(findAllChuongDto: FindAllChuongDto) {
-      const monHoc = await this.monHocService.timMotMonHocTheoId(findAllChuongDto.idMonHoc)
+  async timTatCaChuongTheoIdMonHoc(idMonHoc: number) {
+      const monHoc = await this.monHocService.timMotMonHocTheoId(idMonHoc)
 
       try{
         return await this.chuongRepo.find({
-          where: {idMonHoc: findAllChuongDto.idMonHoc},
+          where: {idMonHoc: idMonHoc}, 
           order: {thuTu: 'ASC'} //thứ tự tăng dần
         })
       }catch(err){

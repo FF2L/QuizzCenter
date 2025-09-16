@@ -1,8 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete,Query } from '@nestjs/common';
+
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req } from '@nestjs/common';
 import { ChuongService } from './chuong.service';
 import { CreateChuongDto } from './dto/create-chuong.dto';
 import { UpdateChuongDto } from './dto/update-chuong.dto';
 import { FindAllChuongDto } from './dto/findAll-chuong.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth/jwt-auth.guard';
 
 @Controller('chuong')
 export class ChuongController {
@@ -12,10 +14,11 @@ export class ChuongController {
   async create(@Body() createChuongDto: CreateChuongDto) {
     return await this.chuongService.taoMotChuong(createChuongDto);
   }
-
+  // @UseGuards(JwtAuthGuard)
   @Get()
-  async findAll(@Query('idMonHoc') idMonHoc: number) {
-    return await this.chuongService.timTatCaChuongTheoIdMonHoc({ idMonHoc });
+
+  async findAll(@Query('idMonHoc') idMonHoc : number/**, @Req() req */) {
+    return await this.chuongService.timTatCaChuongTheoIdMonHoc(idMonHoc/**, req.user.id */);
   }
   
   @Get(':id')

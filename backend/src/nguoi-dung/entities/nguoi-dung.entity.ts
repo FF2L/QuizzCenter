@@ -11,7 +11,7 @@ import * as bcrypt from "bcrypt"
 export class NguoiDung  extends BaseEntity{
     
     @Column({unique: true})
-    @Index({ unique: true})
+    @Index()
     maNguoiDung: string;
 
     @Column()
