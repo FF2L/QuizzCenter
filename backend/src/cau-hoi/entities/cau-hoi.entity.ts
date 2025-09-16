@@ -31,17 +31,13 @@ export class CauHoi extends BaseEntity{
     })
     doKho: DoKho
 
-    @Column({
-        default: 1
-    })
-    tileDiem: number
-
     @ManyToOne(() => Chuong, (chuong) => chuong.cauHoi, {lazy: true})
     @JoinColumn({name: 'idChuong'})
-    idChuong: Promise<Chuong>
+    chuong: Promise<Chuong>
+    @Column() idChuong: number
 
-    @OneToMany(() => DapAn, (dapAn) => dapAn.idCauHoi, {cascade:true, lazy: true})
-    dapAn: Promise<DapAn[]>
+    @OneToMany(() => DapAn, (da) => da.cauHoi, { cascade: true, lazy: true })
+    dapAn: Promise<DapAn[]>; 
 
     @OneToMany(() => FileDinhKem, (fileDinhKem) => fileDinhKem.idCauHoi, {cascade: true, lazy:true})
     fileDinhKem: Promise<FileDinhKem[]>

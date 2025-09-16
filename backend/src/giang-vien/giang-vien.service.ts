@@ -16,6 +16,7 @@ export class GiangVienService {
 
   async timGiangVienTheoId(idGiangVien: number){
     const giangVien = await this.nguoiDungService.timMotNguoiDungTheoId(idGiangVien)
+    if (!giangVien) throw new NotFoundException('Không tìm thấy giảng viên')
     return giangVien
   }
 
