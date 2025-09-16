@@ -1,6 +1,6 @@
 import { Chuong } from 'src/chuong/entities/chuong.entity';
 import { GiangVienService } from './../giang-vien/giang-vien.service';
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateChuongDto } from './dto/create-chuong.dto';
 import { UpdateChuongDto } from './dto/update-chuong.dto';
 import { MonHocService } from 'src/mon-hoc/mon-hoc.service';
@@ -9,13 +9,17 @@ import { Repository } from 'typeorm';
 import { GiangVien } from 'src/giang-vien/entities/giang-vien.entity';
 import { MonHoc } from 'src/mon-hoc/entities/mon-hoc.entity';
 import { FindAllChuongDto } from './dto/findAll-chuong.dto';
+import { Pagination } from 'src/common/dto/pagination.dto';
+import { CauHoiService } from 'src/cau-hoi/cau-hoi.service';
+import { FilterCauHoiQueryDto } from 'src/cau-hoi/dto/filter_cau-hoi_query.dto';
 
 @Injectable()
 export class ChuongService {
 
   constructor( @InjectRepository(Chuong) private chuongRepo : Repository<Chuong>,
               private giangVienService: GiangVienService,
-              private monHocService: MonHocService
+              private monHocService: MonHocService,
+              @Inject(forwardRef(() => CauHoiService)) private cauHoiService: CauHoiService
   ) {}
 
   async taoMotChuong(createChuongDto: CreateChuongDto) {
@@ -39,12 +43,12 @@ export class ChuongService {
     
   }
 
-  async timTatCaChuongTheoIdMonHoc(findAllChuongDto: FindAllChuongDto) {
-      const monHoc = await this.monHocService.timMotMonHocTheoId(findAllChuongDto.idMonHoc)
+  async timTatCaChuongTheoIdMonHoc(idMonHoc: number) {
+      const monHoc = await this.monHocService.timMotMonHocTheoId(idMonHoc)
 
       try{
         return await this.chuongRepo.find({
-          where: {idMonHoc: findAllChuongDto.idMonHoc},
+          where: {idMonHoc: idMonHoc}, 
           order: {thuTu: 'ASC'} //thứ tự tăng dần
         })
       }catch(err){
@@ -52,8 +56,12 @@ export class ChuongService {
       }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} chuong`;
+  async timMotChuongTheoId(id: number) {
+    const chuong= await this.chuongRepo.findOne({
+      where: {id}
+    })
+    if (!chuong) throw new NotFoundException('Không tìm thấy chương')
+      return chuong
   }
 
   async capNhatChuong(id: number, updateChuongDto: UpdateChuongDto) {
@@ -70,6 +78,13 @@ export class ChuongService {
         throw new InternalServerErrorException('Cập nhật chương không thành công')
       }
      
+  }
+
+  async layTatCauHoiTheoChuong(idChuong: number, filterCauHoiDto : FilterCauHoiQueryDto){
+    const chuong = await this.timMotChuongTheoId(idChuong)
+    
+    return await this.cauHoiService.layTatCaCauHoiTheoIdChuong(idChuong,filterCauHoiDto)
+
   }
 
   remove(id: number) {

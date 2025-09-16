@@ -3,7 +3,7 @@ Lưu ý là khi truyền dư hay truyền thiếu trường, sai định dạng 
 
 lấy tất cả môn học: vd khi tới trang 1 cần lấy 5 môn học đi thì ta truyền vào skip: 0 limit: 5 trang 2 là skip: 5 limit 5, tuong tự vậy.
 Này là tùy chinh nếu không cungg cấp biến nào hết thì mặc định nó sẽ lấy 10 môn học đầu tiên trong database.
-    get: localhost:3000/chuong
+    get: localhost:3000/mon-hoc
     body cần
     {
         "skip": 0,
