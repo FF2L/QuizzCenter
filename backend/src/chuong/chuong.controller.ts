@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete,Query } from '@nestjs/common';
 import { ChuongService } from './chuong.service';
 import { CreateChuongDto } from './dto/create-chuong.dto';
 import { UpdateChuongDto } from './dto/update-chuong.dto';
@@ -14,10 +14,10 @@ export class ChuongController {
   }
 
   @Get()
-  async findAll(@Body() findAllChuongDto : FindAllChuongDto) {
-    return await this.chuongService.timTatCaChuongTheoIdMonHoc(findAllChuongDto);
+  async findAll(@Query('idMonHoc') idMonHoc: number) {
+    return await this.chuongService.timTatCaChuongTheoIdMonHoc({ idMonHoc });
   }
-
+  
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.chuongService.findOne(+id);
