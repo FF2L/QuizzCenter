@@ -3,12 +3,8 @@ Lưu ý là khi truyền dư hay truyền thiếu trường, sai định dạng 
 
 lấy tất cả môn học: vd khi tới trang 1 cần lấy 5 môn học đi thì ta truyền vào skip: 0 limit: 5 trang 2 là skip: 5 limit 5, tuong tự vậy.
 Này là tùy chinh nếu không cungg cấp biến nào hết thì mặc định nó sẽ lấy 10 môn học đầu tiên trong database.
-    get: localhost:3000/mon-hoc
-    body cần
-    {
-        "skip": 0,
-        "limit": 10
-    }
+    get: localhost:3000/mon-hoc?skip=0&limit=10
+
 
 lấy tất cả chương: nó sẽ sắp xếp theo trường thuTu lúc tạo. Gọi xong sẽ trả về danh sách chương thuộc môn học đó theo thứ tự
     get: localhost:3000/chuong
@@ -30,14 +26,96 @@ Tạo xong sẽ nhận về chương vừa tạo
         "idMonHoc": 1
     }
 
-cập nhật chuong: body nó cần là có thể là tất cả các trường hoặc một hoặc nhiều trường trong body của cái tạo chuong, nghĩa là tùy chọn.
+cập nhật chuong: body nó cần có thể là tất cả các trường hoặc một hoặc nhiều trường trong body của cái tạo chuong, nghĩa là tùy chọn.
 Tương tự như cái tạo chương khi update trường thuTu thì nó sẽ tự cập nhật trường thuTu trong database. Update xong nhận về sẽ là 
 cái chương vừa update
-    patch: localhost:3000/chuong/id 
+    patch: localhost:3000/chuong/:id 
     body cần:
-        {
+    {
         "tenChuong": "chương 1: Học cách viết",
         "thuTu": 2,
         "idGiangVien": 2,
         "idMonHoc": 1
     }
+Có lấy chuong theo id
+    get: localhost:3000/chuong/:id 
+
+---------thêm sửa xóa Câu hỏi----------- lưu ý là tôi đã viết trigger cho phần số lượng câu hỏi rồi
+nên khi insert hay update (chương id),delete thì số lượng của chương đó tự cập nhật nên cần tự xử  trên fe
+
+
+tạo câu hỏi: lưu ý là loại câu hỏi phỉa truyền đúng kiểu: MotDung, NhieuDung nếu không truyền
+loaiCauHoi thì mặc định nó là loại: MotDung. doKho cần truyền vào kiểu là: De, Kho
+không truyền mặc định là De.  Lỗi khi mà nếu đáp án false hết thì báo lỗi, nếu loaiCauHoi la motdung à dapAnDung >1 thì báo lỗi
+trả về cái câu hỏi + mảng đáp án
+    post: localhost:3000/cau-hoi
+    body cần : 
+   {
+    "tenHienThi": "Câu 1",
+    "noiDungCauHoi": "2 + 2 = ?",
+    "loaiCauHoi": "MotDung",
+    "doKho": "Kho",
+    "idChuong": 9,
+    "mangDapAn": [
+        { "noiDung": "3", "dapAnDung": true},
+        { "noiDung": "4", "dapAnDung": false },
+        { "noiDung": "5", "dapAnDung": false },
+        { "noiDung": "6", "dapAnDung": false }
+    ]
+    }
+
+
+lấy tất cả câu hỏi theo idchương: muốn lấy câu hỏi chương nào thì truyền
+id của chương đó vào :id. Ở đây tôi build thêm query là skip, limit, doKho, loaiCauHoi
+nếu muốn sử dụng bất cứ trường nào thì tùy chỉnh mà xài. Nếu không có truyền gì hết thì nó mặc định
+lấy 10 cái câu hỏi mới nhất được tạo sắp xếp theo ngày tạo/update. Ở đây ông có thể chọn chương rồi nó hiện ra tất cả rồi 
+lọc theo độ khó hoặc loại câu hỏi cho nó vui, tùy ông.
+
+    get: localhost:3000/chuong/:idChuong/cau-hoi?loaiCauHoi=MotDung&doKho=De&limit=5&skip=5
+
+
+update câu hỏi: body nó cần có thể là tất cả các trường hoặc một hoặc nhiều trường trong body của cái tạo câu hỏi, nghĩa là tùy chọn.
+Tương tự như cái tạo chương khi update trường tên hiển thị thì nó sẽ tự cập nhật trường tên hiển thị trong database. Update xong nhận về sẽ là 
+cái câu hỏi vừa update. Lưu ý là update câu hỏi sẽ ko cho update loaiCauHoi
+    patch: localhost:3000/cau-hoi
+    body cần : 
+    {
+        "tenHienThi": "câu hỏi test",
+        "noiDungCauHoi": "abc",
+        "doKho": "Kho",
+        "idChuong":10
+    }
+
+//Tìm một câu hỏi theo Id: trả về  cauHoi và mảng danp91 án nên test trước để biết api ra sau
+    get: localhost:3000/cau-hoi/:id
+ 
+
+xóa câu hỏi: hiện tại là xóa luôn cho nó dễ sau này xóa kia sau cần id của câu hỏi cần xóa
+
+    delete: localhost:3000/cau-hoi/:id
+
+
+------thêm sửa xóa đáp an
+
+Thêm một đáp án: khi thêm một đáp án đúng mà câu hỏi đó là một đúng thì đáp án đúng cũ sẽ tự update lại
+    post: localhost:3000/dap-an/
+    body cần: 
+    {
+        "noiDung": "adsasd",
+        "dapAnDung": "sdfasdf",
+        "idCauHoi" : 1
+    }
+
+update một đáp án: khi update một đáp án enú6 là câu hỏi một đúng, update câu hỏi sai thì câu hỏi đúng cũ sẽ tự update lại,
+KHÔNG THỂ UPDATE idCauHoi
+
+patch : localhost:3000/dap-an/
+        {
+        "noiDung": "adsasd",
+        "dapAnDung": "sdfasdf",
+    }
+
+delete: không thể delete đáp án đúng của một câu hỏi một đúng cần update lại hoặc insert rồi hãy xóa
+
+delete: localhost:3000/dap-an/:id
+
