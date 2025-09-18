@@ -19,6 +19,7 @@ import dbPostgresConfig from './config/dbPostgres.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_PIPE } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
+import { GuiFileModule } from './gui-file/gui-file.module';
 
 
 @Module({
@@ -32,7 +33,7 @@ import { AuthModule } from './auth/auth.module';
       useFactory: dbPostgresConfig, // sử dụng khi dbPostgressCOnfig file trả về một hàm trả về instance của PostgresConnectionOptions
      })
     ,
-    NguoiDungModule, ThongBaoModule, KhoaModule, MonHocModule, GiangVienModule, SinhVienModule, ChuongModule, CauHoiModule, DapAnModule, FileDinhKemModule, LopHocPhanModule, BaiKiemTraModule, BaiLamSinhVienModule, AuthModule],
+    NguoiDungModule, ThongBaoModule, KhoaModule, MonHocModule, GiangVienModule, SinhVienModule, ChuongModule, CauHoiModule, DapAnModule, FileDinhKemModule, LopHocPhanModule, BaiKiemTraModule, BaiLamSinhVienModule, AuthModule, GuiFileModule],
   controllers: [AppController],
   providers: [AppService,
     {

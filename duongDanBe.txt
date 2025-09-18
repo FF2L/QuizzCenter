@@ -119,3 +119,6 @@ delete: không thể delete đáp án đúng của một câu hỏi một đúng
 
 delete: localhost:3000/dap-an/:id
 
+-----------Thêm câu hỏi bằng file---------------
+tạo câu hỏi bằng file: Cứ lấy cái mẫu excel đính mà chơi, giới hạn 20mb 1 file.
+post: localhost:3000/gui-file/cau-hoi/:idChuong
