@@ -16,8 +16,8 @@ export class DapAnService {
     @Inject(forwardRef(()=> CauHoiService)) private cauHoiService: CauHoiService
 ){}
 
-  async taoNhieuDapAn(mangDapAn: DapAnDto[], idCauHoi: number, loaiCauHoi: LoaiCauHoi, manager?: EntityManager) {
-    
+  async taoNhieuDapAn(mangDapAn: DapAnDto[], idCauHoi: number, loaiCauHoi: LoaiCauHoi) {
+   
     const mangDapAnDaCoIdCauHoi = mangDapAn.map((dapAn) => ({...dapAn,idCauHoi}))
     let soDapAnDung = 0
     mangDapAn.forEach((dapAn) => soDapAnDung += dapAn.dapAnDung ? 1 : 0 )
@@ -25,9 +25,9 @@ export class DapAnService {
     if(loaiCauHoi === LoaiCauHoi.MotDung && soDapAnDung >1)
       throw new BadRequestException('Câu hỏi một đúng chỉ có một đáp án đúng, sai nếu có 0 hoặc nhiều hơn 1 đáp án đúng')
 
-    const dapAnManager = manager ? manager.getRepository(DapAn) : this.dapAnRepo
+    const dapAnMang = await this.dapAnRepo.save(mangDapAnDaCoIdCauHoi)
 
-    return await dapAnManager.save(mangDapAnDaCoIdCauHoi)
+    return (dapAnMang)
     
   }
 
@@ -53,6 +53,12 @@ export class DapAnService {
 
   findOne(id: number) {
     return `This action returns a #${id} dapAn`;
+  }
+  async timNhieuDapAnTheoIdCauHoi (id:number){
+    return await this.dapAnRepo.find({
+      where: {idCauHoi: id}
+    })
+
   }
 
 async capNhatMotDapAn(id: number, dto: UpdateDapAnDto, manager?: EntityManager) {
