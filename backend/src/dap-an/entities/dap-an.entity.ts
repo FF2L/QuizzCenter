@@ -18,8 +18,7 @@ export class DapAn  extends BaseEntity{
     })
     @JoinColumn({ name: 'idCauHoi' })
     cauHoi: Promise<CauHoi>;         
-
-    @RelationId((da: DapAn) => da.cauHoi)
+    @Column()
     idCauHoi: number; 
 
     @OneToMany(() => ChiTietBaiLam, (chiTietBaiLam) => chiTietBaiLam.dapAn,{lazy:true, cascade:true})

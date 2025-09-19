@@ -23,19 +23,21 @@ export class CauHoiService {
   async taoMotCauHoi(createCauHoiDto: CreateCauHoiDto) {
     const chuong = await this.chuongService.timMotChuongTheoId(createCauHoiDto.idChuong)
     
-    return this.ds.transaction(async (manager) =>{
-      const cauHoi = await manager.save(manager.create(CauHoi,{
+    
+      const cauHoi = await this.cauHoiRepo.create({
       tenHienThi: createCauHoiDto.tenHienThi,
       noiDungCauHoi: createCauHoiDto.noiDungCauHoi,
       loaiCauHoi: createCauHoiDto.loaiCauHoi,
       doKho: createCauHoiDto.doKho,
       idChuong: createCauHoiDto.idChuong
-    }));
-
+      })
+      const cauHoiSave = await this.cauHoiRepo.save(cauHoi)
     
-    const mangDapAn = await this.dapAnService.taoNhieuDapAn(createCauHoiDto.mangDapAn, cauHoi.id, cauHoi.loaiCauHoi, manager)
+    const mangDapAn = await this.dapAnService.taoNhieuDapAn(createCauHoiDto.mangDapAn, cauHoiSave.id, cauHoi.loaiCauHoi)
+    // console.log(cauHoi)
+    // console.log(mangDapAn)
     return {cauHoi,mangDapAn}
-    })
+  
     
   }
 
@@ -60,10 +62,10 @@ export class CauHoiService {
 
  async timCauHoiTheoId(id: number) {
     const cauHoi = await this.cauHoiRepo.findOne({ where: { id } });
-    console.log(id)
     if (!cauHoi) throw new NotFoundException('Không tìm thấy câu hỏi');
-    await cauHoi.dapAn;           
-    return {cauHoi}
+    console.log(id)
+    const dapAn = await this.dapAnService.timNhieuDapAnTheoIdCauHoi(id)           
+    return {cauHoi, dapAn}
   }
 
   async capNhatCauHoi(id: number, updateCauHoiDto: UpdateCauHoiDto) {
@@ -77,6 +79,8 @@ export class CauHoiService {
       throw new InternalServerErrorException('Cập nhật câu hỏi không thảnh công')
     }
   }
+
+
 
   async remove(id: number) {
     return await this.cauHoiRepo.delete(id)
