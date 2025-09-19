@@ -29,16 +29,16 @@ const BankQuestion = () => {
   const location = useLocation();
   const { tenMonHoc } = location.state || {};
   const idMonHocNumber = Number(idMonHoc);
-  const [currentQuestion, setCurrentQuestion] = useState<CauHoi | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState<CauHoiPayload | null>(null);
 
   //mở create-dialog
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [openDetailDialog, setOpenDetailDialog] = useState(false);
-  const [currentQuestionDetail, setCurrentQuestionDetail] = useState<CauHoi | null>(null);
+  const [currentQuestionDetail, setCurrentQuestionDetail] = useState<CauHoiPayload | null>(null);
 
-  const [questions, setQuestions] = useState<CauHoi[]>([]);
+  const [questions, setQuestions] = useState<CauHoiPayload[]>([]);
   const newId = Date.now(); // id giả cho câu hỏi
 
 
@@ -78,31 +78,37 @@ const BankQuestion = () => {
     fetchChuong();
   }, [idMonHocNumber]);
  
-
+  const fetchQuestionDetail = async (id: number) => {
+    try {
+      const res = await fetch(`http://localhost:3000/cau-hoi/${id}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data: CauHoiPayload = await res.json();
+      setCurrentQuestionDetail(data);
+      setOpenDetailDialog(true);
+    } catch (err) {
+      console.error("Lỗi khi fetch chi tiết câu hỏi:", err);
+    }
+  };
 
 //Ds cauHoi
 useEffect(() => {
   const fetchQuestions = async () => {
     if (!selectedCategory) return;
-
     try {
-      const res = await fetch(
-        `http://localhost:3000/chuong/${selectedCategory}/cau-hoi`,
-        { method: "GET", headers: { "Content-Type": "application/json" } }
-      );
-
+      const res = await fetch(`http://localhost:3000/chuong/${selectedCategory}/cau-hoi`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-      const data = await res.json();
-      setQuestions(data);
+      const data: CauHoi[] = await res.json();
+      const payloads: CauHoiPayload[] = data.map((cauHoi) => ({
+        cauHoi,
+        dapAn: [] // will be filled when user opens detail via GET /cau-hoi/:id
+      }));
+      setQuestions(payloads);
     } catch (err) {
       console.error("Lỗi khi fetch câu hỏi:", err);
     }
   };
-
   fetchQuestions();
 }, [selectedCategory]);
-
   const handleCloseDialog = () =>{
     setOpenCreateDialog(false);
     setOpenUpdateDialog(false);
@@ -112,7 +118,7 @@ useEffect(() => {
     setAnchorEl(null);
   };
  
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>, question: CauHoi) => {
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>, question: CauHoiPayload) => {
     setAnchorEl(event.currentTarget); // Vị trí nút bấm
     setCurrentQuestion(question); // Lưu câu hỏi hiện tại
   };
@@ -259,19 +265,19 @@ useEffect(() => {
 
                     <Stack spacing={1} alignItems="flex-start">
                       <Typography sx={{  fontSize: "20px", fontWeight: "medium", color: "black"}}>
-                      Câu {index + 1}: {q.noiDungCauHoi}
+                      Câu {index + 1}: {q.cauHoi.noiDungCauHoi}
                       </Typography>
 
                       {/* Info nằm cùng hàng */}
                       <Stack direction="row" spacing={4} justifyContent="center">
                         <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#a5a5a5", textAlign: "center" }}>
-                          Ngày tạo: {q.create_at}
+                          Ngày tạo: {q.cauHoi.create_at}
                         </Typography>
                         <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#a5a5a5", textAlign: "center" }}>
-                          Ngày cập nhật: {q.update_at}
+                          Ngày cập nhật: {q.cauHoi.update_at}
                         </Typography>
                         <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#a5a5a5", textAlign: "center" }}>
-                          Loại câu hỏi: {LOAI_CAU_HOI_MAP[q.loaiCauHoi] || q.loaiCauHoi}
+                          Loại câu hỏi: {LOAI_CAU_HOI_MAP[q.cauHoi.loaiCauHoi] || q.cauHoi.loaiCauHoi}
                         </Typography>
                       </Stack>
                     </Stack>
@@ -300,37 +306,35 @@ useEffect(() => {
 
 </Button>
 <Menu
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        transformOrigin={{ vertical: "top", horizontal: "left" }}
-        PaperProps={{
-          sx: {
-            borderRadius: "12px",
-            backgroundColor: "#ffffff",
-            boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
-            mt: 1,
-          },
-        }}
-      >
-           <MenuItem 
-                     sx={{display:'flex',justifyContent:'center', alignItems:'center', flexDirection:'column'}}      
-                     onClick={() => { handleClose();  }}>Xóa
-                     
-                     </MenuItem>
-                    <MenuItem  sx={{display:'flex',justifyContent:'center', alignItems:'center', flexDirection:'column'}}     
-                      >Cập nhật
-                    </MenuItem>
-            <MenuItem    
-                     sx={{display:'flex',justifyContent:'center', alignItems:'center',flexDirection:'column'}}   
-                     onClick={() => {
-                      handleClose(); // đóng menu
-                      setCurrentQuestionDetail(q); // q là câu hỏi bạn vừa bấm
-                      setOpenDetailDialog(true);   // mở dialog
-                    }}>Xem chi tiết
-                    </MenuItem>
-           </Menu>
+            anchorEl={anchorEl}
+            open={open}
+            onClose={handleClose}
+            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+            transformOrigin={{ vertical: "top", horizontal: "left" }}
+            PaperProps={{ sx: { borderRadius: "12px", backgroundColor: "#fff", boxShadow: "0px 4px 20px rgba(0,0,0,0.1)", mt: 1 } }}
+          >
+            <MenuItem sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}
+              onClick={() => { handleClose(); /* TODO: delete handler */ }}>
+              Xóa
+            </MenuItem>
+
+            <MenuItem sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}
+              onClick={() => { handleClose(); /* TODO: update handler */ }}>
+              Cập nhật
+            </MenuItem>
+
+            <MenuItem sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}
+              onClick={() => {
+                handleClose();
+                // fetch full payload (cauHoi + dapAn) by id
+                if (currentQuestion?.cauHoi?.id) {
+                  fetchQuestionDetail(currentQuestion.cauHoi.id);
+                }
+              }}
+            >
+              Xem chi tiết
+            </MenuItem>
+          </Menu>
 
                 </Stack>
               </CardContent>
@@ -344,16 +348,15 @@ useEffect(() => {
         onClose={() => setOpenCreateDialog(false)}
         idChuong={Number(selectedCategory)}
         onCreated={(payload: CauHoiPayload) => {
-        setQuestions([payload.cauHoi, ...questions]); // payload.cauHoi mới đúng type CauHoi
+        setQuestions([payload, ...questions]); // payload.cauHoi mới đúng type CauHoi
         setOpenCreateDialog(false);
          }}
          />
        <QuestionDetailDialog
-          open={openDetailDialog}
-         onClose={() => setOpenDetailDialog(false)}
-         questionDetail={currentQuestionDetail} 
-/>
-
+        open={openDetailDialog}
+        onClose={() => setOpenDetailDialog(false)}
+        questionDetail={currentQuestionDetail}
+      />
 
 
 
