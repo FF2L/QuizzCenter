@@ -114,7 +114,7 @@ patch : localhost:3000/dap-an/
         "noiDung": "adsasd",
         "dapAnDung": "sdfasdf",
     }
-
+    
 delete: không thể delete đáp án đúng của một câu hỏi một đúng cần update lại hoặc insert rồi hãy xóa
 
 delete: localhost:3000/dap-an/:id
