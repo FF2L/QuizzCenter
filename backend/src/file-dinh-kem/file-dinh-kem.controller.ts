@@ -12,23 +12,23 @@ export class FileDinhKemController {
     return this.fileDinhKemService.create(createFileDinhKemDto);
   }
 
-  @Get()
-  findAll() {
-    return this.fileDinhKemService.findAll();
-  }
+  // @Get()
+  // findAll() {
+  //   return this.fileDinhKemService.findAll();
+  // }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.fileDinhKemService.findOne(+id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.fileDinhKemService.findOne(+id);
+  // }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateFileDinhKemDto: UpdateFileDinhKemDto) {
     return this.fileDinhKemService.update(+id, updateFileDinhKemDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.fileDinhKemService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.fileDinhKemService.remove(+id);
+  // }
 }

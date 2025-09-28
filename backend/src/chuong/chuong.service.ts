@@ -87,7 +87,11 @@ export class ChuongService {
 
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} chuong`;
+  async xoaChuongTheoIdChuong(id: number) {
+    const chuong = await this.timMotChuongTheoId(id)
+    if(+chuong.soLuongCauHoi>0)
+      throw new BadRequestException('Không thể xóa chương có câu hỏi')
+    else
+      return await this.chuongRepo.delete(id);
   }
 }
