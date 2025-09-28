@@ -17,6 +17,9 @@ export class CauHoi extends BaseEntity{
     @Column()
     noiDungCauHoi: string
 
+    @Column({nullable: true})
+    noiDungCauHoiHTML: string
+
     @Column({
         type: 'enum',
         enum: LoaiCauHoi,

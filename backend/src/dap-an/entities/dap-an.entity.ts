@@ -8,6 +8,9 @@ export class DapAn  extends BaseEntity{
     @Column()
     noiDung: string
 
+    @Column({nullable: true})
+    noiDungHTML: string
+
     @Column({default : false})
     dapAnDung: boolean
 

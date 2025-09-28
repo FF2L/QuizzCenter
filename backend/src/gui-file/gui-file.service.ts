@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Inject, InternalServerErrorException } from '@nestjs/common';
 import { CreateGuiFileDto } from './dto/create-gui-file.dto';
 import { UpdateGuiFileDto } from './dto/update-gui-file.dto';
 import { DataSource } from 'typeorm';
@@ -9,13 +9,73 @@ import { DapAn } from 'src/dap-an/entities/dap-an.entity';
 import { CauHoi } from 'src/cau-hoi/entities/cau-hoi.entity';
 import { LoaiCauHoi } from 'src/common/enum/loaicauhoi.enum';
 import { DoKho } from 'src/common/enum/dokho.enum';
+import { Chuong } from 'src/chuong/entities/chuong.entity';
+import { v2 as Cloudinary, UploadApiOptions, UploadApiResponse } from 'cloudinary';
+import * as streamifier from 'streamifier';
+
 
 type Normalized = { items: NormalizedItem[] };
 
 @Injectable()
 export class GuiFileService {
 
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(private readonly dataSource: DataSource,
+    @Inject('CLOUDINARY') private cloudianry: typeof Cloudinary
+  ) {}
+
+  /**Phần upload ảnh */
+    async uploadMotAnh( fileBuffer: Buffer, options: UploadApiOptions ={}) : Promise<UploadApiResponse>{
+      return new Promise ((resolve,rejects) => {
+        const uploadStream = this.cloudianry.uploader.upload_stream({
+          folder: process.env.CLOUDINARY_FOLDER || 'imagesQuizzCenter',
+          resource_type: 'image',
+          ...options
+        },
+        (error, result) =>{error? rejects(error) : resolve(result as UploadApiResponse)}
+      )
+      streamifier.createReadStream(fileBuffer).pipe(uploadStream)
+      })
+    }
+
+    async uploadMangAnh(buffers: Buffer[], options: UploadApiOptions = {}) {
+    const uploaded: UploadApiResponse[] = [];
+    try {
+      for (let i = 0; i < buffers.length; i++) {
+        const res = await this.uploadMotAnh(buffers[i], options);
+        uploaded.push(res); // lưu để rollback nếu sau đó lỗi
+      }
+      // thành công tất cả
+      return uploaded.map((r) => ({
+        public_id: r.public_id,
+        url: r.secure_url,
+        width: r.width,
+        height: r.height,
+        format: r.format,
+        resource_type: r.resource_type,
+        bytes: r.bytes,
+      }));
+    } catch (err: any) {
+      // ROLLBACK: xoá tất cả cái đã upload thành công
+      await Promise.allSettled(
+        uploaded.map((r) => this.cloudianry.uploader.destroy(r.public_id, { resource_type: 'image' })),
+      );
+      // ném lỗi ra ngoài cho controller xử lý
+      throw new InternalServerErrorException({
+        message: 'Upload thất bại, đã rollback ảnh đã tải lên.',
+        cause: err?.message || String(err),
+      });
+    }
+  }
+
+    async xoaAnhTheoId(publicId: string){
+      try{
+        return await this.cloudianry.uploader.destroy(publicId,{resource_type: 'image'})
+      }catch(error){
+        throw new InternalServerErrorException('Lỗi xóa ảnh trên cloudianry')
+      }
+      
+    }
+  /**End phần upload ảnh */
 
   // --- 3.1 Parse Excel ---
   async parseXlsx(buffer: Buffer): Promise<RawRow[]> {
@@ -115,7 +175,11 @@ export class GuiFileService {
     await this.dataSource.transaction(async (manager) => {
       const cauHoiRepo = manager.getRepository(CauHoi);
       const dapAnRepo = manager.getRepository(DapAn);
+      const chuongRepo = manager.getRepository(Chuong);
 
+      const chuong = chuongRepo.findOne({where: {id: idChuong}})
+      if(!chuong) throw new NotFoundException('Không tìm thấy id chương')
+        
       for (const it of data.items) {
         // Ràng buộc loại 1 đúng
         if (it.loaiCauHoi === LoaiCauHoi.MotDung) {
@@ -201,6 +265,8 @@ private mapLoai(input?: string): LoaiCauHoi {
   if (s.includes('nhieu dung') || /^(2|n|multi|multiple)$/.test(s)) return LoaiCauHoi.NhieuDung;
   return LoaiCauHoi.MotDung;
 }
+
+
 
 
   create(createGuiFileDto: CreateGuiFileDto) {
