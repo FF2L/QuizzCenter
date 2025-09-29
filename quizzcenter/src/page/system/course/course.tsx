@@ -70,57 +70,7 @@ import React, { useState } from "react";
     >
       <Stack spacing={3} sx={{ maxWidth: 1582, mx: "auto" }}>
         {/* Header with Search */}
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ pt: 4 }}>
-          <Autocomplete
-            options={[]}
-            sx={{
-             
-              width: "350px",
-              "& .MuiOutlinedInput-root": {
-                backgroundColor: "#e7e7e7",
-                borderRadius: "15px",               //style của Searchtextfield     
-                height: "45px",
-                border: "none",
-                "& fieldset": {
-                  border: "none",
-                },
-              },
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="Search..."
-                sx={{
-                  "& .MuiInputBase-input": {
-                    fontFamily: "Product Sans, Helvetica",
-                    fontWeight: "bold",
-                    fontSize: "20px",
-                    color: "#959595",
-                  },
-                }}
-              />
-            )}
-          />
-          <Button
-            variant="contained"
-            startIcon={<SearchIcon />}
-            sx={{
-              backgroundColor: "#245d51",
-              borderRadius: "15px",
-              height: "45px",
-              width: "130px",
-              fontFamily: "Poppins, Helvetica",
-              fontWeight: "medium",
-              fontSize: "16px",
-              textTransform: "none",
-              "&:hover": {
-                backgroundColor: "#1e4d42",
-              },
-            }}
-          >
-            Tìm kiếm
-          </Button>
-        </Stack>
+       
 
         {/* Navigation Tabs */}
         <Tabs
@@ -148,7 +98,6 @@ import React, { useState } from "react";
     }
     sx={{
       backgroundColor: selectedTab === 0 ? "#245d51" : "#e7e7e7",
-      borderRadius: "282px",
       minHeight: 56,
       minWidth: 200,
       mr: 2,
@@ -163,7 +112,6 @@ import React, { useState } from "react";
             sx={{
               backgroundColor: selectedTab === 1 ? "#245d51" : "#e7e7e7",
               color: selectedTab === 1 ? "white" : "black",
-              borderRadius: "282px",
               minHeight: 56,
               minWidth: 200,
               fontFamily: "Poppins, Helvetica",
@@ -176,7 +124,57 @@ import React, { useState } from "react";
             }}
           />
         </Tabs>
-
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ pt: 4 }}>
+          <Autocomplete
+            options={[]}
+            sx={{
+             
+              width: "350px",
+              "& .MuiOutlinedInput-root": {
+                backgroundColor: "#e7e7e7",
+                           //style của Searchtextfield     
+                height: "45px",
+                border: "none",
+                "& fieldset": {
+                  border: "none",
+                },
+              },
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="Search..."
+                sx={{
+                  "& .MuiInputBase-input": {
+                    fontFamily: "Product Sans, Helvetica",
+                    fontWeight: "bold",
+                    fontSize: "20px",
+                    color: "#959595",
+                  },
+                }}
+              />
+            )}
+          />
+          <Button
+            variant="contained"
+            startIcon={<SearchIcon />}
+            sx={{
+              backgroundColor: "#245d51",
+            
+              height: "45px",
+              width: "130px",
+              fontFamily: "Poppins, Helvetica",
+              fontWeight: "medium",
+              fontSize: "16px",
+              textTransform: "none",
+              "&:hover": {
+                backgroundColor: "#1e4d42",
+              },
+            }}
+          >
+            Tìm kiếm
+          </Button>
+        </Stack>
         {/* Course List */}
         <Box
           sx={{

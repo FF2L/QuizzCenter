@@ -46,7 +46,7 @@ export class ChuongController {
 
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.chuongService.remove(+id);
+  async remove(@Param('id',ParseIntPipe) id: number) {
+    return this.chuongService.xoaChuongTheoIdChuong(id);
   }
 }

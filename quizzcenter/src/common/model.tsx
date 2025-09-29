@@ -58,6 +58,7 @@ export interface DapAn {
   update_at: string;
   delete_at: string | null;
   noiDung: string;
+  noiDungHTML: string | null; 
   dapAnDung: boolean;
   idCauHoi: number;
 }
@@ -69,12 +70,25 @@ export interface CauHoi {
   delete_at: string | null;
   tenHienThi: string;
   noiDungCauHoi: string;
-  loaiCauHoi: string; 
-  doKho: string;      
+  noiDungCauHoiHTML: string | null; 
+  loaiCauHoi: string;
+  doKho: string;
   idChuong: number;
 }
-  // Payload trả về từ BE
-  export interface CauHoiPayload {
-    cauHoi: CauHoi;
-    dapAn: DapAn[];
-  }
+export interface FileDinhKem {
+  id: number;
+  create_at: string;
+  update_at: string;
+  delete_at: string | null;
+  tenFile: string;
+  duongDan: string;
+  loaiFile: string;
+  publicId: string;
+  idCauHoi: number;
+}
+export interface CauHoiPayload {
+  cauHoi: CauHoi;
+  dapAn: DapAn[];
+  mangFileDinhKem: FileDinhKem[];
+
+}

@@ -146,7 +146,7 @@ const Class = () => {
           <Box sx={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
         
           </Box>
-            <Card  sx={{ borderRadius: "20px", height: "95px", boxShadow: "none", border:"1px solid #A8A8A8"  }}>
+            <Card  sx={{ borderRadius: "20px", height: "95px", boxShadow: "none" }}>
               <CardContent  sx={{ padding: 2, height: "70px", backgroundColor: "white" }}>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" height="100%">
                   {/* Left info */}
@@ -155,8 +155,6 @@ const Class = () => {
     
                     </Typography>
             
-                    <Box sx={{ width: "1px", height: "70px", backgroundColor: "#A8A8A8" }} />
-
                     <Stack spacing={1} alignItems="flex-start">
                       <Typography sx={{  fontSize: "20px", fontWeight: "medium", color: "black"}}>
                       DHKTPM17A
@@ -178,62 +176,7 @@ const Class = () => {
                   </Stack>
 
                   {/* Right button */}
-                  <Button
-  variant="contained"
-  sx={{
-    backgroundColor: "#245d51",
-    borderRadius: "10px",
-    height: "50px",
-    width: "150px",
-    fontSize: "16px",
-    fontWeight: "medium",
-    textTransform: "none",
-    boxShadow:'none',
-
-    "&:hover": { backgroundColor: "#1a4a3e" },
-  }}
- 
->
-  Actions
-  <img src="/assets/ArrowDown.png" alt="icon" 
-   style={{ width: "25px", height: "25px",marginLeft: "8px" }} />
-
-</Button>
-<Menu
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        transformOrigin={{ vertical: "top", horizontal: "left" }}
-        PaperProps={{
-          sx: {
-            borderRadius: "12px",
-            backgroundColor: "#ffffff",
-            boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
-            mt: 1,
-          },
-        }}
-      >
-        <MenuItem 
-                     sx={{display:'flex',justifyContent:'center', alignItems:'center', flexDirection:'column'}}      
-                     onClick={() => { handleClose();  }}>Xóa
-                     
-                     </MenuItem>
-
-                    
-                          <MenuItem  sx={{display:'flex',justifyContent:'center', alignItems:'center', flexDirection:'column'}}     
-                          
-                                >
-                                  Cập nhật
-                                   </MenuItem>
-                                   
-        <MenuItem    
-                     sx={{display:'flex',justifyContent:'center', alignItems:'center',flexDirection:'column'}}   
-                     onClick={() => { handleClose();  }}>Thêm câu hỏi
-                    
-
-                     </MenuItem>
-      </Menu>
+                  
 
                 </Stack>
               </CardContent>

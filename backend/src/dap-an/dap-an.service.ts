@@ -36,6 +36,7 @@ export class DapAnService {
 
     const dapAn = this.dapAnRepo.create({
       noiDung: createMotDapAn.noiDung,
+      noiDungHTML: createMotDapAn.noiDungHTML,
       dapAnDung: createMotDapAn.dapAnDung,
       idCauHoi: createMotDapAn.idCauHoi
   })

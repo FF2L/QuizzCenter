@@ -5,8 +5,9 @@ import SearchIcon from '@mui/icons-material/Search';
 import { useEffect, useState, use } from "react";
 import { Chuong } from "../../../../common/model";
 import CreateDialog from "./createDialog"; 
+import { Delete, Edit, AddCircle } from "@mui/icons-material";
 import UpdateDialog from "./updateDialog";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { IconButton } from "@mui/material";
 import {
   Autocomplete,
   Box,
@@ -62,6 +63,7 @@ const CategoryTab = () => {
 
         const data: Chuong[] = await res.json();
         setChuongList(data);
+        console.log(data)
       } catch (err) {
         console.error("Lỗi khi fetch chương:", err);
       } finally {
@@ -158,36 +160,44 @@ const CategoryTab = () => {
             </Typography>
           </Stack>
 
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleOpenCreateDialog}
-            sx={{
-              backgroundColor: "#408c55",
-             
-              height: "50px",
-              width: "120px",
-              fontSize: "16px",
-              fontWeight: "bold",
-              textTransform: "none",
-              boxShadow: "inset 0px 6px 17px rgba(36, 93, 81, 0.25)",
-              "&:hover": { backgroundColor: "#357045" },
-            }}
-          >
-            Tạo
-          </Button>
         </Stack>
 
         {/* Category List */}
         <Stack spacing={2}>
-          <Box sx={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
-          <Typography sx={{fontWeight:'bold'}}>
+          <Box sx={{ flexDirection: "row", display: "flex", alignItems: "center",justifyContent:"space-between"  }}>
+          <Box sx={{ flexDirection: "row", display: "flex", alignItems: "center"  }}>
+          <Typography sx={{fontWeight:'bold',fontSize:"18px"}}>
             Môn học:
           </Typography>
-          <Typography sx={{color:"#245d51", ml:1, fontWeight:'bold'}}>{tenMonHoc}</Typography>
+          <Box sx={{backgroundColor:"rgba(255, 0, 0, 0.04)", borderRadius:"10px", height:"30px", width:"180px", display:"flex", justifyContent:'center', alignItems:"center"}}>
+          <Typography sx={{color:"rgba(255, 0, 0, 1)", ml:1, fontWeight:'bold',fontSize:"18px"}}>{tenMonHoc}</Typography>
+          </Box>
+          <Typography sx={{ml:1,fontWeight:'bold',fontSize:"18px"}}> → Danh mục</Typography>
+        </Box>
+<Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleOpenCreateDialog}
+            sx={{
+              backgroundColor: "#408C56",
+              borderRadius:"50px",
+              border:"1px black",
+              height: "50px",
+              width: "180px",
+              fontSize: "16px",
+              fontWeight: "bold",
+              color:"white",
+              textTransform: "none",
+              "&:hover": { backgroundColor: "#D9D9D9", color:'black' },
+            }}
+          >
+            Thêm danh mục
+          </Button>
+
+
           </Box>
           {chuongList.map((chuong) => (
-            <Card key={chuong.id}  sx={{ borderRadius: "20px", height: "95px", boxShadow: "none", border:"1px solid #A8A8A8"  }}>
+            <Card key={chuong.id}  sx={{ borderRadius: "20px", height: "95px", boxShadow: "none", border:"none"  }}>
               <CardContent  sx={{ padding: 2, height: "70px", backgroundColor: "white" }}>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" height="100%">
                   {/* Left info */}
@@ -206,12 +216,6 @@ const CategoryTab = () => {
                       {/* Info nằm cùng hàng */}
                       <Stack direction="row" spacing={4} justifyContent="center">
                         <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#a5a5a5", textAlign: "center" }}>
-                          Ngày tạo: {chuong.create_at}
-                        </Typography>
-                        <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#a5a5a5", textAlign: "center" }}>
-                          Ngày cập nhật: {chuong.update_at}
-                        </Typography>
-                        <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#a5a5a5", textAlign: "center" }}>
                           Số câu hỏi: {chuong.soLuongCauHoi}
                         </Typography>
                       </Stack>
@@ -219,65 +223,35 @@ const CategoryTab = () => {
                   </Stack>
 
                   {/* Right button */}
-                  <Button
-  variant="contained"
-  sx={{
-    backgroundColor: "#245d51",
-    
-    height: "50px",
-    width: "150px",
-    fontSize: "16px",
-    fontWeight: "medium",
-    textTransform: "none",
-    boxShadow:'none',
+                  <Stack direction="row" spacing={1}>
+                  <IconButton
+          sx={{ color: "#245d51" }}
+          onClick={() => {
+            // gọi hàm thêm câu hỏi
+          }}
+        >
+          <AddCircle />
+        </IconButton>
+        <IconButton
+          sx={{ color: "#0DC913" }}
+          onClick={() => {
+            handleOpenUpdateDialog(chuong);
+          }}
+        >
+          <Edit />
+        </IconButton>
+        <IconButton
+          sx={{ color: "#d32f2f" }}
+          onClick={() => {
+            // gọi hàm xóa
+          }}
+        >
+          <Delete />
+        </IconButton>
 
-    "&:hover": { backgroundColor: "#1a4a3e" },
-  }}
-  onClick={(e) => handleClick(e, chuong)}
->
-  Actions
-  <Box sx={{height:"25px", width:"1px", backgroundColor:'white', ml:2}}></Box>
-  <img src="/assets/ArrowDown.png" alt="icon" 
-   style={{ width: "20px", height: "20px",marginLeft: "13px" }} />
+       
 
-</Button>
-<Menu
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        transformOrigin={{ vertical: "top", horizontal: "left" }}
-        PaperProps={{
-          sx: {
-            borderRadius: "12px",
-            backgroundColor: "#ffffff",
-            boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
-            mt: 1,
-          },
-        }}
-      >
-        <MenuItem 
-                     sx={{display:'flex',justifyContent:'center', alignItems:'center', flexDirection:'column'}}      
-                     onClick={() => { handleClose();  }}>Xóa
-                     
-                     </MenuItem>
-
-                    
-                          <MenuItem  sx={{display:'flex',justifyContent:'center', alignItems:'center', flexDirection:'column'}}     
-                           onClick={() => {
-                            if (currentChuong) handleOpenUpdateDialog(currentChuong);
-                          }}
-                                >
-                                  Cập nhật
-                                   </MenuItem>
-                                   
-        <MenuItem    
-                     sx={{display:'flex',justifyContent:'center', alignItems:'center',flexDirection:'column'}}   
-                     onClick={() => { handleClose();  }}>Thêm câu hỏi
-                    
-
-                     </MenuItem>
-      </Menu>
+      </Stack>
 
                 </Stack>
               </CardContent>
@@ -321,9 +295,6 @@ const CategoryTab = () => {
       }}
      />
 
-   
-
-      
     </Box>
   );
 };

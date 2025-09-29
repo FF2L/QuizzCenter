@@ -1,12 +1,8 @@
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import Home from "@mui/icons-material/Home";
-import ManageAccounts from "@mui/icons-material/ManageAccounts";
-import Course from "../page/system/course/course";
-import { useNavigate } from "react-router-dom";
-import LibraryBooks from "@mui/icons-material/LibraryBooks";
 import MenuBook from "@mui/icons-material/MenuBook";
+import { useNavigate } from "react-router-dom";
 import {
-  Avatar,
   Box,
   List,
   ListItem,
@@ -27,13 +23,14 @@ type MenuItem = {
 };
 
 const menuItems: MenuItem[] = [
-  { id: 0, title: "Home", icon: <Home sx={{ fontSize: 40, color: "#000" }} />, path: "/home" },
-  { id: 1, title: "Môn học", icon: <MenuBook sx={{ fontSize: 40, color: "#000" }}/>, path: "/course" },
+  { id: 0, title: "Home", icon: <Home sx={{ fontSize: 40 }} />, path: "/home" },
+  { id: 1, title: "Môn học", icon: <MenuBook sx={{ fontSize: 40 }} />, path: "/course" },
 ];
 
 export default function MenuBar() {
   const navigate = useNavigate();
   const [openParent, setOpenParent] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number | null>(null); // lưu id item đã chọn
 
   const handleToggle = (id: number) => {
     setOpenParent(openParent === id ? null : id);
@@ -42,7 +39,7 @@ export default function MenuBar() {
   return (
     <Box
       sx={{
-        width: "250px",
+        width: "15vw",
         height: "100vh",
         position: "relative",
         overflow: "hidden",
@@ -74,12 +71,30 @@ export default function MenuBar() {
         }}
       >
         {/* Avatar */}
-    
-        <img src="/assets/teacherAvatar.png" alt="icon" style={{ width: "120px", height: "120px" }} />
-        <Typography sx={{ mt: 3, fontWeight: 500, color: "white", fontSize: "28px", lineHeight: "20px" }}>
+        <img
+          src="/assets/teacherAvatar.png"
+          alt="icon"
+          style={{ width: "120px", height: "120px" }}
+        />
+        <Typography
+          sx={{
+            mt: 3,
+            fontWeight: 500,
+            color: "white",
+            fontSize: "28px",
+            lineHeight: "20px",
+          }}
+        >
           Giảng Viên
         </Typography>
-        <Typography sx={{ mt: 2,  fontWeight: 400, color: "white", fontSize: 16 }}>
+        <Typography
+          sx={{
+            mt: 2,
+            fontWeight: 400,
+            color: "white",
+            fontSize: 16,
+          }}
+        >
           Features
         </Typography>
 
@@ -106,22 +121,35 @@ export default function MenuBar() {
                   }}
                 >
                   <ListItem
-                    onClick={() =>
-                      item.children ? handleToggle(item.id) : item.path && navigate(item.path)
-                    }
+                    onClick={() => {
+                      setSelected(item.id);
+                      item.children
+                        ? handleToggle(item.id)
+                        : item.path && navigate(item.path);
+                    }}
                     sx={{
                       height: "50px",
                       cursor: "pointer",
+                      backgroundColor:
+                        selected === item.id
+                          ? "#C7C7C7"
+                          : "transparent",
                       "&:hover": { backgroundColor: "rgba(0,0,0,0.04)" },
                     }}
                   >
-                    <ListItemIcon sx={{ minWidth: 60 }}>{item.icon}</ListItemIcon>
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 60,
+                        color: selected === item.id ? "black" : "#000",
+                      }}
+                    >
+                      {item.icon}
+                    </ListItemIcon>
                     <ListItemText
                       primary={item.title}
                       primaryTypographyProps={{
-      
                         fontWeight: 500,
-                        color: "#000000",
+                        color: selected === item.id ? "black" : "#000000",
                         fontSize: 18,
                         letterSpacing: "-0.40px",
                         lineHeight: "20px",
@@ -130,9 +158,12 @@ export default function MenuBar() {
                     {item.children && (
                       <ExpandMore
                         sx={{
-                          color: "#000",
+                          color: selected === item.id ? "#245d51" : "#000",
                           fontSize: 24,
-                          transform: openParent === item.id ? "rotate(180deg)" : "rotate(0deg)",
+                          transform:
+                            openParent === item.id
+                              ? "rotate(180deg)"
+                              : "rotate(0deg)",
                           transition: "transform 0.2s",
                         }}
                       />
@@ -141,43 +172,6 @@ export default function MenuBar() {
                 </Paper>
 
                 {/* Submenu */}
-                {item.children && (
-                  <Collapse in={openParent === item.id} timeout="auto" unmountOnExit>
-                    {item.children.map((child) => (
-                      <Paper
-                        key={child.id}
-                        elevation={0}
-                        sx={{
-                          width: "100%",
-                          borderRadius: 0,
-                          borderBottom: "1px solid #a1b4ab",
-                          backgroundColor: "#f7f9fc",
-                          pl: 6, // lùi vào để nhìn như menu con
-                        }}
-                      >
-                        <ListItem
-                          onClick={() => child.path && navigate(child.path)}
-                          sx={{
-                            height: 56,
-                            cursor: "pointer",
-                            "&:hover": { backgroundColor: "rgba(0,0,0,0.04)" },
-                          }}
-                        >
-                          <ListItemIcon sx={{ minWidth: 50 }}>{child.icon}</ListItemIcon>
-                          <ListItemText
-                            primary={child.title}
-                            primaryTypographyProps={{
-                              fontFamily: "Poppins",
-                              fontWeight: 400,
-                              color: "#000000",
-                              fontSize: 16,
-                            }}
-                          />
-                        </ListItem>
-                      </Paper>
-                    ))}
-                  </Collapse>
-                )}
               </React.Fragment>
             ))}
           </List>

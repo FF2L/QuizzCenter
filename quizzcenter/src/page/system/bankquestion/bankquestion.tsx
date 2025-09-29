@@ -4,7 +4,11 @@ import CategoryIcon from "@mui/icons-material/Category";
 import SearchIcon from '@mui/icons-material/Search';
 import { useEffect, useState, use } from "react";
 import { Chuong,CauHoi,DapAn,CauHoiPayload } from "../../../common/model";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { IconButton } from "@mui/material";
+import { Delete, Edit, Visibility  } from "@mui/icons-material";
+import DeleteConfirmDialog from "./deleteConfirmDialog"
+import { useRef } from "react";
+
 import {
   Autocomplete,
   Box,
@@ -18,27 +22,33 @@ import {
 } from "@mui/material";
 import CreateQuestionDialog from "./createQuestionDialog"
 import QuestionDetailDialog from "./deTailDialog"
+import UpdateQuestionDialog from "./updateQuestionDialog";
+
 const BankQuestion = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);  //menu con
   const open = Boolean(anchorEl);
 
   const { idMonHoc } = useParams<{ idMonHoc: string }>();
   const [chuongList, setChuongList] = useState<Chuong[]>([]);
-
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [loading, setLoading] = useState(false);
   const location = useLocation();
   const { tenMonHoc } = location.state || {};
   const idMonHocNumber = Number(idMonHoc);
   const [currentQuestion, setCurrentQuestion] = useState<CauHoiPayload | null>(null);
-
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   //mở create-dialog
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  
   const [openDetailDialog, setOpenDetailDialog] = useState(false);
   const [currentQuestionDetail, setCurrentQuestionDetail] = useState<CauHoiPayload | null>(null);
-
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState<{ id: number; name: string; } | null>(null);  
   const [questions, setQuestions] = useState<CauHoiPayload[]>([]);
+  const [updateQuestionId, setUpdateQuestionId] = useState<number | null>(null);
+
   const newId = Date.now(); // id giả cho câu hỏi
 
 
@@ -63,7 +73,7 @@ const BankQuestion = () => {
 
         const data: Chuong[] = await res.json();
         setChuongList(data);
-
+        console.log(data)
         // mặc định chọn chương đầu tiên
         if (data.length > 0) {
           setSelectedCategory(data[0].id.toString());
@@ -78,6 +88,7 @@ const BankQuestion = () => {
     fetchChuong();
   }, [idMonHocNumber]);
  
+  //xem chi tiet
   const fetchQuestionDetail = async (id: number) => {
     try {
       const res = await fetch(`http://localhost:3000/cau-hoi/${id}`);
@@ -100,7 +111,8 @@ useEffect(() => {
       const data: CauHoi[] = await res.json();
       const payloads: CauHoiPayload[] = data.map((cauHoi) => ({
         cauHoi,
-        dapAn: [] // will be filled when user opens detail via GET /cau-hoi/:id
+        dapAn: [],
+        mangFileDinhKem: [] 
       }));
       setQuestions(payloads);
     } catch (err) {
@@ -109,20 +121,75 @@ useEffect(() => {
   };
   fetchQuestions();
 }, [selectedCategory]);
-  const handleCloseDialog = () =>{
-    setOpenCreateDialog(false);
-    setOpenUpdateDialog(false);
+
+//xoa cau hoi
+const handleDeleteQuestion = async () => {
+  if (!questionToDelete) return;
+
+  try {
+    const res = await fetch(`http://localhost:3000/cau-hoi/${questionToDelete.id}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+    // Cập nhật lại UI
+    setQuestions(questions.filter((q) => q.cauHoi.id  !== questionToDelete.id));
+    setOpenDeleteDialog(false);
+    setQuestionToDelete(null);
+    alert("Xóa thành công!");
+  } catch (err) {
+    console.error("Lỗi khi xóa câu hỏi:", err);
+    alert("Xóa thất bại!");
+  }
+};
+
+//nhap File
+const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  if (event.target.files && event.target.files.length > 0) {
+    setSelectedFile(event.target.files[0]);
+  }
+};
+
+const handleUpload = async () => {
+  if (!selectedFile) {
+    alert("Vui lòng chọn file Excel trước!");
+    return;
   }
 
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
- 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>, question: CauHoiPayload) => {
-    setAnchorEl(event.currentTarget); // Vị trí nút bấm
-    setCurrentQuestion(question); // Lưu câu hỏi hiện tại
-  };
+  const formData = new FormData();
+  formData.append("file", selectedFile);
+
+  try {
+    const res = await fetch(`http://localhost:3000/gui-file/cau-hoi/${selectedCategory}`, {
+      method: "POST",
+      body: formData,
+    });
   
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+  
+    alert("Upload thành công!");
+  
+    // Gọi lại API GET để lấy danh sách mới
+    const refresh = await fetch(`http://localhost:3000/chuong/${selectedCategory}/cau-hoi`);
+    const data: CauHoi[] = await refresh.json();
+    const payloads: CauHoiPayload[] = data.map((cauHoi) => ({
+      cauHoi,
+      dapAn: [],
+      mangFileDinhKem: []
+    }));
+    setQuestions(payloads);
+    setSelectedFile(null);
+  } catch (err) {
+    console.error("Lỗi khi upload file:", err);
+    alert("Upload thất bại!");
+  }
+  
+};
+
+
 
 
   return (
@@ -143,7 +210,7 @@ useEffect(() => {
               options={[]}
               sx={{
                 mt: "50px", 
-                width: "350px",
+                width: "33vw",
                 "& .MuiOutlinedInput-root": {
                   backgroundColor: "white",
                   
@@ -153,107 +220,145 @@ useEffect(() => {
               }}
               renderInput={(params) => (
                 <TextField
-                  {...params}
-                  placeholder="Tìm kiếm danh mục ..."
-                  sx={{
-                    "& .MuiInputBase-input": {
-                      color: "#959595",
-                      fontSize: "16px",
-                      fontWeight: "medium",
-                      fontFamily: "Poppins",
-                    },
-                  }}
-                />
+  {...params}
+  placeholder="Tìm kiếm danh mục ..."
+  sx={{
+    "& .MuiInputBase-input": {
+      color: "#959595",
+      fontSize: "16px",
+      fontWeight: "medium",
+    },
+  }}
+  InputProps={{
+    ...params.InputProps,
+    startAdornment: (
+      <SearchIcon sx={{ color: "#959595", mr: 1 }} />
+    ),
+  }}
+/>
               )}
             />
-            <Button
-              variant="contained"
-              startIcon={<SearchIcon />}
-              sx={{
-                backgroundColor: "#245d51",
-               
-                mt: "50px", 
-                height: "45px",
-                width: "130px",
-                fontSize: "16px",
-                fontWeight: "medium",
-                boxShadow:'none',
-                textTransform: "none",
-                "&:hover": { backgroundColor: "#1a4a3e" },
-              }}
-            >
-              Tìm kiếm
-            </Button>
+           
           </Box>
         </Stack>
 
         {/* Header */}
         <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Box sx={{ width: "50px", height: "50px", backgroundColor: "#245d51", borderRadius: "32px" }}>
-              <CategoryIcon sx={{ fontSize: 40, color: "white" }} />
-            </Box>
-            <Typography variant="h3" sx={{  fontWeight: "medium", fontSize: "30px", color: "black" }}>
+          <Box sx={{display:'flex', justifyContent:"center", alignItems:'center', flexDirection:'row'}}>
+              <img src="/assets/QuestionBankIcon.png" 
+              style={{height:"60px", width:"60px", borderRadius:100}}></img>
+           
+            <Typography variant="h3" sx={{ml:1, fontWeight: "medium", fontSize: "30px", color: "black" }}>
               Ngân hàng câu hỏi
             </Typography>
-            <TextField
+          </Box>
+        </Stack>
+      
+        {/* Category List */}
+        <Stack spacing={2}>
+          <Box sx={{flexDirection: "row", display: "flex", alignItems: "center",justifyContent:"space-between" }}>
+            <Box sx={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
+          <Typography sx={{fontWeight:'bold',fontSize:"18px"}}>
+            Môn học:
+          </Typography>
+          <Box sx={{backgroundColor:"rgba(255, 0, 0, 0.04)", borderRadius:"10px", height:"30px", width:"180px", display:"flex", justifyContent:'center', alignItems:"center"}}>
+          <Typography sx={{color:"rgba(255, 0, 0, 1)", ml:1, fontWeight:'bold',fontSize:"18px"}}>{tenMonHoc}</Typography>
+          </Box>
+          <Typography sx={{ml:1,fontWeight:'bold',fontSize:"18px"}}> → Ngân hàng câu hỏi</Typography>
+          </Box>
+
+          <Stack direction="row" spacing={2}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setOpenCreateDialog(true)}
+            sx={{
+              backgroundColor: "#408C56",
+              height: "50px",
+              borderRadius:"50px",
+              width: "160px",
+              fontSize: "16px",
+              fontWeight: "bold",
+              border:"1px black",
+              color:"white",
+              textTransform: "none",
+              "&:hover": { backgroundColor: "#D9D9D9", color:'black' },
+            }}
+          >
+            Thêm câu hỏi
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => fileInputRef.current?.click()}
+            sx={{
+              backgroundColor: "white",
+              height: "50px",
+              borderRadius:"50px",
+              border:"1px black",
+              width: "160px",
+              fontSize: "16px",
+              fontWeight: "bold",
+              color:"black",
+              "&:hover": { backgroundColor: "#D9D9D9" },
+            }}
+          >
+             <img src="/assets/FileIcon.png" 
+              style={{height:"30px", width:"30px"}}></img>
+            Nhập File
+            <input
+   type="file"
+   hidden
+   accept=".xlsx,.xls"
+   ref={fileInputRef}
+   onChange={handleFileChange}
+  />
+          </Button>
+          {selectedFile && (
+  <Button
+    variant="contained"
+    color="primary"
+    sx={{
+      height: "50px",
+      borderRadius: "50px",
+      width: "160px",
+      fontSize: "16px",
+      fontWeight: "bold",
+      textTransform: "none",
+    }}
+    onClick={handleUpload}
+  >
+    Tải lên
+  </Button>
+)}
+          </Stack>
+          </Box>
+          <TextField
                 select
                 label="Chọn danh mục"
-              value={selectedCategory}
-      onChange={(e) => setSelectedCategory(e.target.value)}
-      sx={{
-        mt: 2,
-        width: 250,
-        backgroundColor: "white",
-        "& .MuiOutlinedInput-root": {
-          height: "45px",
-        },
-      }}
-    >
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                       sx={{
+                       ml:"70px",
+                       width: 250,
+                       backgroundColor: "white",
+                       borderRadius:"10px",
+                       "& .MuiOutlinedInput-root": {
+                       height: "45px",
+                       borderRadius:"10px",
+                        },
+                         }}
+                       >
       {chuongList.map((chuong) => (
                 <MenuItem key={chuong.id} value={chuong.id}>
                   {chuong.thuTu}. {chuong.tenChuong}
                 </MenuItem>
               ))}
     </TextField>
-          </Stack>
-
-
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setOpenCreateDialog(true)}
-            sx={{
-              backgroundColor: "#408c55",
-              borderRadius: "10px",
-              height: "50px",
-              width: "120px",
-              fontSize: "16px",
-              fontWeight: "bold",
-              textTransform: "none",
-              boxShadow: "inset 0px 6px 17px rgba(36, 93, 81, 0.25)",
-              "&:hover": { backgroundColor: "#357045" },
-            }}
-          >
-            Tạo
-          </Button>
-        </Stack>
-       <Stack>
-        
-       </Stack>
-        {/* Category List */}
-        <Stack spacing={2}>
-          <Box sx={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
-          <Typography sx={{fontWeight:'bold'}}>
-            Môn học:
-          </Typography>
-          <Typography sx={{color:"#245d51", ml:1, fontWeight:'bold'}}>{tenMonHoc}</Typography>
-          </Box>
           {questions.map((q, index) => (
-            <Card  sx={{ borderRadius: "20px", height: "95px", boxShadow: "none", border:"1px solid #A8A8A8"  }}>
+            <Card  sx={{ borderRadius: "20px", height: "70px", boxShadow: "none", border:"none"  }}>
 
             
-              <CardContent  sx={{ padding: 2, height: "70px", backgroundColor: "white" }}>
+              <CardContent  sx={{ padding: 1.5, height: "50px", backgroundColor: "white" }}>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" height="100%">
                   {/* Left info */}
                   <Stack direction="row" spacing={2} alignItems="center">
@@ -261,80 +366,61 @@ useEffect(() => {
           
                     </Typography>
             
-                    <Box sx={{ width: "1px", height: "70px", backgroundColor: "#A8A8A8" }} />
-
                     <Stack spacing={1} alignItems="flex-start">
-                      <Typography sx={{  fontSize: "20px", fontWeight: "medium", color: "black"}}>
-                      Câu {index + 1}: {q.cauHoi.noiDungCauHoi}
+                    <Box sx={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
+                    <Typography sx={{  fontSize: "20px", fontWeight: "bold", color: "black"}}>
+                      Câu {index + 1}:
                       </Typography>
-
+                      <Typography sx={{  fontSize: "20px", fontWeight: "medium", color: "black", ml:2}}>
+                     {q.cauHoi.tenHienThi}
+                      </Typography>
+                     </Box>
                       {/* Info nằm cùng hàng */}
-                      <Stack direction="row" spacing={4} justifyContent="center">
-                        <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#a5a5a5", textAlign: "center" }}>
-                          Ngày tạo: {q.cauHoi.create_at}
-                        </Typography>
-                        <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#a5a5a5", textAlign: "center" }}>
-                          Ngày cập nhật: {q.cauHoi.update_at}
-                        </Typography>
-                        <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#a5a5a5", textAlign: "center" }}>
-                          Loại câu hỏi: {LOAI_CAU_HOI_MAP[q.cauHoi.loaiCauHoi] || q.cauHoi.loaiCauHoi}
-                        </Typography>
-                      </Stack>
+                     
                     </Stack>
                   </Stack>
 
                   {/* Right button */}
-                  <Button
-  variant="contained"
+<Stack direction="row" spacing={1}>
+  
+
+  {/* Cập nhật */}
+  <IconButton
+      sx={{ color: "#0DC913" }}
+  
+      onClick={() => {
+        setUpdateQuestionId(q.cauHoi.id);   // lưu id câu hỏi
+        setOpenUpdateDialog(true);          // mở dialog update
+      }}
+  >
+    <Edit />
+  </IconButton>
+<IconButton
   sx={{
-    backgroundColor: "#245d51",
-    borderRadius: "10px",
-    height: "50px",
-    width: "150px",
-    fontSize: "16px",
-    fontWeight: "medium",
-    textTransform: "none",
-    boxShadow:'none',
-
-    "&:hover": { backgroundColor: "#1a4a3e" },
+    color:"#DB9C14"
   }}
-  onClick={(e) => handleClick(e, q)}
+  onClick={() => {
+    if (q.cauHoi.id) {
+      fetchQuestionDetail(q.cauHoi.id);
+    }
+  }}
 >
-  Actions
-  <img src="/assets/ArrowDown.png" alt="icon" 
-   style={{ width: "25px", height: "25px",marginLeft: "8px" }} />
+  <Visibility />
+</IconButton>
+{/* Xóa */}
+<IconButton
+    sx={{
+      color: "#d32f2f" 
+    }}
+    onClick={() => {
+      setQuestionToDelete({id:q.cauHoi.id, name:q.cauHoi.tenHienThi});
+      setOpenDeleteDialog(true);
+    }}
+  >
+    <Delete />
+  </IconButton>
+</Stack>
 
-</Button>
-<Menu
-            anchorEl={anchorEl}
-            open={open}
-            onClose={handleClose}
-            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-            transformOrigin={{ vertical: "top", horizontal: "left" }}
-            PaperProps={{ sx: { borderRadius: "12px", backgroundColor: "#fff", boxShadow: "0px 4px 20px rgba(0,0,0,0.1)", mt: 1 } }}
-          >
-            <MenuItem sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}
-              onClick={() => { handleClose(); /* TODO: delete handler */ }}>
-              Xóa
-            </MenuItem>
-
-            <MenuItem sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}
-              onClick={() => { handleClose(); /* TODO: update handler */ }}>
-              Cập nhật
-            </MenuItem>
-
-            <MenuItem sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}
-              onClick={() => {
-                handleClose();
-                // fetch full payload (cauHoi + dapAn) by id
-                if (currentQuestion?.cauHoi?.id) {
-                  fetchQuestionDetail(currentQuestion.cauHoi.id);
-                }
-              }}
-            >
-              Xem chi tiết
-            </MenuItem>
-          </Menu>
 
                 </Stack>
               </CardContent>
@@ -356,11 +442,32 @@ useEffect(() => {
         open={openDetailDialog}
         onClose={() => setOpenDetailDialog(false)}
         questionDetail={currentQuestionDetail}
-      />
-
-
-
-
+        />
+         <DeleteConfirmDialog
+         open={openDeleteDialog}
+         onClose={() => setOpenDeleteDialog(false)}
+         onConfirm={handleDeleteQuestion}
+         questionName={questionToDelete?.name}
+        />
+<UpdateQuestionDialog
+  open={openUpdateDialog}
+  onClose={() => setOpenUpdateDialog(false)}
+  cauHoiId={updateQuestionId ?? 0}
+  onUpdated={(payload) => {
+    const fullPayload: CauHoiPayload = {
+      ...payload,
+      mangFileDinhKem: (payload as CauHoiPayload).mangFileDinhKem ?? []
+    };
+  
+    setQuestions((prev) =>
+      prev.map((q) =>
+        q.cauHoi.id === fullPayload.cauHoi.id ? fullPayload : q
+      )
+    );
+  }}
+  
+  
+/>
 
 
 

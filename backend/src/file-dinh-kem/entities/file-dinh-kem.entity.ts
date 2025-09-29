@@ -13,7 +13,11 @@ export class FileDinhKem extends BaseEntity{
     @Column()
     loaiFile: string
 
+    @Column()
+    publicId: string
+
     @ManyToOne(() => CauHoi, (cauHoi) => cauHoi.fileDinhKem, {lazy: true})
     @JoinColumn({name: 'idCauHoi'})
-    idCauHoi: Promise<CauHoi>
+    cauHoi: Promise<CauHoi>
+    @Column() idCauHoi: number
 }

@@ -110,7 +110,7 @@ export default function UpdateDialog({
           Hủy
         </Button>
         <Button  onClick={handleUpdate}   disabled={submitting} variant="contained" sx={{ borderRadius:'10px',backgroundColor: "#245d51", "&:hover": { backgroundColor: "#1a4a3e" } }}>
-        {submitting ? "Đang tạo..." : "Tạo"}
+        {submitting ? "Đang tạo..." : "Cập nhật"}
         </Button>
       </DialogActions>
     </Dialog>
