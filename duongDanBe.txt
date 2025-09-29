@@ -77,7 +77,7 @@ lọc theo độ khó hoặc loại câu hỏi cho nó vui, tùy ông.
 update câu hỏi: body nó cần có thể là tất cả các trường hoặc một hoặc nhiều trường trong body của cái tạo câu hỏi, nghĩa là tùy chọn.
 Tương tự như cái tạo chương khi update trường tên hiển thị thì nó sẽ tự cập nhật trường tên hiển thị trong database. Update xong nhận về sẽ là 
 cái câu hỏi vừa update. Lưu ý là update câu hỏi sẽ ko cho update loaiCauHoi
-    patch: localhost:3000/cau-hoi
+    patch: localhost:3000/cau-hoi:id
     body cần : 
     {
         "tenHienThi": "câu hỏi test",
@@ -122,3 +122,60 @@ delete: localhost:3000/dap-an/:id
 -----------Thêm câu hỏi bằng file---------------
 tạo câu hỏi bằng file: Cứ lấy cái mẫu excel đính mà chơi, giới hạn 20mb 1 file.
 post: localhost:3000/gui-file/cau-hoi/:idChuong
+
+-------28/9/2025-----------
+Có thể xóa chương nhưng chỉ xóa chương không có câu hỏi
+Delete: localhost:3000/chuong/:id
+
+sửa lại tạo câu hỏi: có thể upload ảnh kèm theo khi tạo câu hỏi và nếu có style thì gửi với dạng htnml lưu vào trường
+noiDungCauHoiHTML để sau này render lấy đó render ra và noiDunCauHoi vẫn giữ nguyên vì sau này nó phục vụ cho tim kiếm. và tương tự đáp án cũng có noiDungHTML.
+THeo tìm hiểu được thì fe có thể dùng dangerouslySetInnerHTML/[innerHTML] để hiển thị cái tôi đã lưu. 
+Và dùng Quill (nhẹ, dễ tích hợp) CKEditor 5 (nhiều tính năng, bản build sẵn) để chuyển kiểu style trên web sang kiểu html rô gửi sang be này.
+LƯU Ý LÀ PHẢI GỬI TẤT CẢ VỚI DẠNG FROM DATA
+    post: localhost:3000/cau-hoi
+    key gửi file: files
+    key gửi dữ liệu tạo câu hỏi: createCauHoi
+    {
+    "tenHienThi": "Câu 1",
+    "noiDungCauHoi": "2 + 2 = ?",
+    "noiDungCauHoiHTML"
+    "loaiCauHoi": "MotDung",
+    "doKho": "Kho",
+    "idChuong": 9,
+    "mangDapAn": [
+        { "noiDung": "3", noiDungHTML:"", dapAnDung": true},
+        { "noiDung": "4", noiDungHTML:"", "dapAnDung": false },
+        { "noiDung": "5", noiDungHTML:"", "dapAnDung": false },
+        { "noiDung": "6", noiDungHTML:"", "dapAnDung": false }
+    ]
+    }
+
+    update câu hỏi bây h có thể update luôn cả ảnh thuộc câu hỏi đó. bạn có thể thêm ảnh mới(gửi qua form data với key la files) 
+    hoặc xóa ảnh củ(nếu xóa thì cần cung cấp mảng mangAnhPublicId hiện tại nó là mảng chuỗi trong object FileDinhKem publicId 
+    vd trước đó có 3 ảnh mỗi ảnh có trường pubId lần lượt là pubId: "1", pubId: "2", pubId: "3" khi xóa cái ảnh thứ 3 thì khi gọi update
+    thì cung cấp mảng mangAnhPublicId: bao gồm pubId: "1"."2")
+    các trường update câu hỏi như ở dưới và không thể update lại loại câu hỏi được.
+        patch: localhost:3000/cau-hoi:id
+    body cần : 
+    {
+        "tenHienThi": "câu hỏi test",
+        "noiDungCauHoi": "abc",
+        "doKho": "Kho",
+        "idChuong":10, 
+        "mangAnhPublicId": ["imagesQuizzCenter/pi5otqn2cowtrer5jujq"]
+    }
+
+
+mấy cái như tạo và update đáp án đã thêm trường noiDungHTML nên có thể  thêm trương đó khi update hay tạo mới
+
+hiện chưa thể uploadfile khi tao5 câu hỏi bằng file excel và chưa tạo câu hỏi với các kiểu file khác đính kèm( hiện tại chỉ ảnh)
+
+khi tạo câu hỏi do không muốn phúc tạp vấn đề.
+
+
+
+
+-----------------Ngày 29/9 thực hiện việc tạo dề  cho việc luyện tập và kiểm tra. Nếu có thể làm luôn cái quản lý câu hỏi trong đề.-----------
+Ý tưởng là tạo để chỉ cần những trường đó khi tạo xong có thể  thêm câu hỏi bằng ngân hàng câu hỏi hoặc tạo câu hỏi thủ công hơn nữa là có thể  
+tạo câu hỏi cho đề bằng file nhập vào. xong cái này là đi được nữa chặng đường.
+
