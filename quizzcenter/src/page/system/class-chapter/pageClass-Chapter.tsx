@@ -108,9 +108,6 @@ function Page() {
     minWidth: "180px",
   }}
 />
-
-
-
           </Tabs>
         </Box>
         </Stack>

@@ -1,4 +1,3 @@
-
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   Dialog,
@@ -49,52 +48,62 @@ const CreateQuestionDialog: React.FC<DialogCreateProps> = ({
   onCreated,
 }) => {
   const [tenHienThi, setTenHienThi] = useState("");
-  const [noiDungCauHoi, setNoiDungCauHoi] = useState(""); // HTML
+  const [noiDungCauHoi, setNoiDungCauHoi] = useState("");
   const [loaiCauHoi, setLoaiCauHoi] = useState("MotDung");
   const [doKho, setDoKho] = useState("De");
   const [dapAns, setDapAns] = useState<DapAnInput[]>([]);
-  const [images, setImages] = useState<{ file: File; url: string }[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
 
   const quillRef = useRef<ReactQuill | null>(null);
 
-  // ---- Handler chèn ảnh ----
-  const imageHandler = () => {
+  // ---- Image Handler ----
+  const imageHandler = useCallback(() => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
     input.click();
-
+  
     input.onchange = () => {
       const file = input.files?.[0];
       if (!file) return;
-
-      const editor = quillRef.current?.getEditor();
-      if (!editor) return;
-
-      const range = editor.getSelection();
-      const insertIndex = range ? range.index : editor.getLength();
-
-      const blobUrl = URL.createObjectURL(file);
-      console.log("Blob URL:", blobUrl);
-
-
-      editor.insertEmbed(insertIndex, "image", blobUrl);
-
-      const imgs = editor.root.querySelectorAll(`img[src="${blobUrl}"]`);
-      imgs.forEach((imgEl) => {
-        const img = imgEl as HTMLImageElement;
-        img.onload = () => {
-          img.style.width = "300px";
-          img.style.height = "auto";
-        };
-      });
-
-      setImages((prev) => [...prev, { file, url: blobUrl }]);
+  
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = e.target?.result;
+        if (!base64) return;
+  
+        const editor = quillRef.current?.getEditor();
+        if (!editor) return;
+  
+        const range = editor.getSelection();
+        const insertIndex = range ? range.index : editor.getLength();
+  
+        // Thêm file vào mảng trước, lấy index chuẩn
+        setFiles((prev) => {
+          const newFiles = [...prev, file];
+          const currentFileIndex = newFiles.length - 1;
+  
+          // Insert ảnh Base64
+          editor.insertEmbed(insertIndex, "image", base64, "user");
+  
+          // Lấy ngay ảnh vừa insert (thường là cuối cùng)
+          const imgs = editor.root.querySelectorAll("img");
+          const lastImg = imgs[imgs.length - 1] as HTMLImageElement;
+          if (lastImg) lastImg.setAttribute("data-file-index", currentFileIndex.toString());
+  
+          return newFiles;
+        });
+      };
+  
+      reader.readAsDataURL(file);
     };
-  };
+  }, []);
+  
+  
 
-  const quillModules = useMemo(
-    () => ({
+  // ---- Modules (useMemo để tránh remount Quill) ----
+  const quillModules = useMemo(() => {
+    return {
       toolbar: {
         container: [
           [{ header: [1, 2, 3, false] }],
@@ -104,27 +113,14 @@ const CreateQuestionDialog: React.FC<DialogCreateProps> = ({
           ["link", "image"],
           ["clean"],
         ],
-        handlers: { image: imageHandler },
+        handlers: {
+          image: imageHandler, // chỉ dùng handler đã memo
+        },
       },
-    }),
-    []
-  );
-
-  const quillFormats = useMemo(
-    () => [
-      "header",
-      "bold",
-      "italic",
-      "underline",
-      "strike",
-      "list",
-      "bullet",
-      "align",
-      "link",
-      "image",
-    ],
-    []
-  );
+    };
+  }, [imageHandler]);
+  
+  console.log(quillRef.current); // xem có instance nào thừa không
 
   const handleQuillChange = (content: string) => {
     setNoiDungCauHoi(content);
@@ -167,27 +163,26 @@ const CreateQuestionDialog: React.FC<DialogCreateProps> = ({
       alert("Nội dung câu hỏi không được để trống!");
       return;
     }
-
+  
     if (dapAns.length < 1) {
       alert("Phải có ít nhất 1 đáp án!");
       return;
     }
-
+  
     const numCorrect = dapAns.filter((d) => d.dapAnDung).length;
     if (numCorrect === 0) {
       alert("Phải có ít nhất 1 đáp án đúng!");
       return;
     }
-
     if (loaiCauHoi === "MotDung" && numCorrect > 1) {
       alert("Câu hỏi một đáp án chỉ được chọn 1 đáp án đúng!");
       return;
     }
-
+  
     const createCauHoi = {
       tenHienThi: tenHienThi.trim(),
-      noiDungCauHoi: htmlToPlainText(noiDungCauHoi),
-      noiDungCauHoiHTML: noiDungCauHoi,
+      noiDungCauHoi: noiDungCauHoi.replace(/<[^>]+>/g, ""), // plain text
+      noiDungCauHoiHTML: noiDungCauHoi, // HTML gốc có style
       loaiCauHoi,
       doKho,
       idChuong,
@@ -197,60 +192,70 @@ const CreateQuestionDialog: React.FC<DialogCreateProps> = ({
         dapAnDung: d.dapAnDung,
       })),
     };
-
-    const formData = new FormData();
-    images.forEach((i) => formData.append("files", i.file));
-    formData.append("createCauHoi", JSON.stringify(createCauHoi));
-
+  
     try {
+      const editor = quillRef.current?.getEditor();
+      if (!editor) throw new Error("Editor chưa khởi tạo");
+  
+      const formData = new FormData();
+      files.forEach((f) => formData.append("files", f));
+  
+      // thay src Base64 bằng //:0 nhưng giữ data-file-index
+      const tempHTML = editor.root.innerHTML.replace(
+        /(<img [^>]*?)src="data:image[^"]+"/g,
+        '$1src="//:0"'
+      );
+  
+      const createCauHoiTemp = { ...createCauHoi, noiDungCauHoiHTML: tempHTML };
+      formData.append("createCauHoi", JSON.stringify(createCauHoiTemp));
+  
       const res = await fetch("http://localhost:3000/cau-hoi", {
         method: "POST",
         body: formData,
       });
-
+  
       if (!res.ok) {
         const text = await res.text();
         throw new Error(`HTTP ${res.status}: ${text}`);
       }
-
+  
       const data: CauHoiPayload = await res.json();
-
-      // ---- Cập nhật URL thật trong editor ----
-      const editor = quillRef.current?.getEditor();
+  
+      // backend trả URL → cập nhật HTML editor
       if (editor && data.mangFileDinhKem) {
-        data.mangFileDinhKem.forEach((f) => {
-          const imgObj = images.find((i) => i.file.name === f.tenFile);
-          if (!imgObj) return;
-          const imgs = editor.root.querySelectorAll(`img[src="${imgObj.url}"]`);
-          imgs.forEach((imgEl) => {
+        data.mangFileDinhKem.forEach((f, idx) => {
+          const imgs = editor.root.querySelectorAll(`img[data-file-index="${idx}"]`);
+          imgs.forEach((imgEl: Element) => {
             const img = imgEl as HTMLImageElement;
             img.src = f.duongDan;
             img.style.width = "100%";
             img.style.height = "auto";
           });
         });
-
+  
         setNoiDungCauHoi(editor.root.innerHTML);
         createCauHoi.noiDungCauHoiHTML = editor.root.innerHTML;
       }
-
+  
       alert("Thêm câu hỏi thành công!");
       onCreated(data);
       onClose();
-
-      // reset state
+  
+      // reset form
       setTenHienThi("");
       setNoiDungCauHoi("");
       setLoaiCauHoi("MotDung");
       setDoKho("De");
       setDapAns([]);
-      setImages([]);
+      setFiles([]);
     } catch (err: any) {
       console.error(err);
       alert("Thêm câu hỏi thất bại: " + err.message);
     }
   };
+  
 
+  
   return (
     <Dialog open={open} onClose={onClose} fullWidth disableEnforceFocus disableAutoFocus>
       <DialogTitle>
@@ -259,7 +264,6 @@ const CreateQuestionDialog: React.FC<DialogCreateProps> = ({
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
       <DialogContent>
         <Stack spacing={2} mt={1}>
           <Box>
@@ -279,7 +283,6 @@ const CreateQuestionDialog: React.FC<DialogCreateProps> = ({
               value={noiDungCauHoi}
               onChange={handleQuillChange}
               modules={quillModules}
-              formats={quillFormats}
               theme="snow"
               placeholder="Nhập nội dung câu hỏi..."
             />
@@ -299,24 +302,35 @@ const CreateQuestionDialog: React.FC<DialogCreateProps> = ({
 
           <Typography fontWeight="bold">Danh sách đáp án:</Typography>
           <Stack spacing={1}>
-            {dapAns.map((d, index) => (
-              <Stack key={index} direction="row" spacing={1} alignItems="center">
-                <Checkbox checked={d.dapAnDung} onChange={() => handleToggleCorrect(index)} />
-                <TextField
-                  fullWidth
-                  placeholder={`Đáp án ${index + 1}`}
-                  value={d.noiDung}
-                  onChange={(e) => handleChangeAnswer(index, e.target.value)}
-                />
-              </Stack>
-            ))}
+          {dapAns.map((d, index) => (
+  <Box key={index} sx={{ mb: 1, border: "1px solid #ddd", borderRadius: 1, p: 1 }}>
+    <Stack direction="row" spacing={1} alignItems="center">
+      <Checkbox checked={d.dapAnDung} onChange={() => handleToggleCorrect(index)} />
+      <Box sx={{ flex: 1 }}>
+        <ReactQuill
+          value={d.noiDung}
+          onChange={(value) => handleChangeAnswer(index, value)}
+          modules={quillModules} // dùng toolbar giống câu hỏi
+          theme="snow"
+          placeholder={`Đáp án ${index + 1}`}
+        />
+      </Box>
+      <IconButton
+        onClick={() => setDapAns((prev) => prev.filter((_, i) => i !== index))}
+        size="small"
+      >
+        <CloseIcon />
+      </IconButton>
+    </Stack>
+  </Box>
+))}
+
             <Button startIcon={<AddIcon />} onClick={handleAddAnswer} sx={{ alignSelf: "flex-start" }}>
               Thêm đáp án
             </Button>
           </Stack>
         </Stack>
       </DialogContent>
-
       <DialogActions>
         <Button onClick={onClose}>Hủy</Button>
         <Button variant="contained" onClick={handleSave}>Lưu</Button>

@@ -189,9 +189,6 @@ const handleUpload = async () => {
   
 };
 
-
-
-
   return (
     <Box
       sx={{

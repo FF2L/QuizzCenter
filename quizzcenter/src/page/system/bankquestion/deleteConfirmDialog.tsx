@@ -34,8 +34,7 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
                </Stack>
             
     
-        
-
+    
 
       </DialogContent>
       <DialogActions>
