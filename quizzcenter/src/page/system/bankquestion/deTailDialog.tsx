@@ -3,6 +3,17 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, 
 import CloseIcon from "@mui/icons-material/Close";
 import { CauHoiPayload } from "../../../common/model";
 
+type LoaiKey = "MotDung" | "NhieuDung";
+type doKhoKey = "Kho" | "De";
+const loaiMap: Record<LoaiKey, string> = {
+  MotDung: "Single answer",
+  NhieuDung: "Multichoice",
+};
+const doKhoMap: Record<doKhoKey, string> = {
+  De: "Dễ",
+  Kho: "Khó",
+};
+
 interface QuestionDetailDialogProps {
   open: boolean;
   onClose: () => void;
@@ -31,20 +42,30 @@ const QuestionDetailDialog: React.FC<QuestionDetailDialogProps> = ({ open, onClo
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
+      <Box sx={{backgroundColor:"#245D51"}}>
+      <DialogTitle sx={{color:"white"}}>
         Chi tiết câu hỏi
-        <Button onClick={onClose} sx={{ position: "absolute", right: 8, top: 8, minWidth: "auto" }}><CloseIcon /></Button>
+        <Button onClick={onClose} sx={{ position: "absolute", right: 8, top: 8, minWidth: "auto", color:"white"}}><CloseIcon /></Button>
       </DialogTitle>
-
+      </Box>
       <DialogContent dividers>
         <Stack spacing={2}>
           <Typography variant="h6">{cauHoi.tenHienThi}</Typography>
 
           <Typography variant="subtitle2" color="text.secondary">Thông tin:</Typography>
           <Stack direction="row" spacing={2} flexWrap="wrap">
-            <Typography variant="body2">Loại: {cauHoi.loaiCauHoi}</Typography>
-            <Typography variant="body2">Độ khó: {cauHoi.doKho}</Typography>
-            <Typography variant="body2">Chương: {cauHoi.idChuong}</Typography>
+          <Typography variant="body2">
+  <strong>Loại:</strong>{" "}
+  {loaiMap[cauHoi.loaiCauHoi as LoaiKey] || cauHoi.loaiCauHoi}
+</Typography>
+<Typography variant="body2">
+  <strong>Độ khó:</strong> {doKhoMap[cauHoi.doKho as doKhoKey] || cauHoi.doKho}
+</Typography>
+<Typography variant="body2">
+  <strong>Chương:</strong> {cauHoi.idChuong}
+</Typography>
+
+
           </Stack>
 
           <Box>
@@ -87,7 +108,7 @@ const QuestionDetailDialog: React.FC<QuestionDetailDialogProps> = ({ open, onClo
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose} variant="contained">Đóng</Button>
+        <Button onClick={onClose} variant="contained" sx={{backgroundColor:"#245D51"}}>Đóng</Button>
       </DialogActions>
     </Dialog>
   );

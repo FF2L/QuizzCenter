@@ -1,4 +1,3 @@
-// UpdateQuestionDialog.tsx
 import React, { useState, useEffect } from "react";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
@@ -119,30 +118,40 @@ const UpdateQuestionDialog: React.FC<UpdateProps> = ({ open, onClose, cauHoiId, 
     setLoading(true);
     try {
       const formData = new FormData();
-
-      const createCauHoi = {
-        ...cauHoi,
-        noiDungCauHoiHTML: noiDungHTML,
-        mangDapAn: dapAn.map(d => ({
-          id: d.id > 0 ? d.id : undefined,
-          noiDung: d.noiDung,
-          noiDungHTML: d.noiDungHTML,
-          dapAnDung: d.dapAnDung,
-          idCauHoi: cauHoi.id,
-        })),
-      };
-
-      formData.append("createCauHoi", JSON.stringify(createCauHoi));
+  
+      // ép kiểu cauHoi sang any để xài tạm field mangDapAn
+      const withMangDapAn = cauHoi as CauHoi & { mangDapAn?: DapAn[] };
+  
+      const cleanMangDapAn = (withMangDapAn.mangDapAn ?? dapAn).map(
+        ({ id, create_at, update_at, delete_at, idCauHoi, ...rest }) => rest
+      );
+      
+  
+      formData.append(
+        "updateCauHoi",
+        JSON.stringify({
+          ...cauHoi,
+          noiDungCauHoiHTML: noiDungHTML,
+          mangDapAn: cleanMangDapAn,
+        })
+      );
+      
+  
       selectedFiles.forEach(f => formData.append("files", f));
-
+  
+      console.log(
+        "Payload PATCH gửi đi:",
+        JSON.parse(formData.get("updateCauHoi") as string)
+      );
+  
       const res = await fetch(`http://localhost:3000/cau-hoi/${cauHoi.id}`, {
         method: "PATCH",
         body: formData,
       });
-
+  
       if (!res.ok) throw new Error(`Update failed: ${res.status}`);
       const updated: CauHoiPayload = await res.json();
-
+  
       alert("Cập nhật thành công!");
       onUpdated({ cauHoi: updated.cauHoi, dapAn: updated.dapAn });
       onClose();
@@ -153,99 +162,70 @@ const UpdateQuestionDialog: React.FC<UpdateProps> = ({ open, onClose, cauHoiId, 
       setLoading(false);
     }
   };
+  
 
+  // ====== RETURN UI ======
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>
         Cập nhật câu hỏi
-        <IconButton onClick={onClose} sx={{ position: "absolute", right: 8, top: 8 }}>
+        <IconButton onClick={onClose} sx={{ float: "right" }}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>
 
       <DialogContent>
-        <Stack spacing={2} mt={1}>
+        <Stack spacing={2}>
           <TextField
             label="Tên hiển thị"
-            fullWidth
             value={cauHoi.tenHienThi}
-            onChange={(e) => handleChangeField("tenHienThi", e.target.value)}
+            onChange={e => handleChangeField("tenHienThi", e.target.value)}
+            fullWidth
           />
 
-          <Typography fontWeight="bold">Nội dung câu hỏi:</Typography>
-          <ReactQuill
-            value={noiDungHTML}
-            onChange={(html) => {
-              setNoiDungHTML(html);
-              handleChangeField("noiDungCauHoiHTML", html);
-            }}
-            theme="snow"
-          />
+          <Typography>Nội dung câu hỏi</Typography>
+          <ReactQuill value={noiDungHTML} onChange={setNoiDungHTML} />
 
-          <TextField
-            label="Loại câu hỏi"
-            value={cauHoi.loaiCauHoi}
-            disabled
-          />
           <TextField
             select
             label="Độ khó"
             value={cauHoi.doKho}
-            onChange={(e) => handleChangeField("doKho", e.target.value)}
+            onChange={e => handleChangeField("doKho", e.target.value)}
+            fullWidth
           >
             {DO_KHO.map(opt => (
-              <MenuItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </MenuItem>
+              <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
             ))}
           </TextField>
 
-          <Typography fontWeight="bold">Danh sách đáp án:</Typography>
-          <Stack spacing={2}>
-            {dapAn.map((d, index) => (
-              <Stack key={index} spacing={1}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Checkbox
-                    checked={!!d.dapAnDung}
-                    onChange={() => handleToggleCorrect(index)}
-                  />
-                  <Button color="error" onClick={() => handleDeleteAnswer(d, index)}>
-                    Xóa
-                  </Button>
-                </Stack>
-                <TextField
-                  fullWidth
-                  placeholder={`Đáp án ${index + 1} (plain text)`}
-                  value={d.noiDung}
-                  onChange={(e) =>
-                    handleChangeAnswer(index, e.target.value, d.noiDungHTML || "")
-                  }
-                />
-                <ReactQuill
-                  value={d.noiDungHTML || ""}
-                  onChange={(html) => handleChangeAnswer(index, d.noiDung, html)}
-                  theme="snow"
-                />
-              </Stack>
-            ))}
-            <Button startIcon={<AddIcon />} onClick={handleAddAnswer}>
-              Thêm đáp án
-            </Button>
-          </Stack>
+          <Typography variant="h6">Đáp án</Typography>
+          {dapAn.map((da, idx) => (
+            <Stack key={idx} direction="row" spacing={2} alignItems="center">
+              <Checkbox
+                checked={da.dapAnDung}
+                onChange={() => handleToggleCorrect(idx)}
+              />
+              <ReactQuill
+                value={da.noiDungHTML || ""}
+                onChange={html => handleChangeAnswer(idx, da.noiDung, html)}
+              />
+              <IconButton onClick={() => handleDeleteAnswer(da, idx)}>
+                <CloseIcon />
+              </IconButton>
+            </Stack>
+          ))}
+          <Button startIcon={<AddIcon />} onClick={handleAddAnswer}>
+            Thêm đáp án
+          </Button>
 
-          <Typography fontWeight="bold">File đính kèm:</Typography>
+          <Typography variant="h6">File đính kèm</Typography>
           <input type="file" multiple onChange={handleFileChange} />
-          {selectedFiles.length > 0 && (
-            <Typography variant="body2">
-              Đã chọn {selectedFiles.length} file
-            </Typography>
-          )}
         </Stack>
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose} disabled={loading}>Hủy</Button>
-        <Button variant="contained" onClick={handleSave} disabled={loading}>
+        <Button onClick={onClose}>Hủy</Button>
+        <Button onClick={handleSave} variant="contained" disabled={loading}>
           Lưu
         </Button>
       </DialogActions>

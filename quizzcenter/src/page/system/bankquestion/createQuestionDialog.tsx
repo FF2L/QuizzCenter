@@ -18,7 +18,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import "react-quill/dist/quill.snow.css";
 import ReactQuill from "react-quill";
 import { CauHoiPayload } from "../../../common/model";
-
+import  { Quill } from "react-quill";
 interface DapAnInput {
   noiDung: string;
   dapAnDung: boolean;
@@ -53,7 +53,7 @@ const CreateQuestionDialog: React.FC<DialogCreateProps> = ({
   const [doKho, setDoKho] = useState("De");
   const [dapAns, setDapAns] = useState<DapAnInput[]>([]);
   const [files, setFiles] = useState<File[]>([]);
-
+  const [errorAnswers, setErrorAnswers] = useState<(string | null)[]>([]);
   const quillRef = useRef<ReactQuill | null>(null);
 
   // ---- Image Handler ----
@@ -99,26 +99,24 @@ const CreateQuestionDialog: React.FC<DialogCreateProps> = ({
     };
   }, []);
   
-  
+// Đăng ký size bằng style thay vì class
+const sizes = ["10px","12px","14px","16px","18px","24px","32px"];
+const quillModules = useMemo(() => ({
+  toolbar: {
+    container: [
+      [{ size: [] }],
+      ["bold", "italic", "underline", "strike"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      [{ align: [] }],
+      ["link", "image"],
+      ["clean"],
+    ],
+    handlers: {
+      image: imageHandler,
+    },
+  },
+}), [imageHandler]);
 
-  // ---- Modules (useMemo để tránh remount Quill) ----
-  const quillModules = useMemo(() => {
-    return {
-      toolbar: {
-        container: [
-          [{ header: [1, 2, 3, false] }],
-          ["bold", "italic", "underline", "strike"],
-          [{ list: "ordered" }, { list: "bullet" }],
-          [{ align: [] }],
-          ["link", "image"],
-          ["clean"],
-        ],
-        handlers: {
-          image: imageHandler, // chỉ dùng handler đã memo
-        },
-      },
-    };
-  }, [imageHandler]);
   
   console.log(quillRef.current); // xem có instance nào thừa không
 
@@ -131,12 +129,25 @@ const CreateQuestionDialog: React.FC<DialogCreateProps> = ({
   };
 
   const handleChangeAnswer = (index: number, value: string) => {
+    const trimmedValue = value.trim();
+  
+    const isDuplicate = dapAns.some((d, i) => i !== index && d.noiDung.trim() === trimmedValue);
+  
+    setErrorAnswers((prev) => {
+      const copy = [...prev];
+      copy[index] = isDuplicate ? "Đáp án trùng với đáp án khác!" : null;
+      return copy;
+    });
+  
+    // Vẫn update giá trị editor
     setDapAns((prev) => {
       const copy = [...prev];
       copy[index].noiDung = value;
       return copy;
     });
   };
+  
+
 
   const handleToggleCorrect = (index: number) => {
     setDapAns((prev) =>
@@ -307,14 +318,20 @@ const CreateQuestionDialog: React.FC<DialogCreateProps> = ({
     <Stack direction="row" spacing={1} alignItems="center">
       <Checkbox checked={d.dapAnDung} onChange={() => handleToggleCorrect(index)} />
       <Box sx={{ flex: 1 }}>
-        <ReactQuill
-          value={d.noiDung}
-          onChange={(value) => handleChangeAnswer(index, value)}
-          modules={quillModules} // dùng toolbar giống câu hỏi
-          theme="snow"
-          placeholder={`Đáp án ${index + 1}`}
-        />
-      </Box>
+  <ReactQuill
+    value={d.noiDung}
+    onChange={(value) => handleChangeAnswer(index, value)}
+    modules={quillModules} 
+    theme="snow"
+    placeholder={`Đáp án ${index + 1}`}
+  />
+  {errorAnswers[index] && (
+    <Typography color="error" fontSize={12} mt={0.5}>
+      {errorAnswers[index]}
+    </Typography>
+  )}
+</Box>
+
       <IconButton
         onClick={() => setDapAns((prev) => prev.filter((_, i) => i !== index))}
         size="small"

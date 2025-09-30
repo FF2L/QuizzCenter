@@ -23,7 +23,7 @@ type MenuItem = {
 };
 
 const menuItems: MenuItem[] = [
-  { id: 0, title: "Home", icon: <Home sx={{ fontSize: 40 }} />, path: "/home" },
+  { id: 0, title: "Trang chủ", icon: <Home sx={{ fontSize: 40 }} />, path: "/home" },
   { id: 1, title: "Môn học", icon: <MenuBook sx={{ fontSize: 40 }} />, path: "/course" },
 ];
 
@@ -87,17 +87,6 @@ export default function MenuBar() {
         >
           Giảng Viên
         </Typography>
-        <Typography
-          sx={{
-            mt: 2,
-            fontWeight: 400,
-            color: "white",
-            fontSize: 16,
-          }}
-        >
-          Features
-        </Typography>
-
         {/* Menu Items */}
         <Box
           sx={{

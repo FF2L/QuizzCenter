@@ -352,7 +352,7 @@ const handleUpload = async () => {
               ))}
     </TextField>
           {questions.map((q, index) => (
-            <Card  sx={{ borderRadius: "20px", height: "70px", boxShadow: "none", border:"none"  }}>
+            <Card  sx={{ borderRadius: "1px", height: "70px", boxShadow: "none", border:"none"  }}>
 
             
               <CardContent  sx={{ padding: 1.5, height: "50px", backgroundColor: "white" }}>
