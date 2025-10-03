@@ -92,3 +92,33 @@ export interface CauHoiPayload {
   mangFileDinhKem: FileDinhKem[];
 
 }
+
+// LopHocPhan.ts
+export interface LopHocPhan {
+  id: number;
+  create_at: string;
+  update_at: string;
+  delete_at: string | null;
+  maLopHoc: string;
+  tenLopHoc: string;
+  thoiGianBatDau: string;
+  thoiGianKetThuc: string;
+  idMonHoc: number;
+  idGiangVien: number;
+}
+
+export interface BaiKiemTra {
+  id: number;
+  create_at: string;
+  update_at: string;
+  delete_at: string | null;
+  tenBaiKiemTra: string;
+  loaiKiemTra: "LuyenTap" | "BaiKiemTra"; // Enum dạng string
+  soLanLam: number;
+  xemBaiLam: boolean;
+  hienThiKetQua: boolean;
+  thoiGianBatDau: string; // ISO string
+  thoiGianKetThuc: string; // ISO string
+  thoiGianLam: number; // thời gian làm bài tính theo giây
+  idLopHocPhan: number;
+}

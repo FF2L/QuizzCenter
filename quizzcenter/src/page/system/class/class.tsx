@@ -1,10 +1,9 @@
+// Class.tsx
+import React, { useEffect, useState } from "react";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
-import { useParams,useLocation } from "react-router-dom";
 import CategoryIcon from "@mui/icons-material/Category";
-import SearchIcon from '@mui/icons-material/Search';
-import { useEffect, useState, use } from "react";
-
-import MoreVertIcon from "@mui/icons-material/MoreVert";
+import SearchIcon from "@mui/icons-material/Search";
 import {
   Autocomplete,
   Box,
@@ -14,39 +13,44 @@ import {
   Stack,
   TextField,
   Typography,
-  Menu, MenuItem 
 } from "@mui/material";
+import { LopHocPhan } from "../../../common/model"; // import model LopHocPhan
 
 const Class = () => {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);  //menu con
-  const open = Boolean(anchorEl);
-
   const { idMonHoc } = useParams<{ idMonHoc: string }>();
-
-  const [loading, setLoading] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { tenMonHoc } = location.state || {};
 
-  //mở create-dialog
-  const [openCreateDialog, setOpenCreateDialog] = useState(false);
-  const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
+  const [lopHocPhanList, setLopHocPhanList] = useState<LopHocPhan[]>([]);
+  const [loading, setLoading] = useState(false);
 
- 
+  const idMonHocNumber = Number(idMonHoc);
+  const idGiangVien = 2; // hardcode cho ví dụ, về sau truyền động
 
+  useEffect(() => {
+    const fetchLopHocPhan = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(
+          `http://localhost:3000/lop-hoc-phan/${idMonHocNumber}?idGiangVien=${idGiangVien}`
+        );
+        const data: LopHocPhan[] = await res.json();
+        // lọc theo thời gian kết thúc >= hiện tại
+        const now = new Date();
+        const filtered = data.filter(
+          (lop) => new Date(lop.thoiGianKetThuc) >= now
+        );
+        setLopHocPhanList(filtered);
+      } catch (error) {
+        console.error("Lỗi fetch lớp học phần:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleCloseDialog = () =>{
-    setOpenCreateDialog(false);
-    setOpenUpdateDialog(false);
-  }
-  const idMonHocNumber = Number(idMonHoc); 
-
-
-  
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-
+    fetchLopHocPhan();
+  }, [idMonHocNumber]);
 
   return (
     <Box
@@ -55,7 +59,7 @@ const Class = () => {
         minHeight: "100vh",
         backgroundColor: "#F2F2F2",
         borderRadius: "10px",
-        padding: 0,
+        padding: 2,
       }}
     >
       <Stack spacing={3}>
@@ -65,11 +69,10 @@ const Class = () => {
             <Autocomplete
               options={[]}
               sx={{
-                mt: "50px", 
+                mt: "50px",
                 width: "350px",
                 "& .MuiOutlinedInput-root": {
                   backgroundColor: "white",
-                  
                   height: "45px",
                   "& fieldset": { border: "none" },
                 },
@@ -77,7 +80,7 @@ const Class = () => {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  placeholder="Tìm kiếm danh mục ..."
+                  placeholder="Tìm kiếm lớp học phần ..."
                   sx={{
                     "& .MuiInputBase-input": {
                       color: "#959595",
@@ -94,13 +97,12 @@ const Class = () => {
               startIcon={<SearchIcon />}
               sx={{
                 backgroundColor: "#245d51",
-               
-                mt: "50px", 
+                mt: "50px",
                 height: "45px",
                 width: "130px",
                 fontSize: "16px",
                 fontWeight: "medium",
-                boxShadow:'none',
+                boxShadow: "none",
                 textTransform: "none",
                 "&:hover": { backgroundColor: "#1a4a3e" },
               }}
@@ -116,79 +118,47 @@ const Class = () => {
             <Box sx={{ width: "50px", height: "50px", backgroundColor: "#245d51", borderRadius: "32px" }}>
               <CategoryIcon sx={{ fontSize: 40, color: "white" }} />
             </Box>
-            <Typography variant="h3" sx={{  fontWeight: "medium", fontSize: "30px", color: "black" }}>
-              Lớp học của tôi
+            <Typography variant="h3" sx={{ fontWeight: "medium", fontSize: "30px", color: "black" }}>
+              {tenMonHoc || "Lớp học của tôi"}
             </Typography>
           </Stack>
 
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-        
-            sx={{
-              backgroundColor: "#408c55",
-              borderRadius: "10px",
-              height: "50px",
-              width: "120px",
-              fontSize: "16px",
-              fontWeight: "bold",
-              textTransform: "none",
-              boxShadow: "inset 0px 6px 17px rgba(36, 93, 81, 0.25)",
-              "&:hover": { backgroundColor: "#357045" },
-            }}
-          >
-            Tạo
-          </Button>
         </Stack>
 
-        {/* Category List */}
+        {/* Danh sách lớp học phần */}
         <Stack spacing={2}>
-          <Box sx={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
-        
-          </Box>
-            <Card  sx={{ borderRadius: "20px", height: "95px", boxShadow: "none" }}>
-              <CardContent  sx={{ padding: 2, height: "70px", backgroundColor: "white" }}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" height="100%">
-                  {/* Left info */}
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Typography sx={{  fontSize: "20px", color: "black", fontWeight: "normal", width: 25, textAlign: "center" }}>
-    
-                    </Typography>
-            
-                    <Stack spacing={1} alignItems="flex-start">
-                      <Typography sx={{  fontSize: "20px", fontWeight: "medium", color: "black"}}>
-                      DHKTPM17A
+          {loading && <Typography>Đang tải...</Typography>}
+          {!loading && lopHocPhanList.length === 0 && (
+            <Typography>Chưa có lớp học phần nào.</Typography>
+          )}
+          {!loading &&
+            lopHocPhanList.map((lop) => (
+              <Card
+                key={lop.id}
+                sx={{ borderRadius: "20px", boxShadow: "none", cursor: "pointer" }}
+                onClick={() =>
+                  navigate(`/bai-kiem-tra/${lop.id}`, { state: { tenLopHoc: lop.tenLopHoc } })
+                }
+              >
+                <CardContent sx={{ padding: 2, backgroundColor: "white" }}>
+                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Stack>
+                      <Typography sx={{ fontSize: "20px", fontWeight: "medium", color: "black" }}>
+                        {lop.tenLopHoc}
                       </Typography>
-
-                      {/* Info nằm cùng hàng */}
-                      <Stack direction="row" spacing={4} justifyContent="center">
-                        <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#a5a5a5", textAlign: "center" }}>
-                          Ngày tạo: 
-                        </Typography>
-                        <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#a5a5a5", textAlign: "center" }}>
-                          Ngày cập nhật: 
-                        </Typography>
-                        <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#a5a5a5", textAlign: "center" }}>
-                          Số câu hỏi: 
-                        </Typography>
-                      </Stack>
+                      <Typography sx={{ fontSize: "14px", color: "#a5a5a5" }}>
+                        Ngày bắt đầu: {new Date(lop.thoiGianBatDau).toLocaleDateString()}
+                      </Typography>
+                      <Typography sx={{ fontSize: "14px", color: "#a5a5a5" }}>
+                        Ngày kết thúc: {new Date(lop.thoiGianKetThuc).toLocaleDateString()}
+                      </Typography>
                     </Stack>
                   </Stack>
-
-                  {/* Right button */}
-                  
-
-                </Stack>
-              </CardContent>
-            </Card>
-        
+                </CardContent>
+              </Card>
+            ))}
         </Stack>
       </Stack>
-      
-
-    
-
-   
     </Box>
   );
 };

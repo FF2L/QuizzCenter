@@ -11,6 +11,7 @@ import TestDetail from './page/system/exam/Test';
 import CategoryTab from './page/system/class-chapter/component/categoryTab';
 import Page from "./page/system/class-chapter/pageClass-Chapter"
 import CreateQuestionPage from './page/system/bankquestion/createQuestion';
+import BaiKiemTraList from './page/system/test/test';
 function App() {
   return (
     <BrowserRouter>
@@ -18,6 +19,7 @@ function App() {
     <Routes>
     <Route path="/course" element={<Course/>} />
     <Route path="/page/:idMonHoc" element={<Page/>} />
+    <Route path="/bai-kiem-tra/:idLopHocPhan" element={<BaiKiemTraList />} />
     <Route path="/create-question" element={<CreateQuestionPage />} />
 
   
