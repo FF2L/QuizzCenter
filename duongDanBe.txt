@@ -183,10 +183,11 @@ lấy tất cả lớp học phần theo id giảng viên và id môn học
 
 
 lấy tất cả bài kiểm tra theo id lớp học phần sort theo cái mới tạo/ update được đưa lên trước
-Get: localhost:3000/bai-kiem-tra/:idLopHocPhan
+có query
+Get: localhost:3000/bai-kiem-tra/:idLopHocPhan?loaiKiemTra=LuyenTap&xemBaiLam=true&hienThiKetQua=true
 
 laý6 thông tin của một bài kiểm tra, có cả câu hỏi và đáp án
-Get: localhost:3000/bai-kiem-tra/findone:idBaiKiemTra
+Get: localhost:3000/bai-kiem-tra/findone/:idBaiKiemTra
 
 
 tạo bài kiểm tra: nếu laoị kiểm tra là 2 kiểu : LuyenTap, BaiKiemTra. Nếu loại là BaiKiemTra thi số lần làm phải là 1.
@@ -231,7 +232,7 @@ QUẢN LÝ CÂU HỎI TRONG ĐỀ
     THÊM BẰNG NGÂN HÀNG CÂU HỎI THÌ LOAD CHUONG LÊN THÊM CÂU HỎI
 
 lấy tất cả câu hỏi trong đề có phân trang:
-get: localhost:3000/bai-kiem-tra/chi-tiet-cau-hoi/4?loaiKiemTra=LuyenTap&xemBaiLam=true&hienThiKetQua=true&skip=0&limit=5
+get: localhost:3000/bai-kiem-tra/chi-tiet-cau-hoi/skip=0&limit=5
 
 thêm câu hỏi vào trong đê: ở đây thêm câu hỏi nào thì dưa id vào mảng
 post: localhost:3000/bai-kiem-tra/chi-tiet-cau-hoi
