@@ -135,6 +135,7 @@ export class BaiKiemTraService {
   /**CRUD câu hỏi trong bài kiểm tra */
   async layTatCaCauHoiCoTrongBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra: number, pagination:Pagination){
     await this.timMotBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra)
+ 
     try{
       const qb = this.chiTietCauHoiBaiKiemTraRepo.createQueryBuilder('ctch')
                 .where('ctch.idBaiKiemTra = :idBaiKiemTra', {idBaiKiemTra})
@@ -161,9 +162,11 @@ export class BaiKiemTraService {
       'ch.loaiCauHoi',
       'ch.doKho',
         ]);
+      const skip  = Math.max(0, Number(pagination?.skip ?? 0));
+      const limit = Math.max(1, Number(pagination?.limit ?? DEFAULT_PAGE_LIMIT));
         return qb.orderBy('ctch.update_at','DESC')
-                    .skip(pagination.skip)
-                    .take(pagination.limit ?? DEFAULT_PAGE_LIMIT)
+                    .skip(skip)
+                    .take(limit)
                     .getMany()
     }catch(err){
       throw new InternalServerErrorException('Lỗi khi lấy tất cả câu hỏi có trong bài kiểm tra')
