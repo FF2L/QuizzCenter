@@ -247,6 +247,3 @@ put: localhost:3000/bai-kiem-tra/chi-tiet-cau-hoi này trả vê danh sách câu
     "idBaiKiemTra": 4,
     "mangIdCauHoi": [183]
 }
-
-
-
