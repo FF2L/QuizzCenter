@@ -8,6 +8,9 @@ import { BaiLamSinhVien } from "src/bai-lam-sinh-vien/entities/bai-lam-sinh-vien
 @Entity()
 export class BaiKiemTra extends BaseEntity {
 
+    @Column()
+    tenBaiKiemTra: string
+
     @Column({
         type: 'enum',
         enum: LoaiKiemTra,
@@ -35,7 +38,8 @@ export class BaiKiemTra extends BaseEntity {
 
     @ManyToOne(() => LopHocPhan, (lopHocPhan) => lopHocPhan.baiKiemTra, {lazy: true})
     @JoinColumn({name: 'idLopHocPhan'})
-    idLopHocPhan: Promise<LopHocPhan>
+    lopHocPhan: Promise<LopHocPhan>
+    @Column() idLopHocPhan:number
 
     @OneToMany(() => ChiTietCauHoiBaiKiemTra, (chiTietCauHoiBaiKiem) => chiTietCauHoiBaiKiem.idBaiKiemTra, {cascade: true, lazy:true})
     chiTietCauHoiBaiKiemTra: Promise<ChiTietCauHoiBaiKiemTra[]>

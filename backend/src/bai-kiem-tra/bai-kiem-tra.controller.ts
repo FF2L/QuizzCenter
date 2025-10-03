@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { BaiKiemTraService } from './bai-kiem-tra.service';
 import { CreateBaiKiemTraDto } from './dto/create-bai-kiem-tra.dto';
 import { UpdateBaiKiemTraDto } from './dto/update-bai-kiem-tra.dto';
@@ -8,27 +8,28 @@ export class BaiKiemTraController {
   constructor(private readonly baiKiemTraService: BaiKiemTraService) {}
 
   @Post()
-  create(@Body() createBaiKiemTraDto: CreateBaiKiemTraDto) {
-    return this.baiKiemTraService.create(createBaiKiemTraDto);
+  async create(@Body() createBaiKiemTraDto: CreateBaiKiemTraDto) {
+    return await this.baiKiemTraService.taoBaiKiemTra(createBaiKiemTraDto);
   }
 
-  @Get()
-  findAll() {
-    return this.baiKiemTraService.findAll();
+  @Get(':idLopHocPhan')
+  async findAll(@Param('idLopHocPhan',ParseIntPipe) idlopHocPHan: number) {
+    return await this.baiKiemTraService.timTatCaBaiKiemTraTheoIdLopHocPhan(idlopHocPHan);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.baiKiemTraService.findOne(+id);
+  @Get('/findone/:idBaiKiemTra')
+  async findOne(@Param('idBaiKiemTra',ParseIntPipe) idBaiKiemTra: number) {
+    return await this.baiKiemTraService.timMotBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBaiKiemTraDto: UpdateBaiKiemTraDto) {
-    return this.baiKiemTraService.update(+id, updateBaiKiemTraDto);
+
+  @Patch(':idBaiKiemTra')
+  async update(@Param('idBaiKiemTra', ParseIntPipe) idBaiKiemTra: number, @Body() updateBaiKiemTraDto: UpdateBaiKiemTraDto) {
+    return await this.baiKiemTraService.capNhatBaiKiemTra(idBaiKiemTra, updateBaiKiemTraDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.baiKiemTraService.remove(+id);
+  @Delete(':idBaiKiemTra')
+  async remove(@Param('idBaiKiemTra',ParseIntPipe) idBaiKiemTra: number) {
+    return await this.baiKiemTraService.xoaBaiKiemTRaTheoIdBaiKiemTRa(idBaiKiemTra);
   }
 }
