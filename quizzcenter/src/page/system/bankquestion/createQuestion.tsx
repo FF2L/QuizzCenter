@@ -18,6 +18,10 @@ import CloseIcon from "@mui/icons-material/Close";
 import "react-quill/dist/quill.snow.css";
 import ReactQuill from "react-quill";
 import { CauHoiPayload } from "../../../common/model";
+import Quill from "quill";
+
+
+
 
 interface DapAnInput {
   noiDung: string;
@@ -25,8 +29,8 @@ interface DapAnInput {
 }
 
 const LOAI_CAU_HOI = [
-  { value: "MotDung", label: "Single Answer" },
-  { value: "NhieuDung", label: "MultiChoice Answer" },
+  { value: "MotDung", label: "Một đáp án" },
+  { value: "NhieuDung", label: "Nhiều đáp án" },
 ];
 
 const DO_KHO = [
@@ -67,6 +71,7 @@ const { tenChuong } = location.state || {};
   const [errorAnswers, setErrorAnswers] = useState<(string | null)[]>([]);
   const quillRef = useRef<ReactQuill | null>(null);
 
+  
   const handleBack = () => {
     navigate("/page/" + state?.idMonHoc, { state: {
       idMonHoc: state?.idMonHoc,
@@ -113,7 +118,7 @@ const { tenChuong } = location.state || {};
       reader.readAsDataURL(file);
     };
   }, []);
-
+ 
   const quillModules = useMemo(() => ({
     toolbar: {
       container: [
