@@ -119,7 +119,7 @@ const Class = () => {
               <CategoryIcon sx={{ fontSize: 40, color: "white" }} />
             </Box>
             <Typography variant="h3" sx={{ fontWeight: "medium", fontSize: "30px", color: "black" }}>
-              {tenMonHoc || "Lớp học của tôi"}
+               Lớp học của tôi
             </Typography>
           </Stack>
 
@@ -137,7 +137,7 @@ const Class = () => {
                 key={lop.id}
                 sx={{ borderRadius: "20px", boxShadow: "none", cursor: "pointer" }}
                 onClick={() =>
-                  navigate(`/bai-kiem-tra/${lop.id}`, { state: { tenLopHoc: lop.tenLopHoc } })
+                  navigate(`/lop-hoc-phan/bai-kiem-tra/${lop.id}`, { state: { tenLopHoc: lop.tenLopHoc } })
                 }
               >
                 <CardContent sx={{ padding: 2, backgroundColor: "white" }}>
