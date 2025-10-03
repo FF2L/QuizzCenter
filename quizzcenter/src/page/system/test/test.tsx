@@ -145,7 +145,7 @@ const handleDelete = async (id: number) => {
         alignItems="center"
         mb={2}
       >
-        <Typography variant="h4">Danh sách bài kiểm tra</Typography>
+        <Typography variant="h4">Bài kiểm tra</Typography>
         <Button  sx={{backgroundColor:"#245D51"}} variant="contained" onClick={() => setOpenCreateDialog(true)}>
           Tạo bài kiểm tra
         </Button>
@@ -161,6 +161,8 @@ const handleDelete = async (id: number) => {
           <Typography sx={{ml:1,fontWeight:'bold',fontSize:"18px"}}> → Lớp học (
                              <span style={{ color: "#007CD5" }}>{tenLopHoc}</span>
                               )</Typography>
+                              <Typography sx={{ml:1,fontWeight:'bold',fontSize:"18px"}}> → Bài kiểm tra
+                           </Typography>   
           </Box>
       {/* Danh sách */}
       <Stack spacing={2}>
@@ -200,7 +202,9 @@ const handleDelete = async (id: number) => {
                   {/* Actions */}
                   <Stack direction="row" spacing={1}>
                     <IconButton
-                      color="primary"
+                      sx={{
+                        color:"#DB9C14"
+                      }}
                       onClick={(e) => {
                         e.stopPropagation(); 
                         handleViewDetail(bai);
@@ -209,7 +213,7 @@ const handleDelete = async (id: number) => {
                       <VisibilityIcon />
                     </IconButton>
                     <IconButton
-                      color="warning"
+                      sx={{ color: "#0DC913" }}
                       onClick={(e) => {
                         e.stopPropagation(); 
                         handleUpdate(bai)}}
@@ -217,7 +221,9 @@ const handleDelete = async (id: number) => {
                       <EditIcon />
                     </IconButton>
                     <IconButton
-                      color="error"
+                       sx={{
+                        color: "#d32f2f" 
+                      }}
                       onClick={(e) => {
                         e.stopPropagation(); 
                         handleDelete(bai.id)}}
