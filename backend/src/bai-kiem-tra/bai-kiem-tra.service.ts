@@ -87,7 +87,6 @@ export class BaiKiemTraService {
     // }
 
     await this.lopHocPhanService.timMotLopHocPhanTheoId(idLopHocPhan)
-    console.log(await this.baiKiemTraRepo.find({where: {idLopHocPhan}, order: {update_at: 'DESC'}}))
     return await this.baiKiemTraRepo.find({where: {idLopHocPhan}, order: {update_at: 'DESC'}})
 
   }
