@@ -41,10 +41,10 @@ export class BaiKiemTra extends BaseEntity {
     lopHocPhan: Promise<LopHocPhan>
     @Column() idLopHocPhan:number
 
-    @OneToMany(() => ChiTietCauHoiBaiKiemTra, (chiTietCauHoiBaiKiem) => chiTietCauHoiBaiKiem.idBaiKiemTra, {cascade: true, lazy:true})
+    @OneToMany(() => ChiTietCauHoiBaiKiemTra, (chiTietCauHoiBaiKiem) => chiTietCauHoiBaiKiem.baiKiemTra, {cascade: true, lazy:true})
     chiTietCauHoiBaiKiemTra: Promise<ChiTietCauHoiBaiKiemTra[]>
 
-    @OneToMany(() => BaiLamSinhVien, (baiLamSinhVien) => baiLamSinhVien.idBaiKiemTra, {cascade:true,lazy: true})
+    @OneToMany(() => BaiLamSinhVien, (baiLamSinhVien) => baiLamSinhVien.baiKiemTra, {cascade:true,lazy: true})
     baiLamSinhVien: Promise<BaiLamSinhVien[]>
 
 }

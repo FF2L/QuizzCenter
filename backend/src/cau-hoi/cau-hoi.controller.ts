@@ -57,10 +57,7 @@ export class CauHoiController {
     return await this.cauHoiService.taoMotCauHoi(createCauHoiDto, mangFile);
   }
 
-  @Get()
-  findAll() {
-    return this.cauHoiService.findAll();
-  }
+
 
   @Get(':id')
   async findOne(@Param('id',ParseIntPipe) id: number) {

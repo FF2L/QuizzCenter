@@ -37,7 +37,7 @@ export class CauHoi extends BaseEntity{
     @ManyToOne(() => Chuong, (chuong) => chuong.cauHoi, {lazy: true})
     @JoinColumn({name: 'idChuong'})
     chuong: Promise<Chuong>
-    @Column() idChuong: number
+    @Column({nullable: true}) idChuong: number
 
     @OneToMany(() => DapAn, (da) => da.cauHoi, { cascade: true, lazy: true })
     dapAn: Promise<DapAn[]>; 

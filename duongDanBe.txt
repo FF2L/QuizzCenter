@@ -185,7 +185,7 @@ lấy tất cả lớp học phần theo id giảng viên và id môn học
 lấy tất cả bài kiểm tra theo id lớp học phần sort theo cái mới tạo/ update được đưa lên trước
 Get: localhost:3000/bai-kiem-tra/:idLopHocPhan
 
-laý6 thông tin của một bài kiểm tra
+laý6 thông tin của một bài kiểm tra, có cả câu hỏi và đáp án
 Get: localhost:3000/bai-kiem-tra/findone:idBaiKiemTra
 
 
@@ -221,5 +221,31 @@ body: {
 
 xóa bài kiểm tra :
 Delete: localhost:3000/bai-kiem-tra/:idBaiKiemTra
+
+
+QUẢN LÝ CÂU HỎI TRONG ĐỀ
+Ý TƯỞNG LÀ THÊM CÂU HỎI BẰNG CÁCH THÊM THỦ CÔNG VÀ THÊM BẰNG CÁCH THÊM BẰNG NGÂN HÀNG CÂU HỎI. 
+    THÊM THỦ CÔNG THÌ THÊM VÀO Y CHANG CÁI THÊM CÂU HỎI TRONG NGÂN HÀNG CÂU HỎI CÓ DIỀU KHÔNG
+    CẦN IdChuong. SAU KHI THÊM THÌ GỌI API THÊM CÂU HỎI VÀO TRONG ĐỀ
+
+    THÊM BẰNG NGÂN HÀNG CÂU HỎI THÌ LOAD CHUONG LÊN THÊM CÂU HỎI
+
+lấy tất cả câu hỏi trong đề có phân trang:
+get: localhost:3000/bai-kiem-tra/chi-tiet-cau-hoi/4?loaiKiemTra=LuyenTap&xemBaiLam=true&hienThiKetQua=true&skip=0&limit=5
+
+thêm câu hỏi vào trong đê: ở đây thêm câu hỏi nào thì dưa id vào mảng
+post: localhost:3000/bai-kiem-tra/chi-tiet-cau-hoi
+{
+    "idBaiKiemTra": 4,
+    "mangIdCauHoi": [181,183]
+}
+
+update câu hỏi: câu hỏi gì hiện dang có trong đề thì cứ ghi vào mảng nếu xóa thì loại ra khỏi mảng, thêm mới thêm vào mảng
+put: localhost:3000/bai-kiem-tra/chi-tiet-cau-hoi này trả vê danh sách câu hỏi sau khi update
+{
+    "idBaiKiemTra": 4,
+    "mangIdCauHoi": [183]
+}
+
 
 

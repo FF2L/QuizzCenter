@@ -37,7 +37,7 @@ export class LopHocPhanService {
   }
 
   async timMotLopHocPhanTheoId(idlopHocPHan: number){
-    const lopHocPhan = await this.lopHocPhanRep.find({where: {id: idlopHocPHan}})
+    const lopHocPhan = await this.lopHocPhanRep.findOne({where: {id: idlopHocPHan}})
     if (!lopHocPhan) throw new NotFoundException(`Không tìm thấy lớp học phần với ${idlopHocPHan}`)
     return lopHocPhan
   
