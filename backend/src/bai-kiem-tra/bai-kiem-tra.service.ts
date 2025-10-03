@@ -47,43 +47,48 @@ export class BaiKiemTraService {
   }
 
   async timTatCaBaiKiemTraTheoIdLopHocPhan(idLopHocPhan: number, filter: FilterChiTietBaiKiemTraDto) {
-    await this.lopHocPhanService.timMotLopHocPhanTheoId(idLopHocPhan)
-      try{
-      const qb = this.chiTietCauHoiBaiKiemTraRepo.createQueryBuilder('ctch')
-                .where('ctch.idLopHocPhan = :idLopHocPhan', {idLopHocPhan})
-                .innerJoin('ctch.baiKiemTra', 'bkt') // JOIN sang BKT để lọc theo các field của BKT
-                .innerJoin('ctch.cauHoi', 'ch')      // JOIN sang Câu hỏi để lấy nội dung
-                // .leftJoinAndSelect('ch.dapAn', 'da') // nếu cần lấy đáp án
+    // await this.lopHocPhanService.timMotLopHocPhanTheoId(idLopHocPhan)
+    //   try{
+    //   const qb = this.baiKiemTraRepo.createQueryBuilder('bkt')
+    //             .where('bkt.idLopHocPhan = :idLopHocPhan', {idLopHocPhan})
+    //             .innerJoin('bkt.chiTietCauHoiBaiKiemTra', 'ctch') // JOIN sang BKT để lọc theo các field của BKT
+    //             .innerJoin('ctch.cauHoi', 'ch')      // JOIN sang Câu hỏi để lấy nội dung
+    //             // .leftJoinAndSelect('ch.dapAn', 'da') // nếu cần lấy đáp án
 
-      if(filter.hienThiKetQua !== undefined) qb.andWhere('bkt.hienThiKetQua = :hienThiKetQua', {hienThiKetQua: filter.hienThiKetQua})
-      if(filter.loaiKiemTra !== undefined) qb.andWhere('bkt.loaiKiemTra = :loaiKiemTra',{loaiKiemTra: filter.loaiKiemTra})
-      if(filter.xemBaiLam !== undefined) qb.andWhere('bkt.xemBaiLam = :xemBaiLam',{xemBaiLam: filter.xemBaiLam} )
+    //   if(filter.hienThiKetQua !== undefined) qb.andWhere('bkt.hienThiKetQua = :hienThiKetQua', {hienThiKetQua: filter.hienThiKetQua})
+    //   if(filter.loaiKiemTra !== undefined) qb.andWhere('bkt.loaiKiemTra = :loaiKiemTra',{loaiKiemTra: filter.loaiKiemTra})
+    //   if(filter.xemBaiLam !== undefined) qb.andWhere('bkt.xemBaiLam = :xemBaiLam',{xemBaiLam: filter.xemBaiLam} )
       
-        qb.select([
-      // chi tiết
-      'ctch.id',
-      'ctch.idBaiKiemTra',
-      'ctch.idCauHoi',
-      'ctch.update_at',
-      // bài kiểm tra (nếu cần trả về)
-      'bkt.id',
-      'bkt.loaiKiemTra',
-      'bkt.hienThiKetQua',
-      'bkt.xemBaiLam',
-        // câu hỏi 
-      'ch.id',
-      'ch.tenHienThi',
-      'ch.noiDungCauHoi',
-      'ch.loaiCauHoi',
-      'ch.doKho',
-        ]);
-        return qb.orderBy('bkt.update_at','DESC')
-                    .skip(filter.skip)
-                    .take(filter.limit ?? DEFAULT_PAGE_LIMIT)
-                    .getMany()
-    }catch(err){
-      throw new InternalServerErrorException('Lỗi khi lấy tất cả câu hỏi có trong bài kiểm tra')
-    }
+    //     qb.select([
+    //   // chi tiết
+    //   'ctch.id',
+    //   'ctch.idBaiKiemTra',
+    //   'ctch.idCauHoi',
+    //   'ctch.update_at',
+    //   // bài kiểm tra (nếu cần trả về)
+    //   'bkt.id',
+    //   'bkt.loaiKiemTra',
+    //   'bkt.hienThiKetQua',
+    //   'bkt.xemBaiLam',
+    //   'bkt.update_at',
+    //     // câu hỏi 
+    //   'ch.id',
+    //   'ch.tenHienThi',
+    //   'ch.noiDungCauHoi',
+    //   'ch.loaiCauHoi',
+    //   'ch.doKho',
+    //     ]);
+    //     return qb.orderBy('bkt.update_at','DESC')
+    //                 .skip(filter.skip)
+    //                 .take(filter.limit ?? DEFAULT_PAGE_LIMIT)
+    //                 .getMany()
+    // }catch(err){
+    //   throw new InternalServerErrorException('Lỗi khi lấy tất cả câu hỏi có trong bài kiểm tra')
+    // }
+
+    await this.lopHocPhanService.timMotLopHocPhanTheoId(idLopHocPhan)
+    console.log(await this.baiKiemTraRepo.find({where: {idLopHocPhan}, order: {update_at: 'DESC'}}))
+    return await this.baiKiemTraRepo.find({where: {idLopHocPhan}, order: {update_at: 'DESC'}})
 
   }
 
