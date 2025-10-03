@@ -13,14 +13,23 @@ import {
   Typography,
   IconButton,
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Category from "./component/categoryTab";
 import Class from "../class/class"
 import BankQuestion from "../bankquestion/bankquestion";
-function Page() {
-  const [selectedTab, setSelectedTab] = useState(0);
+import { useLocation } from "react-router-dom";
+function PageClassChapterBankQuestion() {
+
   const navigate = useNavigate();
+  const location = useLocation();
+  const [selectedTab, setSelectedTab] = useState(0);
+
+  useEffect(() => {
+    if (location.state?.tab !== undefined) {
+      setSelectedTab(location.state.tab);
+    }
+  }, [location.state]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue:number)=>{
     setSelectedTab(newValue)
@@ -141,4 +150,4 @@ function Page() {
   );
 }
 
-export default Page;
+export default PageClassChapterBankQuestion;

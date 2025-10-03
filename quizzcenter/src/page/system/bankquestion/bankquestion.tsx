@@ -8,7 +8,7 @@ import { IconButton } from "@mui/material";
 import { Delete, Edit, Visibility  } from "@mui/icons-material";
 import DeleteConfirmDialog from "./deleteConfirmDialog"
 import { useRef } from "react";
-
+import { useNavigate } from "react-router-dom";
 import {
   Autocomplete,
   Box,
@@ -27,13 +27,14 @@ import UpdateQuestionDialog from "./updateQuestionDialog";
 const BankQuestion = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);  //menu con
   const open = Boolean(anchorEl);
-
+  const [selectedChuongName, setSelectedChuongName] = useState("");
   const { idMonHoc } = useParams<{ idMonHoc: string }>();
   const [chuongList, setChuongList] = useState<Chuong[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [loading, setLoading] = useState(false);
   const location = useLocation();
   const { tenMonHoc } = location.state || {};
+  const { tenChuong } = location.state || {};
   const idMonHocNumber = Number(idMonHoc);
   const [currentQuestion, setCurrentQuestion] = useState<CauHoiPayload | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -48,7 +49,7 @@ const BankQuestion = () => {
   const [questionToDelete, setQuestionToDelete] = useState<{ id: number; name: string; } | null>(null);  
   const [questions, setQuestions] = useState<CauHoiPayload[]>([]);
   const [updateQuestionId, setUpdateQuestionId] = useState<number | null>(null);
-
+  const navigate = useNavigate();
   const newId = Date.now(); // id giả cho câu hỏi
 
 
@@ -57,36 +58,49 @@ const BankQuestion = () => {
     NhieuDung: "MultiChoice Answer",
     // nếu có thêm loại khác, thêm vào đây
   };
- //selectTextField
   useEffect(() => {
-    const fetchChuong = async () => {
-      if (!idMonHocNumber) return;
+    const stateIdChuong = location.state?.idChuong;
+    const stateTenChuong = location.state?.tenChuong;
+  
+    if (stateIdChuong) {
+      setSelectedCategory(stateIdChuong.toString());
+      setSelectedChuongName(stateTenChuong || "");
+    }
+  }, [location.state]);
+  
+ //selectTextField
+ useEffect(() => {
+  const fetchChuong = async () => {
+    if (!idMonHocNumber) return;
 
-      setLoading(true);
-      try {
-        const res = await fetch(`http://localhost:3000/chuong?idMonHoc=${idMonHocNumber}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
+    setLoading(true);
+    try {
+      const res = await fetch(`http://localhost:3000/chuong?idMonHoc=${idMonHocNumber}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data: Chuong[] = await res.json();
+      setChuongList(data);
 
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      // Nếu location.state có idChuong thì chọn nó, nếu không chọn mặc định
+      const defaultChuong = location.state?.idChuong 
+        ? data.find(c => c.id === Number(location.state.idChuong))
+        : data[0];
 
-        const data: Chuong[] = await res.json();
-        setChuongList(data);
-        console.log(data)
-        // mặc định chọn chương đầu tiên
-        if (data.length > 0) {
-          setSelectedCategory(data[0].id.toString());
-        }
-      } catch (err) {
-        console.error("Lỗi khi fetch chương:", err);
-      } finally {
-        setLoading(false);
+      if (defaultChuong) {
+        setSelectedCategory(defaultChuong.id.toString());
+        setSelectedChuongName(defaultChuong.tenChuong);
       }
-    };
 
-    fetchChuong();
-  }, [idMonHocNumber]);
+    } catch (err) {
+      console.error("Lỗi khi fetch chương:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchChuong();
+}, [idMonHocNumber, location.state]);
+
+
  
   //xem chi tiet
   const fetchQuestionDetail = async (id: number) => {
@@ -268,8 +282,19 @@ const handleUpload = async () => {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => setOpenCreateDialog(true)}
-            sx={{
+            onClick={() =>
+              navigate('/create-question', {
+                state: {
+                  idChuong: Number(selectedCategory),
+                  idMonHoc: idMonHoc, 
+                  tenMonHoc: tenMonHoc,
+                tenChuong: selectedChuongName,  
+                  returnPath: location.pathname,
+                  returnTab: "bankQuestion"  
+                },
+              })
+            }
+                        sx={{
               backgroundColor: "#408C56",
               height: "50px",
               borderRadius:"50px",
@@ -330,27 +355,24 @@ const handleUpload = async () => {
           </Stack>
           </Box>
           <TextField
-                select
-                label="Chọn danh mục"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                       sx={{
-                       ml:"70px",
-                       width: 250,
-                       backgroundColor: "white",
-                       borderRadius:"10px",
-                       "& .MuiOutlinedInput-root": {
-                       height: "45px",
-                       borderRadius:"10px",
-                        },
-                         }}
-                       >
-      {chuongList.map((chuong) => (
-                <MenuItem key={chuong.id} value={chuong.id}>
-                  {chuong.thuTu}. {chuong.tenChuong}
-                </MenuItem>
-              ))}
-    </TextField>
+          select
+          label="Chọn danh mục"
+          value={selectedCategory}
+          onChange={(e) => {
+            const selectedId = e.target.value;
+            setSelectedCategory(selectedId);
+            const chuong = chuongList.find((c) => c.id.toString() === selectedId);
+            setSelectedChuongName(chuong?.tenChuong || "");
+          }}
+          sx={{ width: 250, backgroundColor: "white", borderRadius: "10px" }}
+        >
+          {chuongList.map((chuong) => (
+            <MenuItem key={chuong.id} value={chuong.id.toString()}>
+              {chuong.thuTu}. {chuong.tenChuong}
+            </MenuItem>
+          ))}
+        </TextField>
+
           {questions.map((q, index) => (
             <Card  sx={{ borderRadius: "1px", height: "70px", boxShadow: "none", border:"none"  }}>
 
@@ -462,12 +484,7 @@ const handleUpload = async () => {
       )
     );
   }}
-  
-  
 />
-
-
-
     </Box>
   );
 };
