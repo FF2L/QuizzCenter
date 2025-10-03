@@ -6,6 +6,7 @@ import {
   DialogActions,
   TextField,
   MenuItem,
+  Box,
   Button,
 } from "@mui/material";
 import { BaiKiemTra } from "../../../common/model";
@@ -88,7 +89,9 @@ const toLocalDatetime = (isoString: string) => {
       fullWidth
       maxWidth="md"
     >
-      <DialogTitle>Cập nhật bài kiểm tra</DialogTitle>
+      <Box sx={{backgroundColor:"#245D51"}}>
+      <DialogTitle color="white">Cập nhật bài kiểm tra</DialogTitle>
+      </Box>
       <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
         <TextField
           label="Tên bài kiểm tra"
@@ -149,7 +152,7 @@ const toLocalDatetime = (isoString: string) => {
 
       <DialogActions>
         <Button onClick={onClose}>Hủy</Button>
-        <Button variant="contained" onClick={handleSubmit}>
+        <Button   sx={{backgroundColor:"#245D51"}} variant="contained" onClick={handleSubmit}>
           Cập nhật
         </Button>
       </DialogActions>

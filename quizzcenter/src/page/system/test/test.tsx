@@ -143,7 +143,7 @@ const handleDelete = async (id: number) => {
         mb={2}
       >
         <Typography variant="h4">Danh sách bài kiểm tra</Typography>
-        <Button variant="contained" onClick={() => setOpenCreateDialog(true)}>
+        <Button  sx={{backgroundColor:"#245D51"}} variant="contained" onClick={() => setOpenCreateDialog(true)}>
           Tạo bài kiểm tra
         </Button>
       </Stack>
@@ -187,19 +187,26 @@ const handleDelete = async (id: number) => {
                   <Stack direction="row" spacing={1}>
                     <IconButton
                       color="primary"
-                      onClick={() => handleViewDetail(bai)}
+                      onClick={(e) => {
+                        e.stopPropagation(); 
+                        handleViewDetail(bai);
+                      }}
                     >
                       <VisibilityIcon />
                     </IconButton>
                     <IconButton
                       color="warning"
-                      onClick={() => handleUpdate(bai)}
+                      onClick={(e) => {
+                        e.stopPropagation(); 
+                        handleUpdate(bai)}}
                     >
                       <EditIcon />
                     </IconButton>
                     <IconButton
                       color="error"
-                      onClick={() => handleDelete(bai.id)}
+                      onClick={(e) => {
+                        e.stopPropagation(); 
+                        handleDelete(bai.id)}}
                     >
                       <DeleteIcon />
                     </IconButton>

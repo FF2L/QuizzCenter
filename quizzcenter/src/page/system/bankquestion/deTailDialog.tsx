@@ -6,8 +6,8 @@ import { CauHoiPayload } from "../../../common/model";
 type LoaiKey = "MotDung" | "NhieuDung";
 type doKhoKey = "Kho" | "De";
 const loaiMap: Record<LoaiKey, string> = {
-  MotDung: "Single answer",
-  NhieuDung: "Multichoice",
+  MotDung: "Một đáp án",
+  NhieuDung: "Nhiều đáp án",
 };
 const doKhoMap: Record<doKhoKey, string> = {
   De: "Dễ",
