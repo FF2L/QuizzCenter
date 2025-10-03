@@ -19,9 +19,7 @@ import "react-quill/dist/quill.snow.css";
 import ReactQuill from "react-quill";
 import { CauHoiPayload } from "../../../common/model";
 import Quill from "quill";
-
-
-
+import './quill.css';
 
 interface DapAnInput {
   noiDung: string;
@@ -311,17 +309,17 @@ const { tenChuong } = location.state || {};
             />
           </Box>
 
-          <Box sx={{ minHeight: 200 }}>
-            <Typography>Nội dung câu hỏi</Typography>
-            <ReactQuill
-              ref={quillRef}
-              value={noiDungCauHoi}
-              onChange={handleQuillChange}
-              modules={quillModules}
-              theme="snow"
-              placeholder="Nhập nội dung câu hỏi..."
-            />
-          </Box>
+          <Box className="quill-editor-container" sx={{ minHeight: 200 }}>
+  <Typography>Nội dung câu hỏi</Typography>
+  <ReactQuill
+    ref={quillRef}
+    value={noiDungCauHoi}
+    onChange={handleQuillChange}
+    modules={quillModules}
+    theme="snow"
+    placeholder="Nhập nội dung câu hỏi..."
+  />
+</Box>
 
           <TextField select label="Loại câu hỏi" value={loaiCauHoi} onChange={(e) => setLoaiCauHoi(e.target.value)}>
             {LOAI_CAU_HOI.map((opt) => (

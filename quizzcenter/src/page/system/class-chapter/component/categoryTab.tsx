@@ -85,7 +85,33 @@ const CategoryTab = () => {
     setAnchorEl(null);
   };
 
-
+  const handleDeleteChuong = async (chuong: Chuong) => {
+    // Kiểm tra xem chương có câu hỏi không
+    if (chuong.soLuongCauHoi && chuong.soLuongCauHoi > 0) {
+      alert("Không thể xóa chương này vì chương đã có câu hỏi!");
+      return;
+    }
+  
+    const confirmDelete = window.confirm(`Bạn có chắc muốn xóa chương "${chuong.tenChuong}" không?`);
+    if (!confirmDelete) return;
+  
+    try {
+      const res = await fetch(`http://localhost:3000/chuong/${chuong.id}`, {
+        method: "DELETE",
+      });
+  
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  
+      // Xóa chương khỏi state
+      setChuongList((prev) => prev.filter((c) => c.id !== chuong.id));
+  
+      alert("Xóa chương thành công!");
+    } catch (err: any) {
+      console.error(err);
+      alert("Xóa chương thất bại: " + err.message);
+    }
+  };
+  
 
   return (
     <Box
@@ -242,9 +268,7 @@ const CategoryTab = () => {
         </IconButton>
         <IconButton
           sx={{ color: "#d32f2f" }}
-          onClick={() => {
-            // gọi hàm xóa
-          }}
+          onClick={() => handleDeleteChuong(chuong)}
         >
           <Delete />
         </IconButton>

@@ -1,0 +1,8 @@
+.quill-editor-container .ql-editor img {
+    max-width: 50%;  
+    height: auto;        
+    display: block;      
+    margin: 5px 0;      
+    border-radius: 4px;  
+  }
+  
