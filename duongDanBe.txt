@@ -185,7 +185,7 @@ lấy tất cả lớp học phần theo id giảng viên và id môn học
 lấy tất cả bài kiểm tra theo id lớp học phần sort theo cái mới tạo/ update được đưa lên trước
 Get: localhost:3000/bai-kiem-tra/:idLopHocPhan
 
-laý6 thông tin của một bài kiểm tra
+laý6 thông tin của một bài kiểm tra, có cả câu hỏi và đáp án
 Get: localhost:3000/bai-kiem-tra/findone:idBaiKiemTra
 
 

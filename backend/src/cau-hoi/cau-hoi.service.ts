@@ -4,7 +4,7 @@ import { CreateCauHoiDto } from './dto/create-cau-hoi.dto';
 import { UpdateCauHoiDto } from './dto/update-cau-hoi.dto';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { CauHoi } from './entities/cau-hoi.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { ChuongService } from 'src/chuong/chuong.service';
 import { Pagination } from 'src/common/dto/pagination.dto';
 import { DEFAULT_PAGE_LIMIT } from 'src/common/utiils/const.globals';
@@ -51,9 +51,7 @@ export class CauHoiService {
   
   }
 
-  findAll() {
-    return `This action returns all cauHoi`;
-  }
+
 
   async layTatCaCauHoiTheoIdChuong(idChuong:number, filterCauHoiDto: FilterCauHoiQueryDto){
    
@@ -77,6 +75,16 @@ export class CauHoiService {
     const mangFileDinhKem = await this.fileDinhKemService.timTatCaFileDinhKemTheoIdCauHoi(id)           
     return {cauHoi, dapAn, mangFileDinhKem}
   }
+
+async timMangCauHoiTheoMangIdCauHoi(ids: number[]){
+  try{
+    return await this.cauHoiRepo.find({
+      where: { id: In(ids) }
+    })
+  }catch(error){ 
+    throw new InternalServerErrorException('Lỗi khi tìm mảng câu hỏi theo Id câu hỏi')
+  }
+}
 
   async capNhatCauHoi(id: number, updateCauHoiDto: UpdateCauHoiDto, mangFile?: ImgFile[]) {
     const {mangAnhPublicId, ...truongCauHoiCanUpdate} = updateCauHoiDto
