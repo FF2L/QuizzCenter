@@ -4,6 +4,7 @@ import { CreateBaiKiemTraDto } from './dto/create-bai-kiem-tra.dto';
 import { UpdateBaiKiemTraDto } from './dto/update-bai-kiem-tra.dto';
 import { Pagination } from 'src/common/dto/pagination.dto';
 import { CreateChiTietBaiKiemTraDto } from './dto/create-chi-tiet-bai-kiem-tra.dto';
+import { FilterChiTietBaiKiemTraDto } from './dto/filter-chi-tiet-bai-kiem-tra.dto';
 
 @Controller('bai-kiem-tra')
 export class BaiKiemTraController {
@@ -37,8 +38,8 @@ export class BaiKiemTraController {
 
   /**CRUD câu hỏi trong bài kiểm tra */
   @Get('/chi-tiet-cau-hoi/:idBaiKiemTra')
-  async layTatCaCauHoiBaiKiemTra(@Param('idBaiKiemTra',ParseIntPipe) idBaiKiemTra: number, @Query() pagination: Pagination ){
-      return await this.baiKiemTraService.layTatCaCauHoiCoTrongBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra, pagination)
+  async layTatCaCauHoiBaiKiemTra(@Param('idBaiKiemTra',ParseIntPipe) idBaiKiemTra: number, @Query() filter: FilterChiTietBaiKiemTraDto ){
+      return await this.baiKiemTraService.layTatCaCauHoiCoTrongBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra, filter)
   }
 
   @Post('/chi-tiet-cau-hoi')
@@ -47,7 +48,7 @@ export class BaiKiemTraController {
   }
 
   @Put('/chi-tiet-cau-hoi')
-  async xoaMangCauHoiCoTrongBaiKiemTra(@Body() createChiTietDto: CreateChiTietBaiKiemTraDto){
+  async updateMangCauHoiCoTrongBaiKiemTra(@Body() createChiTietDto: CreateChiTietBaiKiemTraDto){
     return await this.baiKiemTraService.capNhatMangCauHoiCoTrongBaiKiemTra(createChiTietDto)
   }
 
