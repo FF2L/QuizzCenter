@@ -22,11 +22,13 @@ export class LopHocPhan extends BaseEntity{
 
     @ManyToOne(() => MonHoc, (monHoc) => monHoc.lopHocPhan, {lazy: true})
     @JoinColumn({name: 'idMonHoc'})
-    idMonHoc: Promise<MonHoc>
+    monHoc: Promise<MonHoc>
+    @Column() idMonHoc: number
 
     @ManyToOne(() => GiangVien, (giangVien) => giangVien.lopHocPhan, {lazy: true})
     @JoinColumn({name: 'idGiangVien'})
-    idGiangVien: Promise<GiangVien>
+    giangVien: Promise<GiangVien>
+    @Column() idGiangVien: number
 
     @ManyToMany(() => SinhVien, (sinhVien) => sinhVien.lopHocPhan, {cascade:true, lazy: true})
     @JoinTable({name: 'chiTietLopHoc'})
