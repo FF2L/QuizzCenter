@@ -16,8 +16,8 @@ export class BaiKiemTraController {
   }
 
   @Get(':idLopHocPhan')
-  async findAll(@Param('idLopHocPhan',ParseIntPipe) idlopHocPHan: number) {
-    return await this.baiKiemTraService.timTatCaBaiKiemTraTheoIdLopHocPhan(idlopHocPHan);
+  async findAll(@Param('idLopHocPhan',ParseIntPipe) idlopHocPHan: number , @Query() filter: FilterChiTietBaiKiemTraDto) {
+    return await this.baiKiemTraService.timTatCaBaiKiemTraTheoIdLopHocPhan(idlopHocPHan, filter);
   }
 
   @Get('/findone/:idBaiKiemTra')
@@ -38,8 +38,8 @@ export class BaiKiemTraController {
 
   /**CRUD câu hỏi trong bài kiểm tra */
   @Get('/chi-tiet-cau-hoi/:idBaiKiemTra')
-  async layTatCaCauHoiBaiKiemTra(@Param('idBaiKiemTra',ParseIntPipe) idBaiKiemTra: number, @Query() filter: FilterChiTietBaiKiemTraDto ){
-      return await this.baiKiemTraService.layTatCaCauHoiCoTrongBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra, filter)
+  async layTatCaCauHoiBaiKiemTra(@Param('idBaiKiemTra',ParseIntPipe) idBaiKiemTra: number, pagination: Pagination ){
+      return await this.baiKiemTraService.layTatCaCauHoiCoTrongBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra, pagination)
   }
 
   @Post('/chi-tiet-cau-hoi')
