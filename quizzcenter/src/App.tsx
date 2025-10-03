@@ -13,6 +13,8 @@ import Page from "./page/system/class-chapter/pageClass-Chapter"
 import CreateQuestionPage from './page/system/bankquestion/createQuestion';
 import BaiKiemTraList from './page/system/test/test';
 import BaiKiemTraDetail from "./page/system/test/DetailTest";
+
+import CreateQuestionForTest from './page/system/test/nhapTayCauHoiChoBaiKiemtra';
 function App() {
   return (
     <BrowserRouter>
@@ -23,6 +25,7 @@ function App() {
     <Route path="/lop-hoc-phan/bai-kiem-tra/:idLopHocPhan" element={<BaiKiemTraList />} />
     <Route path="/bai-kiem-tra/:idBaiKiemTra" element={<BaiKiemTraDetail />} />
     <Route path="/create-question" element={<CreateQuestionPage />} />
+     <Route path="/bai-kiem-tra/:idBaiKiemTra/create-question-test" element={<CreateQuestionForTest />} />
 </Routes>
     </MainLayout>
   </BrowserRouter>

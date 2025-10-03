@@ -303,5 +303,9 @@ export class BaiKiemTraService {
   });
 }
 
+async xoaCauHoiCoTrongBaiKiemTra(idChiTietBaiKiemTra: number){
+  return await this.chiTietCauHoiBaiKiemTraRepo.delete(idChiTietBaiKiemTra)
+}
+
 
 }

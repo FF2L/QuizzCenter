@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Box,
   Stack,
@@ -10,15 +10,27 @@ import {
   Pagination,
   Menu,
   MenuItem,
+  IconButton,
 } from "@mui/material";
 import { BaiKiemTra, CauHoiPayload } from "../../../common/model";
+import { Delete, Edit, Visibility } from "@mui/icons-material";
+import QuestionDetailDialog from "../bankquestion/deTailDialog";
+import DeleteConfirmDialog from "../bankquestion/deleteConfirmDialog";
+import UpdateQuestionDialog from "../bankquestion/updateQuestionDialog";
 
 const BaiKiemTraDetail: React.FC = () => {
   const { idBaiKiemTra } = useParams<{ idBaiKiemTra: string }>();
   const [bai, setBai] = useState<BaiKiemTra | null>(null);
-  const [cauHoiList, setCauHoiList] = useState<CauHoiPayload[]>([]);
+  const [cauHoiList, setCauHoiList] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [totalPage, setTotalPage] = useState(1);
+  const navigate = useNavigate();
+  const [currentQuestionDetail, setCurrentQuestionDetail] = useState<CauHoiPayload | null>(null);
+  const [questionToDelete, setQuestionToDelete] = useState<{ id: number; name: string; } | null>(null);  
+  const [updateQuestionId, setUpdateQuestionId] = useState<number | null>(null);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [openDetailDialog, setOpenDetailDialog] = useState(false);
+  const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
   const limit = 5;
 
   // menu state
@@ -50,6 +62,41 @@ const BaiKiemTraDetail: React.FC = () => {
     };
     fetchDetail();
   }, [idBaiKiemTra]);
+
+    //xem chi tiet
+    const fetchQuestionDetail = async (id: number) => {
+      try {
+        const res = await fetch(`http://localhost:3000/cau-hoi/${id}`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data: CauHoiPayload = await res.json();
+        setCurrentQuestionDetail(data);
+        setOpenDetailDialog(true);
+      } catch (err) {
+        console.error("Lỗi khi fetch chi tiết câu hỏi:", err);
+      }
+    };
+
+    //xoa cau hoi
+const handleDeleteQuestion = async () => {
+  if (!questionToDelete) return;
+
+  try {
+    const res = await fetch(`http://localhost:3000/bai-kiem-tra/chi-tiet-cau-hoi/${questionToDelete.id}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+    // Cập nhật lại UI
+    setCauHoiList(cauHoiList.filter((q) => q.id  !== questionToDelete.id));
+    setOpenDeleteDialog(false);
+    setQuestionToDelete(null);
+    alert("Xóa thành công!");
+  } catch (err) {
+    console.error("Lỗi khi xóa câu hỏi:", err);
+    alert("Xóa thất bại!");
+  }
+};
 
   // fetch câu hỏi
   useEffect(() => {
@@ -102,15 +149,28 @@ const BaiKiemTraDetail: React.FC = () => {
                 open={open}
                 onClose={handleClose}
               >
-                <MenuItem onClick={() => { handleClose(); alert("Tạo bằng tay"); }}>
+                <MenuItem
+                  onClick={() => {
+                    if (!idBaiKiemTra) return;
+                    navigate(`/bai-kiem-tra/${idBaiKiemTra}/create-question-test`, {
+                      state: {
+                        idBaiKiemTra: Number(idBaiKiemTra),
+                        // idMonHoc: bai?.idMonHoc,          // nếu có
+                        // tenMonHoc: bai?.tenMonHoc,        // nếu có
+                        tenBaiKiemTra: bai?.tenBaiKiemTra // nếu có
+                      }
+                    });
+                  }}
+                >
                   Tạo bằng tay
                 </MenuItem>
+
                 <MenuItem onClick={() => { handleClose(); alert("Ngân hàng câu hỏi"); }}>
                   Ngân hàng câu hỏi
                 </MenuItem>
-                <MenuItem onClick={() => { handleClose(); alert("Excel"); }}>
+                {/* <MenuItem onClick={() => { handleClose(); alert("Excel"); }}>
                   Excel
-                </MenuItem>
+                </MenuItem> */}
               </Menu>
             </div>
           </Stack>
@@ -144,15 +204,90 @@ const BaiKiemTraDetail: React.FC = () => {
                       - {da.noiDung} {da.dapAnDung ? "(Đúng)" : ""}
                     </Typography>
                   ))}
-
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    mt={1}
+                  >
                   <Stack direction="row" spacing={2} mt={1}>
                     <Typography>Loại: {item.__cauHoi__?.loaiCauHoi}</Typography>
                     <Typography>Độ khó: {item.__cauHoi__?.doKho}</Typography>
+                  </Stack>
+
+                  <Stack direction="row" spacing={1}  sx={{ flexShrink: 0 }}>
+                    
+                    {/* Cập nhật */}
+                    <IconButton
+                        sx={{ color: "#0DC913" }}
+                    
+                        onClick={() => {
+                          setUpdateQuestionId(item.__cauHoi__.id);   // lưu id câu hỏi
+                          setOpenUpdateDialog(true);          // mở dialog update
+                        }}
+                    >
+                      <Edit />
+                    </IconButton>
+                  <IconButton
+                    sx={{
+                      color:"#DB9C14"
+                    }}
+                    onClick={() => {
+                      if (item.__cauHoi__?.id) {
+                        fetchQuestionDetail(item.__cauHoi__?.id);
+                      }
+                    }}
+                  >
+                    <Visibility />
+                  </IconButton>
+                  {/* Xóa */}
+                  <IconButton
+                      sx={{
+                        color: "#d32f2f" 
+                      }}
+                      onClick={() => {
+                        setQuestionToDelete({id: item.id, name: item.__cauHoi__.tenHienThi});
+                        setOpenDeleteDialog(true);
+                      }}
+                    >
+                      <Delete />
+                    </IconButton>
+                  </Stack>
                   </Stack>
                 </CardContent>
               </Card>
             ))}
           </Stack>
+                 <QuestionDetailDialog
+                  open={openDetailDialog}
+                  onClose={() => setOpenDetailDialog(false)}
+                  questionDetail={currentQuestionDetail}
+                  />
+
+                <DeleteConfirmDialog
+                open={openDeleteDialog}
+                onClose={() => setOpenDeleteDialog(false)}
+                onConfirm={handleDeleteQuestion}
+                questionName={questionToDelete?.name}
+                />
+
+                <UpdateQuestionDialog
+                  open={openUpdateDialog}
+                  onClose={() => setOpenUpdateDialog(false)}
+                  cauHoiId={updateQuestionId ?? 0}
+                  onUpdated={(payload) => {
+                    const fullPayload: CauHoiPayload = {
+                      ...payload,
+                      mangFileDinhKem: (payload as CauHoiPayload).mangFileDinhKem ?? []
+                    };
+                  
+                    setCauHoiList((prev) =>
+                      prev.map((q) =>
+                        q.__cauHoi__.id === fullPayload.cauHoi.id ? fullPayload : q
+                      )
+                    );
+                  }}
+                />
 
           {/* Phân trang */}
           <Box mt={3}>

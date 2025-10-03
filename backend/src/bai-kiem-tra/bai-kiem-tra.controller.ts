@@ -51,5 +51,10 @@ export class BaiKiemTraController {
   async updateMangCauHoiCoTrongBaiKiemTra(@Body() createChiTietDto: CreateChiTietBaiKiemTraDto){
     return await this.baiKiemTraService.capNhatMangCauHoiCoTrongBaiKiemTra(createChiTietDto)
   }
+  @Delete('/chi-tiet-cau-hoi/:idChiTietBaiKiemTra')
+    async xoaMotCauHoiTrongChiTietCauHo(@Param('idChiTietBaiKiemTra',ParseIntPipe) idChiTietBaiKiemTra: number){
+    return await this.baiKiemTraService.xoaCauHoiCoTrongBaiKiemTra(idChiTietBaiKiemTra)
+  }
+
 
 }
