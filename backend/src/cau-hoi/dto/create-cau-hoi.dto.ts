@@ -34,6 +34,7 @@ class CauHoitDto {
     doKho : DoKho
 
     @IsNumber()
+    @IsOptional()
     idChuong: number
 }
 export class CreateCauHoiDto extends IntersectionType(

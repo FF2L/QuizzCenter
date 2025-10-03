@@ -175,6 +175,49 @@ khi tạo câu hỏi do không muốn phúc tạp vấn đề.
 
 
 
------------------Ngày 29/9 thực hiện việc tạo dề  cho việc luyện tập và kiểm tra. Nếu có thể làm luôn cái quản lý câu hỏi trong đề.-----------
-Ý tưởng là tạo để chỉ cần những trường đó khi tạo xong có thể  thêm câu hỏi bằng ngân hàng câu hỏi hoặc tạo câu hỏi thủ công hơn nữa là có thể  
-tạo câu hỏi cho đề bằng file nhập vào. xong cái này là đi được nữa chặng đường.
+---------------------Ngày 3/10-------------------------------
+
+lấy tất cả lớp học phần theo id giảng viên và id môn học 
+    ở đây idGiangVien được đưa vào query để sau nay2 tái sử dụng được và nó sẽ lấy lớp học theo thời gian kết thúc >= thời gian hiện tại
+    Get:localhost:3000/lop-hoc-phan/:idMonHoc?idGiangVien=2
+
+
+lấy tất cả bài kiểm tra theo id lớp học phần sort theo cái mới tạo/ update được đưa lên trước
+Get: localhost:3000/bai-kiem-tra/:idLopHocPhan
+
+laý6 thông tin của một bài kiểm tra
+Get: localhost:3000/bai-kiem-tra/findone:idBaiKiemTra
+
+
+tạo bài kiểm tra: nếu laoị kiểm tra là 2 kiểu : LuyenTap, BaiKiemTra. Nếu loại là BaiKiemTra thi số lần làm phải là 1.
+thời gian bắt đầu/ kết thúc viết theo định dạng ở dưới là dược. thời gian làm chuyển sang giây: 90 phút => 5400 giây
+Post: localhost:3000/bai-kiem-tra
+body: {
+      "tenBaiKiemTra": "bài kiểm tra 15p",
+      "loaiKiemTra": "BaiKiemTra",
+      "soLanLam": 1,
+      "xemBaiLam": true,
+      "hienThiKetQua": true,
+      "thoiGianBatDau": "2025-10-03",
+      "thoiGianKetThuc": "2025-10-04",
+      "thoiGianLam": 5400,
+      "idLopHocPhan": 1
+}
+
+
+cập nhật bài kiểm tra: các trường cần cập nhật y chang, nào cần cập nhật thì chỉ cần trường dó cung cấp idBaiKiemTra cần cập nhật
+Patch: localhost:3000/bai-kiem-tra/:idBaiKiemTra
+body: {
+      "tenBaiKiemTra": "bài kiểm tra 15p",
+      "loaiKiemTra": "BaiKiemTra",
+      "soLanLam": 1,
+      "xemBaiLam": true,
+      "hienThiKetQua": true,
+      "thoiGianBatDau": "2025-10-03",
+      "thoiGianKetThuc": "2025-10-04",
+      "thoiGianLam": 5400,
+      "idLopHocPhan": 1
+}
+
+xóa bài kiểm tra :
+Delete: localhost:3000/bai-kiem-tra/:idBaiKiemTra

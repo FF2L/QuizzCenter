@@ -13,12 +13,14 @@ export class ChiTietBaiLam {
     diemDat: number
 
     @ManyToOne(()=>ChiTietCauHoiBaiKiemTra, (chiTietCauHoiBaiKiemTra)=> chiTietCauHoiBaiKiemTra.chiTietBaiLam, {lazy:true})
-    @JoinColumn({name: 'idCauHoiBaiKieTra'})
-    idCauHoiBaiKiemTra: Promise<ChiTietCauHoiBaiKiemTra>
+    @JoinColumn({name: 'idCauHoiBaiKiemTra'})
+    cauHoiBaiKiemTra: Promise<ChiTietCauHoiBaiKiemTra>
+    @Column() idCauHoiBaiKiemTra: number
 
     @ManyToOne(() => BaiLamSinhVien, (baiLamSinhVien) => baiLamSinhVien.chiTietBaiLam, {lazy:true})
     @JoinColumn({name: 'idBaiLamSinhVien'})
-    idBaiLamSinhVien: Promise<BaiLamSinhVien>
+    baiLamSinhVien: Promise<BaiLamSinhVien>
+    @Column() idBaiLamSinhVien: number
 
     @ManyToOne(() => DapAn, (dapAn) => dapAn.chiTietBaiLam, {lazy:true})
     @JoinColumn({name: 'idDapAn'})

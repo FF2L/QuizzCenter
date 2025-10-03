@@ -57,10 +57,7 @@ export class CauHoiController {
     return await this.cauHoiService.taoMotCauHoi(createCauHoiDto, mangFile);
   }
 
-  @Get()
-  findAll() {
-    return this.cauHoiService.findAll();
-  }
+
 
   @Get(':id')
   async findOne(@Param('id',ParseIntPipe) id: number) {
@@ -76,8 +73,6 @@ export class CauHoiController {
 )
   async update(@Param('id',ParseIntPipe) id: number, @Body('updateCauHoi', new ParseJsonPipe()) updateCauHoiDto: any, @UploadedFiles() files?: Express.Multer.File[]) {
          // 2) transform -> instance DTO (ép kiểu ngầm)
-         console.log("👉 updateCauHoiDto nhận được:", updateCauHoiDto);
-
     const dto = plainToInstance(UpdateCauHoiDto, updateCauHoiDto, { enableImplicitConversion: true });
 
     // 3) validate thủ công 
