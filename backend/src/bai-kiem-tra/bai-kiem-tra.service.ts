@@ -55,7 +55,7 @@ export class BaiKiemTraService {
     const baiKiemTra = await this.baiKiemTraRepo.findOne({where: {id: idBaiKiemTra}},)
     if(!baiKiemTra) throw new NotFoundException(`Không tìm thấy bài kiểm tra ${idBaiKiemTra}`)
 
-    return baiKiemTra.chiTietCauHoiBaiKiemTra
+    return baiKiemTra
   }
 
   async capNhatBaiKiemTra(idBaiKiemTra: number, updateBaiKiemTraDto: UpdateBaiKiemTraDto) {
