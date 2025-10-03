@@ -56,6 +56,7 @@ export class GuiFileService {
       }));
     } catch (err: any) {
       // ROLLBACK: xoá tất cả cái đã upload thành công
+      console.log(err)
       await Promise.allSettled(
         uploaded.map((r) => this.cloudianry.uploader.destroy(r.public_id, { resource_type: 'image' })),
       );
