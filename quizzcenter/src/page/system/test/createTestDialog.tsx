@@ -7,6 +7,7 @@ import {
   TextField,
   MenuItem,
   Button,
+  Box,
 } from "@mui/material";
 
 interface CreateBaiKiemTraDialogProps {
@@ -66,7 +67,9 @@ const CreateBaiKiemTraDialog: React.FC<CreateBaiKiemTraDialogProps> = ({
       fullWidth
       maxWidth="md"
     >
-      <DialogTitle>Tạo bài kiểm tra mới</DialogTitle>
+      <Box sx={{backgroundColor:"#245D51"}}>
+      <DialogTitle color="white">Tạo bài kiểm tra mới</DialogTitle>
+      </Box>
       <DialogContent
         sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
       >
@@ -129,7 +132,7 @@ const CreateBaiKiemTraDialog: React.FC<CreateBaiKiemTraDialogProps> = ({
 
       <DialogActions>
         <Button onClick={onClose}>Hủy</Button>
-        <Button variant="contained" onClick={handleSubmit}>
+        <Button sx={{backgroundColor:"#245D51"}} variant="contained" onClick={handleSubmit}>
           Tạo
         </Button>
       </DialogActions>

@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  Box,
   Typography,
   Stack,
 } from "@mui/material";
@@ -41,7 +42,9 @@ const ViewBaiKiemTraDialog: React.FC<Props> = ({ open, onClose, idBaiKiemTra }) 
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Chi tiết bài kiểm tra</DialogTitle>
+      <Box sx={{backgroundColor:"#245D51"}}>
+      <DialogTitle color="white">Chi tiết bài kiểm tra</DialogTitle>
+      </Box>
       <DialogContent dividers>
         {loading && <Typography>Đang tải...</Typography>}
         {!loading && detail && (
