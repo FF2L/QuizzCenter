@@ -193,6 +193,7 @@ export class GuiFileService {
         const q = cauHoiRepo.create({
           tenHienThi: it.tenHienThi ?? '',
           noiDungCauHoi: it.noiDungCauHoi,
+          noiDungCauHoiHTML: it.noiDungCauHoi,
           loaiCauHoi: it.loaiCauHoi,
           doKho: it.doKho,
           idChuong,                            // <— gán chương
@@ -203,6 +204,7 @@ export class GuiFileService {
         if (it.answers.length) {
           const ansEntities = it.answers.map(a => dapAnRepo.create({
             noiDung: a.noiDung,
+            noiDungHTML: a.noiDung,
             dapAnDung: !!a.dung,
             idCauHoi: savedQ.id,
           }));
