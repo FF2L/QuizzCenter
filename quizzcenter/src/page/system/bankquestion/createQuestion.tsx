@@ -291,9 +291,9 @@ const { tenChuong } = location.state || {};
           </Box>
           <Typography sx={{ml:1,fontWeight:'bold',fontSize:"18px"}}> → Ngân hàng câu hỏi</Typography>
           <Typography sx={{ ml: 1, fontWeight: 'bold', fontSize: "18px" }}>
-  → Tạo câu hỏi (
-  <span style={{ color: "#007CD5" }}>{tenChuong}</span>
-  )
+              → Tạo câu hỏi (
+                            <span style={{ color: "#007CD5" }}>{tenChuong}</span>
+                             )
 </Typography>
 
          

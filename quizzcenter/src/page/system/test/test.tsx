@@ -1,6 +1,6 @@
 // BaiKiemTraList.tsx
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams,useLocation } from "react-router-dom";
 import {
   Box,
   Card,
@@ -28,6 +28,9 @@ const BaiKiemTraList = () => {
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
   const [selectedBai, setSelectedBai] = useState<BaiKiemTra | null>(null);
+  const location = useLocation();
+  const { tenMonHoc,tenLopHoc } = location.state || {};
+
   const navigate = useNavigate();
   useEffect(() => {
     const fetchBaiKiemTra = async () => {
@@ -134,7 +137,7 @@ const handleDelete = async (id: number) => {
   
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Box sx={{ p: 2 , backgroundColor:"#F8F8F8"}}>
       {/* Header */}
       <Stack
         direction="row"
@@ -147,7 +150,18 @@ const handleDelete = async (id: number) => {
           Tạo bài kiểm tra
         </Button>
       </Stack>
+      <Box sx={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
+          <Typography sx={{fontWeight:'bold',fontSize:"18px"}}>
+            Môn học:
+          </Typography>
 
+          <Box sx={{backgroundColor:"rgba(255, 0, 0, 0.04)", borderRadius:"10px", height:"30px", width:"180px", display:"flex", justifyContent:'center', alignItems:"center"}}>
+          <Typography sx={{color:"rgba(255, 0, 0, 1)", ml:1, fontWeight:'bold',fontSize:"18px"}}>{tenMonHoc}</Typography>
+          </Box>
+          <Typography sx={{ml:1,fontWeight:'bold',fontSize:"18px"}}> → Lớp học (
+                             <span style={{ color: "#007CD5" }}>{tenLopHoc}</span>
+                              )</Typography>
+          </Box>
       {/* Danh sách */}
       <Stack spacing={2}>
         {loading && <Typography>Đang tải...</Typography>}
@@ -159,7 +173,7 @@ const handleDelete = async (id: number) => {
           baiKiemTraList.map((bai) => (
             <Card   onClick={() => navigate(`/bai-kiem-tra/${bai.id}`)} 
                     key={bai.id} 
-                    sx={{ borderRadius: 2, boxShadow: "none" }}>
+                    sx={{ borderRadius: 2, boxShadow: "none",  }}>
               <CardContent sx={{ backgroundColor: "#fff" }}>
                 <Stack
                   direction="row"

@@ -121,10 +121,19 @@ const Class = () => {
             <Typography variant="h3" sx={{ fontWeight: "medium", fontSize: "30px", color: "black" }}>
                Lớp học của tôi
             </Typography>
+            
           </Stack>
 
         </Stack>
-
+        <Box sx={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
+          <Typography sx={{fontWeight:'bold',fontSize:"18px"}}>
+            Môn học:
+          </Typography>
+          <Box sx={{backgroundColor:"rgba(255, 0, 0, 0.04)", borderRadius:"10px", height:"30px", width:"180px", display:"flex", justifyContent:'center', alignItems:"center"}}>
+          <Typography sx={{color:"rgba(255, 0, 0, 1)", ml:1, fontWeight:'bold',fontSize:"18px"}}>{tenMonHoc}</Typography>
+          </Box>
+          <Typography sx={{ml:1,fontWeight:'bold',fontSize:"18px"}}> → Lớp học</Typography>
+          </Box>
         {/* Danh sách lớp học phần */}
         <Stack spacing={2}>
           {loading && <Typography>Đang tải...</Typography>}
@@ -137,7 +146,7 @@ const Class = () => {
                 key={lop.id}
                 sx={{ borderRadius: "20px", boxShadow: "none", cursor: "pointer" }}
                 onClick={() =>
-                  navigate(`/lop-hoc-phan/bai-kiem-tra/${lop.id}`, { state: { tenLopHoc: lop.tenLopHoc } })
+                  navigate(`/lop-hoc-phan/bai-kiem-tra/${lop.id}`, { state: { tenLopHoc: lop.tenLopHoc,tenMonHoc  } })
                 }
               >
                 <CardContent sx={{ padding: 2, backgroundColor: "white" }}>
