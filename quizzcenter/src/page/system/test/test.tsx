@@ -15,15 +15,20 @@ import CreateBaiKiemTraDialog from "../test/createTestDialog";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-
+import ViewBaiKiemTraDialog from "../test/testDetailDalog";
+import UpdateBaiKiemTraDialog from "../test/updateTestDialog"; 
+import { useNavigate } from "react-router-dom";
 const BaiKiemTraList = () => {
   const { idLopHocPhan } = useParams<{ idLopHocPhan: string }>();
   const [baiKiemTraList, setBaiKiemTraList] = useState<BaiKiemTra[]>([]);
   const [loading, setLoading] = useState(false);
-
+  const [openViewDialog, setOpenViewDialog] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   // Dialog
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
-
+  const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
+  const [selectedBai, setSelectedBai] = useState<BaiKiemTra | null>(null);
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchBaiKiemTra = async () => {
       try {
@@ -67,34 +72,66 @@ const BaiKiemTraList = () => {
     }
   };
 
+  const handleUpdateBaiKiemTra = async (id: number, payload: any) => {
+    try {
+      const res = await fetch(`http://localhost:3000/bai-kiem-tra/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+  
+      if (res.ok) {
+        const updated = await res.json();
+        setBaiKiemTraList((prev) =>
+          prev.map((b) => (b.id === id ? updated : b))
+        );
+        setOpenUpdateDialog(false);
+      } else {
+        console.error("Cập nhật thất bại");
+        alert("Cập nhật thất bại!");
+      }
+    } catch (error) {
+      console.error("Lỗi cập nhật:", error);
+      alert("Có lỗi xảy ra khi cập nhật.");
+    }
+  };
+
   // Xem chi tiết
   const handleViewDetail = (bai: BaiKiemTra) => {
-    alert(`Xem chi tiết: ${bai.tenBaiKiemTra}`);
-    // Có thể navigate tới trang chi tiết
+    setSelectedId(bai.id);
+    setOpenViewDialog(true);
   };
 
   // Cập nhật
   const handleUpdate = (bai: BaiKiemTra) => {
-    alert(`Cập nhật: ${bai.tenBaiKiemTra}`);
-    // TODO: mở dialog cập nhật
+    setSelectedBai(bai);
+    setOpenUpdateDialog(true);
   };
 
   // Xóa
-  const handleDelete = async (id: number) => {
+  // Xóa
+const handleDelete = async (id: number) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa bài kiểm tra này?")) return;
+  
     try {
       const res = await fetch(`http://localhost:3000/bai-kiem-tra/${id}`, {
         method: "DELETE",
       });
+  
       if (res.ok) {
+        // Xóa thành công -> cập nhật lại danh sách
         setBaiKiemTraList((prev) => prev.filter((b) => b.id !== id));
       } else {
-        console.error("Xóa thất bại");
+        const errorText = await res.text();
+        console.error("Xóa thất bại:", errorText);
+        alert("Xóa thất bại!");
       }
     } catch (error) {
       console.error("Lỗi khi xóa:", error);
+      alert("Có lỗi xảy ra khi xóa.");
     }
   };
+  
 
   return (
     <Box sx={{ p: 2 }}>
@@ -120,7 +157,9 @@ const BaiKiemTraList = () => {
 
         {!loading &&
           baiKiemTraList.map((bai) => (
-            <Card key={bai.id} sx={{ borderRadius: 2, boxShadow: "none" }}>
+            <Card   onClick={() => navigate(`/bai-kiem-tra/${bai.id}`)} 
+                    key={bai.id} 
+                    sx={{ borderRadius: 2, boxShadow: "none" }}>
               <CardContent sx={{ backgroundColor: "#fff" }}>
                 <Stack
                   direction="row"
@@ -178,6 +217,17 @@ const BaiKiemTraList = () => {
         onCreate={handleCreateBaiKiemTra}
         idLopHocPhan={Number(idLopHocPhan)}
       />
+      <ViewBaiKiemTraDialog
+  open={openViewDialog}
+  onClose={() => setOpenViewDialog(false)}
+  idBaiKiemTra={selectedId}
+/>
+<UpdateBaiKiemTraDialog
+  open={openUpdateDialog}
+  onClose={() => setOpenUpdateDialog(false)}
+  baiKiemTra={selectedBai}
+  onUpdate={handleUpdateBaiKiemTra}
+/>
     </Box>
   );
 };
