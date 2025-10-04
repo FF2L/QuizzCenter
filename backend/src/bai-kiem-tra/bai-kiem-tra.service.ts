@@ -89,6 +89,27 @@ export class BaiKiemTraService {
     await this.lopHocPhanService.timMotLopHocPhanTheoId(idLopHocPhan)
     return await this.baiKiemTraRepo.find({where: {idLopHocPhan}, order: {update_at: 'DESC'}})
 
+    
+  }
+  async timMonHocTheoIdBaikiemTradOne(idBaiKiemTra:number){
+      const bkt = await this.baiKiemTraRepo.findOne({
+    where: { id: idBaiKiemTra },
+    relations: { lopHocPhan: { monHoc: true } },   // join 2 bậc
+    select: {
+      id: true,
+      lopHocPhan: {
+        id: true,
+        monHoc: { id: true, maMonHoc: true, tenMonHoc: true },
+      },
+    },
+  });
+
+  if (!bkt) return null;
+
+  // vì bạn dùng lazy relations (Promise<...>)
+  const lhp = await bkt.lopHocPhan;
+  const mh  = await lhp.monHoc;
+  return { id: mh.id, maMonHoc: mh.maMonHoc, tenMonHoc: mh.tenMonHoc };
   }
 
   async timMotBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra: number){
