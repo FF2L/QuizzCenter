@@ -15,6 +15,7 @@ import BaiKiemTraList from './page/system/test/test';
 import BaiKiemTraDetail from "./page/system/test/DetailTest";
 
 import CreateQuestionForTest from './page/system/test/nhapTayCauHoiChoBaiKiemtra';
+import SelectFromBankPage from './page/system/test/chonCauHoiTuNganHangCauhoi';
 function App() {
   return (
     <BrowserRouter>
@@ -26,6 +27,7 @@ function App() {
     <Route path="/bai-kiem-tra/:idBaiKiemTra" element={<BaiKiemTraDetail />} />
     <Route path="/create-question" element={<CreateQuestionPage />} />
      <Route path="/bai-kiem-tra/:idBaiKiemTra/create-question-test" element={<CreateQuestionForTest />} />
+      <Route path="/select-from-bank" element={<SelectFromBankPage />} />
 </Routes>
     </MainLayout>
   </BrowserRouter>

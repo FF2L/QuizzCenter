@@ -24,6 +24,10 @@ export class BaiKiemTraController {
   async findOne(@Param('idBaiKiemTra',ParseIntPipe) idBaiKiemTra: number) {
     return await this.baiKiemTraService.timMotBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra);
   }
+    @Get(':idBaiKiemTra/mon-hoc')
+  timMonHocTheoIdBaikiemTra(@Param(':idBaiKiemTra') idBaiKiemTra: number) {
+    return this.baiKiemTraService.timMonHocTheoIdBaikiemTradOne(idBaiKiemTra);
+  }
 
 
   @Patch(':idBaiKiemTra')

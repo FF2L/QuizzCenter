@@ -31,6 +31,7 @@ const BaiKiemTraDetail: React.FC = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openDetailDialog, setOpenDetailDialog] = useState(false);
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
+  const [monHoc, setMonHoc] = useState<  any | null>(null);  
   const limit = 5;
 
   // menu state
@@ -95,6 +96,22 @@ const handleDeleteQuestion = async () => {
   } catch (err) {
     console.error("Lỗi khi xóa câu hỏi:", err);
     alert("Xóa thất bại!");
+  }
+};
+
+const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null> => {
+  if (!idBaiKiemTra) return null;
+  try {
+    const res = await fetch(`http://localhost:3000/bai-kiem-tra/${idBaiKiemTra}/mon-hoc`);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+    const mh = await res.json();
+    const result = { id: mh.id, tenMonHoc: mh.tenMonHoc };
+    setMonHoc(result); // optional
+    return result;
+  } catch (err) {
+    console.error("Lỗi khi lấy môn học:", err);
+    return null;
   }
 };
 
@@ -165,9 +182,30 @@ const handleDeleteQuestion = async () => {
                   Tạo bằng tay
                 </MenuItem>
 
-                <MenuItem onClick={() => { handleClose(); alert("Ngân hàng câu hỏi"); }}>
-                  Ngân hàng câu hỏi
-                </MenuItem>
+               <MenuItem
+  onClick={async () => {
+    handleClose();
+    if (!idBaiKiemTra) return;
+
+    const mh = await fetchidMonHoc();       // 🔴 chờ fetch xong
+    if (!mh) {
+      alert("Không lấy được môn học!");
+      return;
+    }
+
+    navigate(`/select-from-bank`, {
+      state: {
+        idBaiKiemTra: Number(idBaiKiemTra),
+        idMonHoc: mh.id,                    // dùng giá trị vừa fetch
+        tenMonHoc: mh.tenMonHoc,
+        tenBaiKiemTra: bai?.tenBaiKiemTra,
+      },
+    });
+  }}
+>
+  Ngân hàng câu hỏi
+</MenuItem>
+
                 {/* <MenuItem onClick={() => { handleClose(); alert("Excel"); }}>
                   Excel
                 </MenuItem> */}
