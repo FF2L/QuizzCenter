@@ -269,7 +269,7 @@ const { tenChuong } = location.state || {};
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container sx={{ py: 4, backgroundColor:'#F8F9FA', width:"100%" }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
         <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
         <IconButton onClick={handleBack}>
@@ -300,7 +300,6 @@ const { tenChuong } = location.state || {};
           </Box>
        </Box>
           <Box>
-            <Typography>Tên hiển thị</Typography>
             <TextField
               label="Tên hiển thị"
               fullWidth
@@ -361,7 +360,7 @@ const { tenChuong } = location.state || {};
               </Box>
             ))}
 
-            <Button startIcon={<AddIcon />} onClick={handleAddAnswer} sx={{ alignSelf: "flex-start" }}>
+            <Button startIcon={<AddIcon />} onClick={handleAddAnswer} sx={{ alignSelf: "flex-start", color:"#245D51" }}>
               Thêm đáp án
             </Button>
           </Stack>
@@ -369,7 +368,9 @@ const { tenChuong } = location.state || {};
       </Box>
 
       <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-      <Button onClick={() => navigate("/page/" + idMonHoc, { state: { tab: 2, idChuong, tenMonHoc,tenChuong } })}>
+      <Button  color="secondary"
+                 variant="outlined" 
+                 onClick={() => navigate("/page/" + idMonHoc, { state: { tab: 2, idChuong, tenMonHoc,tenChuong } })}>
   Hủy
 </Button>
 

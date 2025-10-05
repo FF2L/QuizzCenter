@@ -348,7 +348,7 @@ const handleComplete = async () => {
   }, [cauHoiDaCoTrongDe, cauHoiDaCoTrongDeGoc]);
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container  sx={{ backgroundColor:'#F8F9FA',py: 4 }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
         <IconButton onClick={handleBack}>
           <ArrowBackIcon />
@@ -439,8 +439,7 @@ const handleComplete = async () => {
               <Card
                 key={cauHoi.id}
                 sx={{
-                  border: daCoTrongDe ? "2px solid #4caf50" : "1px solid #ddd",
-                  borderRadius: 2,
+                  border: daCoTrongDe ? "1px solid #4caf50" : "1px solid #ddd",
                   cursor: "pointer",
                   transition: "all 0.2s",
                   "&:hover": {
@@ -451,10 +450,10 @@ const handleComplete = async () => {
                 onClick={() => handleViewDetail(cauHoi.id)}
               >
                 <CardContent>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Stack direction="row">
                     <Box sx={{ flex: 1 }}>
-                      <Stack direction="row" alignItems="center" spacing={1} mb={1}>
-                        <Typography variant="h6" sx={{ fontSize: 16, fontWeight: "medium" }}>
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <Typography  sx={{ fontSize: 16, fontWeight: "bold" }}>
                           {cauHoi.tenHienThi}
                         </Typography>
                         {daCoTrongDe && (
@@ -478,8 +477,8 @@ const handleComplete = async () => {
                         />
                       </Stack>
                     </Box>
-
-                    <Button
+                  </Stack>
+                  <Button
                       variant={daCoTrongDe ? "outlined" : "contained"}
                       color={daCoTrongDe ? "error" : "primary"}
                       onClick={(e) => handleToggleCauHoi(cauHoi.id, daCoTrongDe, e)}
@@ -490,7 +489,6 @@ const handleComplete = async () => {
                     >
                       {daCoTrongDe ? "Bỏ chọn" : "Chọn thêm"}
                     </Button>
-                  </Stack>
                 </CardContent>
               </Card>
             );
@@ -510,7 +508,8 @@ const handleComplete = async () => {
       </Box>
 
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
-        <Button onClick={handleBack}>Quay lại</Button>
+        <Button  color="secondary"
+                 variant="outlined"  onClick={handleBack}>Quay lại</Button>
         <Button variant="contained" sx={{ backgroundColor: "#245D51" }} onClick={handleComplete}>
           Hoàn thành
         </Button>
@@ -640,12 +639,12 @@ const handleComplete = async () => {
       </Dialog>
       {/* Dialog confirm khi quay lại */}
 <Dialog open={openConfirmBack} onClose={() => setOpenConfirmBack(false)}>
-  <DialogTitle>Xác nhận</DialogTitle>
+  <DialogTitle >Xác nhận</DialogTitle>
   <DialogContent>
     <Typography>Bạn có thay đổi chưa lưu. Bỏ thay đổi và quay lại?</Typography>
   </DialogContent>
   <DialogActions>
-    <Button onClick={() => setOpenConfirmBack(false)}>Hủy</Button>
+    <Button  onClick={() => setOpenConfirmBack(false)}>Hủy</Button>
     <Button onClick={confirmBack} color="error" variant="contained">Đồng ý</Button>
   </DialogActions>
 </Dialog>
@@ -657,7 +656,8 @@ const handleComplete = async () => {
     <Typography>{message}</Typography>
   </DialogContent>
   <DialogActions>
-    <Button onClick={() => setOpenMessage(false)} autoFocus>Xác nhận</Button>
+    <Button  color="secondary"
+                 variant="outlined"  onClick={() => setOpenMessage(false)} autoFocus>Xác nhận</Button>
   </DialogActions>
 </Dialog>
 

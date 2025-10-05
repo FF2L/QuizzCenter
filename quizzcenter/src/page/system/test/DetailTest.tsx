@@ -227,13 +227,26 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
 
           {/* Danh sách câu hỏi */}
           <Stack spacing={2}>
-            {cauHoiList.map((item: any) => (
-              <Card key={item.id}>
-                <CardContent>
-                  <Typography variant="h6">
+          <Box
+    sx={{
+      border: "1px solid #ddd",
+      borderRadius: "12px",
+      p: 2,
+      backgroundColor: "#fafafa",
+    }}
+  >
+            {cauHoiList.map((item: any,index) => (
+              <Card key={item.id} sx={{mb: 2,}}>
+                <CardContent sx={{ height:"20px",}}>
+                  <Stack spacing={2} direction="row">
+                <Typography sx={{ fontWeight: "bold" }}>
+               Câu {index + 1}:
+              </Typography>
+                  <Typography >
                     {item.__cauHoi__?.tenHienThi}
                   </Typography>
-                  <Typography>
+                  </Stack>
+                  <Typography sx={{color:"#898989"}}>
                     {item.__cauHoi__?.noiDungCauHoi}
                   </Typography>
 
@@ -248,10 +261,7 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
                     justifyContent="space-between"
                     mt={1}
                   >
-                  <Stack direction="row" spacing={2} mt={1}>
-                    <Typography>Loại: {item.__cauHoi__?.loaiCauHoi}</Typography>
-                    <Typography>Độ khó: {item.__cauHoi__?.doKho}</Typography>
-                  </Stack>
+                  
 
                   <Stack direction="row" spacing={1}  sx={{ flexShrink: 0 }}>
                     
@@ -295,6 +305,7 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
                 </CardContent>
               </Card>
             ))}
+            </Box>
           </Stack>
                  <QuestionDetailDialog
                   open={openDetailDialog}

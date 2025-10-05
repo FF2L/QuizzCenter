@@ -13,13 +13,15 @@ import Page from "./page/system/class-chapter/pageClass-Chapter"
 import CreateQuestionPage from './page/system/bankquestion/createQuestion';
 import BaiKiemTraList from './page/system/test/test';
 import BaiKiemTraDetail from "./page/system/test/DetailTest";
-
+import {theme} from './theme/theme'
+import { ThemeProvider } from '@emotion/react';
 import CreateQuestionForTest from './page/system/test/nhapTayCauHoiChoBaiKiemtra';
 import SelectFromBankPage from './page/system/test/chonCauHoiTuNganHangCauhoi';
 function App() {
   return (
     <BrowserRouter>
     <MainLayout>
+    <ThemeProvider theme={theme}>
     <Routes>
     <Route path="/course" element={<Course/>} />
     <Route path="/page/:idMonHoc" element={<Page/>} />
@@ -29,6 +31,7 @@ function App() {
      <Route path="/bai-kiem-tra/:idBaiKiemTra/create-question-test" element={<CreateQuestionForTest />} />
       <Route path="/select-from-bank" element={<SelectFromBankPage />} />
 </Routes>
+</ThemeProvider>
     </MainLayout>
   </BrowserRouter>
   );

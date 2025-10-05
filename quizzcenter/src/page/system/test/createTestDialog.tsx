@@ -68,10 +68,10 @@ const CreateBaiKiemTraDialog: React.FC<CreateBaiKiemTraDialogProps> = ({
       maxWidth="md"
     >
       <Box sx={{backgroundColor:"#245D51"}}>
-      <DialogTitle color="white">Tạo bài kiểm tra mới</DialogTitle>
+      <DialogTitle  color="white">Tạo bài kiểm tra mới</DialogTitle>
       </Box>
       <DialogContent
-        sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+        sx={{ display: "flex", flexDirection: "column", gap: 10, mt: 1}}
       >
         <TextField
           label="Tên bài kiểm tra"
@@ -131,7 +131,9 @@ const CreateBaiKiemTraDialog: React.FC<CreateBaiKiemTraDialogProps> = ({
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>Hủy</Button>
+        <Button  color="secondary"
+                 variant="outlined"
+               onClick={onClose}>Hủy</Button>
         <Button sx={{backgroundColor:"#245D51"}} variant="contained" onClick={handleSubmit}>
           Tạo
         </Button>
