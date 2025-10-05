@@ -18,6 +18,8 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import ViewBaiKiemTraDialog from "../test/testDetailDalog";
 import UpdateBaiKiemTraDialog from "../test/updateTestDialog"; 
 import { useNavigate } from "react-router-dom";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+
 const BaiKiemTraList = () => {
   const { idLopHocPhan } = useParams<{ idLopHocPhan: string }>();
   const [baiKiemTraList, setBaiKiemTraList] = useState<BaiKiemTra[]>([]);
@@ -145,7 +147,12 @@ const handleDelete = async (id: number) => {
         alignItems="center"
         mb={2}
       >
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+        <IconButton onClick={() => navigate(-1)}>
+      <ArrowBackIcon />
+    </IconButton>
         <Typography variant="h4">Bài kiểm tra</Typography>
+        </Box>
         <Button  sx={{backgroundColor:"#245D51"}} variant="contained" onClick={() => setOpenCreateDialog(true)}>
           Tạo bài kiểm tra
         </Button>
@@ -175,16 +182,11 @@ const handleDelete = async (id: number) => {
           baiKiemTraList.map((bai) => (
             <Card   onClick={() => navigate(`/bai-kiem-tra/${bai.id}`)} 
                     key={bai.id} 
-                    sx={{ borderRadius: 2, boxShadow: "none",  }}>
-              <CardContent sx={{ backgroundColor: "#fff" }}>
-                <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
+                   >
+              <CardContent>
                   {/* Info */}
                   <Stack spacing={1}>
-                    <Typography sx={{ fontSize: 18, fontWeight: "medium" }}>
+                    <Typography sx={{fontWeight:'bold'}}>
                       {bai.tenBaiKiemTra}
                     </Typography>
                     <Typography sx={{ fontSize: 14, color: "#555" }}>
@@ -231,7 +233,6 @@ const handleDelete = async (id: number) => {
                       <DeleteIcon />
                     </IconButton>
                   </Stack>
-                </Stack>
               </CardContent>
             </Card>
           ))}

@@ -20,7 +20,7 @@ import Class from "../class/class"
 import BankQuestion from "../bankquestion/bankquestion";
 import { useLocation } from "react-router-dom";
 function PageClassChapterBankQuestion() {
-
+  const [selectedChuongFromCategory, setSelectedChuongFromCategory] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedTab, setSelectedTab] = useState(0);
@@ -39,7 +39,7 @@ function PageClassChapterBankQuestion() {
       sx={{
         width: "100%",
         minHeight: "100vh",
-        backgroundColor: "#F2F2F2",
+        backgroundColor: "#F8F9FA",
       
         p: 2,
       }}
@@ -61,9 +61,6 @@ function PageClassChapterBankQuestion() {
     <Typography
       sx={{
         color: selectedTab === 0 ? "white" : "black", // ✔ chọn = trắng
-        fontFamily: "Poppins, Helvetica",
-        fontWeight: 500,
-        fontSize: "20px",
         textTransform: "none",
       }}
     >
@@ -71,10 +68,12 @@ function PageClassChapterBankQuestion() {
     </Typography>
   }
   sx={{
-    backgroundColor: selectedTab === 0 ? "#245d51" : "#e7e7e7", // ✔ chọn = xanh
+    backgroundColor: selectedTab === 0 ? "#245d51" : "#FFFFFF", // ✔ chọn = xanh
     minHeight: "40px",
     minWidth: "180px",
     mr: 0.5,
+    border: "1px solid #C5C5C5",
+    borderRadius:"5px"
   }}
 />
 <Tab
@@ -91,10 +90,12 @@ function PageClassChapterBankQuestion() {
     </Typography>
   }
   sx={{
-    backgroundColor: selectedTab === 1 ? "#245d51" : "#e7e7e7",
+    backgroundColor: selectedTab === 1 ? "#245d51" : "#FFFFFF",
     minHeight: "40px",
     minWidth: "180px",
     mr: 0.5,
+    border: "1px solid #C5C5C5",
+    borderRadius:"5px"
   }}
 />
 <Tab
@@ -102,9 +103,6 @@ function PageClassChapterBankQuestion() {
     <Typography
       sx={{
         color: selectedTab === 2 ? "white" : "black",
-        fontFamily: "Poppins, Helvetica",
-        fontWeight: 500,
-        fontSize: "20px",
         textTransform: "none",
       }}
     >
@@ -112,9 +110,11 @@ function PageClassChapterBankQuestion() {
     </Typography>
   }
   sx={{
-    backgroundColor: selectedTab === 2 ? "#245D51" : "#e7e7e7",
+    backgroundColor: selectedTab === 2 ? "#245D51" : "#FFFFFF",
     minHeight: "40px",
     minWidth: "180px",
+    border: "1px solid #C5C5C5",
+    borderRadius:"5px"
   }}
 />
           </Tabs>

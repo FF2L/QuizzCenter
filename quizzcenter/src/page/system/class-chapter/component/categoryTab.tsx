@@ -8,6 +8,9 @@ import CreateDialog from "./createDialog";
 import { Delete, Edit, AddCircle } from "@mui/icons-material";
 import UpdateDialog from "./updateDialog";
 import { IconButton } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+
+
 import {
   Autocomplete,
   Box,
@@ -35,7 +38,7 @@ const CategoryTab = () => {
   //mở create-dialog
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
-
+  const navigate = useNavigate();
   const handleOpenCreateDialog = () => setOpenCreateDialog(true);
   const handleOpenUpdateDialog = ( chuong: Chuong)=>{
           setCurrentChuong(chuong)
@@ -118,7 +121,6 @@ const CategoryTab = () => {
       sx={{
         width: "100%",
         minHeight: "100vh",
-        backgroundColor: "#F2F2F2",
         borderRadius: "10px",
         padding: 0,
       }}
@@ -200,22 +202,10 @@ const CategoryTab = () => {
           </Box>
           <Typography sx={{ml:1,fontWeight:'bold',fontSize:"18px"}}> → Danh mục</Typography>
         </Box>
-<Button
+            <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleOpenCreateDialog}
-            sx={{
-              backgroundColor: "#408C56",
-              borderRadius:"50px",
-              border:"1px black",
-              height: "50px",
-              width: "180px",
-              fontSize: "16px",
-              fontWeight: "bold",
-              color:"white",
-              textTransform: "none",
-              "&:hover": { backgroundColor: "#D9D9D9", color:'black' },
-            }}
           >
             Thêm danh mục
           </Button>
@@ -223,24 +213,38 @@ const CategoryTab = () => {
 
           </Box>
           {chuongList.map((chuong) => (
-            <Card key={chuong.id}  sx={{ borderRadius: "20px", height: "95px", boxShadow: "none", border:"none"  }}>
-              <CardContent  sx={{ padding: 2, height: "70px", backgroundColor: "white" }}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" height="100%">
+            <Card key={chuong.id} 
+            onClick={() =>
+              navigate(`/page/${idMonHoc}`, {
+                state: {
+                  idChuong: chuong.id,
+                  tenChuong: chuong.tenChuong,
+                  tenMonHoc: tenMonHoc,
+                  tab: 2, // chuyển sang tab Ngân hàng câu hỏi
+                },
+              })
+            }
+            
+            
+           >
+              <CardContent sx={{height:"50px"}}>
+                
                   {/* Left info */}
-                  <Stack direction="row" spacing={2} alignItems="center">
+                  <Stack direction="row"
+            spacing={2}>
                     <Typography sx={{  fontSize: "20px", color: "black", fontWeight: "normal", width: 25, textAlign: "center" }}>
                       {chuong.thuTu}
                     </Typography>
             
-                    <Box sx={{ width: "1px", height: "70px", backgroundColor: "#A8A8A8" }} />
+                    <Box sx={{ width: "1px", height: "70px", backgroundColor: "#A8A8A8"}} />
 
-                    <Stack spacing={1} alignItems="flex-start">
+                    <Stack spacing={2} >
                       <Typography sx={{  fontSize: "20px", fontWeight: "medium", color: "black"}}>
                         {chuong.tenChuong}
                       </Typography>
 
                       {/* Info nằm cùng hàng */}
-                      <Stack direction="row" spacing={4} justifyContent="center">
+                      <Stack>
                         <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#a5a5a5", textAlign: "center" }}>
                           Số câu hỏi: {chuong.soLuongCauHoi}
                         </Typography>
@@ -272,12 +276,7 @@ const CategoryTab = () => {
         >
           <Delete />
         </IconButton>
-
-       
-
       </Stack>
-
-                </Stack>
               </CardContent>
             </Card>
           ))}
