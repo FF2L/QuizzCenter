@@ -12,7 +12,7 @@ export const theme = createTheme({
   },
   typography: {
     fontSize: 16,
-    fontFamily: "Nunito Sans",
+    fontFamily: "Inter",
   },
 spacing:2,
   components: {
@@ -45,6 +45,7 @@ spacing:2,
           padding: "8px 20px",
           transition: "all 0.3s ease",
           boxShadow: "none",
+          height:"50px",
           "&:hover": {
             boxShadow: "0 0 6px rgba(0,0,0,0.2)",
           },

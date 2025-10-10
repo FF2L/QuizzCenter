@@ -219,7 +219,7 @@ const BankQuestion = () => {
         >
           {chuongList.map(chuong => (
             <MenuItem key={chuong.id} value={chuong.id.toString()}>
-              {chuong.thuTu}. {chuong.tenChuong}
+               {chuong.tenChuong}
             </MenuItem>
           ))}
         </TextField>

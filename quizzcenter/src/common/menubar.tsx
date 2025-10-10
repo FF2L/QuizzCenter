@@ -22,8 +22,8 @@ type MenuItem = {
 };
 
 const menuItems: MenuItem[] = [
-  { id: 0, title: "Trang chủ", icon: <Home sx={{ fontSize: 40 }} />, path: "/home" },
-  { id: 1, title: "Môn học", icon: <MenuBook sx={{ fontSize: 40 }} />, path: "/course" },
+  { id: 0, title: "Trang chủ", icon: <Home sx={{ fontSize: 40, fontFamily: "Inter" }} />, path: "/home" },
+  { id: 1, title: "Môn học", icon: <MenuBook sx={{ fontSize: 40, fontFamily: "Inter" }} />, path: "/course" },
 ];
 
 export default function MenuBar() {
@@ -42,16 +42,13 @@ export default function MenuBar() {
         height: "100vh",
         position: "relative",
         overflow: "hidden",
-        boxShadow: "4px 0px 20px rgba(0, 0, 0, 0.1)", // ✅ đổ bóng sang phải
-        zIndex: 10, // để nổi hơn nội dung chính
-        background: "linear-gradient(to bottom, #245D51, #FFFFFF)",
+        backgroundColor:"#245D51",
       }}
     >
       {/* Nội dung */}
       <Box
         sx={{
           position: "relative",
-          zIndex: 1,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -68,10 +65,11 @@ export default function MenuBar() {
         <Typography
           sx={{
             mt: 3,
-            color:"white",
             fontWeight: 500,
             fontSize: "28px",
             lineHeight: "20px",
+            fontFamily: "Inter",
+            color:"white"
           }}
         >
           Giảng Viên
@@ -93,10 +91,7 @@ export default function MenuBar() {
         elevation={0}
         sx={{
           width: "100%",
-          borderRadius: 5,
-          borderTop: index === 0 ? "1px solid #a1b4ab" : "none",
-          borderBottom: "1px solid #a1b4ab",
-          backgroundColor: "white",
+          backgroundColor:"#245D51"
         }}
       >
         <ListItem
@@ -109,20 +104,21 @@ export default function MenuBar() {
           sx={{
             height: "50px",
             cursor: "pointer",
-            borderRadius: 5,
             backgroundColor:
-              selected === item.id ? "#245D51" : "transparent", // ✅ Nền khi chọn
+              selected === item.id ? "#FFFFFF" : "transparent", // ✅ Nền khi chọn
             "&:hover": {
               backgroundColor:
                 selected === item.id ? "#1E4E44" : "rgba(0,0,0,0.04)",
             },
             transition: "all 0.3s ease",
+     
+            
           }}
         >
           <ListItemIcon
             sx={{
               minWidth: 60,
-              color: selected === item.id ? "#FFFFFF" : "#000000", // ✅ Icon trắng khi chọn
+              color: selected === item.id ? "#000000" : "#FFFFFF", // ✅ Icon trắng khi chọn
             }}
           >
             {item.icon}
@@ -132,7 +128,7 @@ export default function MenuBar() {
             primary={item.title}
             primaryTypographyProps={{
               fontWeight: 500,
-              color: selected === item.id ? "#FFFFFF" : "#000000", // ✅ Chữ trắng khi chọn
+              color: selected === item.id ? "#000000" : "#FFFFFF", // ✅ Chữ trắng khi chọn
               fontSize: 18,
               letterSpacing: "-0.40px",
               lineHeight: "20px",
