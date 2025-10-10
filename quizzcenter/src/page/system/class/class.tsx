@@ -57,7 +57,6 @@ const Class = () => {
       sx={{
         width: "100%",
         minHeight: "100vh",
-        backgroundColor: "#F2F2F2",
         borderRadius: "10px",
         padding: 2,
       }}
@@ -144,23 +143,24 @@ const Class = () => {
             lopHocPhanList.map((lop) => (
               <Card
                 key={lop.id}
-                sx={{ borderRadius: "20px", boxShadow: "none", cursor: "pointer" }}
                 onClick={() =>
                   navigate(`/lop-hoc-phan/bai-kiem-tra/${lop.id}`, { state: { tenLopHoc: lop.tenLopHoc,tenMonHoc  } })
                 }
               >
-                <CardContent sx={{ padding: 2, backgroundColor: "white" }}>
+                <CardContent sx={{ padding: 10, backgroundColor: "white" }}>
                   <Stack direction="row" alignItems="center" justifyContent="space-between">
                     <Stack>
                       <Typography sx={{ fontSize: "20px", fontWeight: "medium", color: "black" }}>
                         {lop.tenLopHoc}
                       </Typography>
+                      <Stack spacing={10} display="flex" direction="row">
                       <Typography sx={{ fontSize: "14px", color: "#a5a5a5" }}>
                         Ngày bắt đầu: {new Date(lop.thoiGianBatDau).toLocaleDateString()}
                       </Typography>
                       <Typography sx={{ fontSize: "14px", color: "#a5a5a5" }}>
                         Ngày kết thúc: {new Date(lop.thoiGianKetThuc).toLocaleDateString()}
                       </Typography>
+                      </Stack>
                     </Stack>
                   </Stack>
                 </CardContent>

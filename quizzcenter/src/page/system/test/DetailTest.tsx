@@ -214,15 +214,16 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
           </Stack>
 
           {/* Thông tin */}
-          <Stack direction="row" spacing={4} mb={3}>
-            <Typography>Loại: {bai.loaiKiemTra}</Typography>
-            <Typography>Số lần làm: {bai.soLanLam}</Typography>
+          
+          <Stack direction="column" spacing={2} mb={3} mt={15} sx={{ width: "fit-content",p: 5,backgroundColor:"rgba(0, 201, 75, 0.08)", borderRadius:"15px", border:"1px solid rgba(0, 201, 75, 1)"}}>
+            <Typography><span style={{ fontWeight: "bold" }}>Loại:</span> {bai.loaiKiemTra}</Typography>
+            <Typography><span style={{ fontWeight: "bold" }}>Số lần làm:</span> {bai.soLanLam}</Typography>
             <Typography>
-              Thời gian:{" "}
+            <span style={{ fontWeight: "bold" }}>Thời gian:{" "}</span>
               {new Date(bai.thoiGianBatDau).toLocaleString()} -{" "}
               {new Date(bai.thoiGianKetThuc).toLocaleString()}
             </Typography>
-            <Typography>Thời gian làm: {bai.thoiGianLam / 60} phút</Typography>
+            <Typography>  <span style={{ fontWeight: "bold" }}>Thời gian làm:</span> {bai.thoiGianLam / 60} phút</Typography>
           </Stack>
 
           {/* Danh sách câu hỏi */}
@@ -236,7 +237,8 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
     }}
   >
             {cauHoiList.map((item: any,index) => (
-              <Card key={item.id} sx={{mb: 2,}}>
+              <Card key={item.id} sx={{mb: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+              "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}}>
                 <CardContent sx={{ height:"20px",}}>
                   <Stack spacing={2} direction="row">
                 <Typography sx={{ fontWeight: "bold" }}>
