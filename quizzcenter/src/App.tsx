@@ -1,39 +1,43 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React, { FC } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from '@emotion/react';
+import { theme } from './theme/theme';
 import MainLayout from './overalllayout/mainlayout';
 
+import Login from './page/system/login/login';
+import ProtectedRoute from './page/system/login/protectedRoute';
+
 import Course from './page/system/course/course';
-import Class from './page/system/class-chapter/pageClass-Chapter';
-import Chapter from './page/system/chapter/chapter';
-import TestDetail from './page/system/exam/Test';
-import CategoryTab from './page/system/class-chapter/component/categoryTab';
-import Page from "./page/system/class-chapter/pageClass-Chapter"
-import CreateQuestionPage from './page/system/bankquestion/createQuestion';
+import Page from './page/system/class-chapter/pageClass-Chapter';
 import BaiKiemTraList from './page/system/test/test';
-import BaiKiemTraDetail from "./page/system/test/DetailTest";
-import {theme} from './theme/theme'
-import { ThemeProvider } from '@emotion/react';
+import BaiKiemTraDetail from './page/system/test/DetailTest';
+import CreateQuestionPage from './page/system/bankquestion/createQuestion';
 import CreateQuestionForTest from './page/system/test/nhapTayCauHoiChoBaiKiemtra';
 import SelectFromBankPage from './page/system/test/chonCauHoiTuNganHangCauhoi';
-function App() {
+
+const App: FC = () => {
   return (
     <BrowserRouter>
-    <MainLayout>
-    <ThemeProvider theme={theme}>
-    <Routes>
-    <Route path="/course" element={<Course/>} />
-    <Route path="/page/:idMonHoc" element={<Page/>} />
-    <Route path="/lop-hoc-phan/bai-kiem-tra/:idLopHocPhan" element={<BaiKiemTraList />} />
-    <Route path="/bai-kiem-tra/:idBaiKiemTra" element={<BaiKiemTraDetail />} />
-    <Route path="/create-question" element={<CreateQuestionPage />} />
-     <Route path="/bai-kiem-tra/:idBaiKiemTra/create-question-test" element={<CreateQuestionForTest />} />
-      <Route path="/select-from-bank" element={<SelectFromBankPage />} />
-</Routes>
-</ThemeProvider>
-    </MainLayout>
-  </BrowserRouter>
+      <ThemeProvider theme={theme}>
+        <Routes>
+          {/* Public route: login */}
+          <Route path="/login" element={<Login />} />
+          {/* Private routes: dùng MainLayout */}
+          <Route element={<MainLayout />}>
+            <Route path="/course" element={<ProtectedRoute><Course /></ProtectedRoute>} />
+            <Route path="/page/:idMonHoc" element={<ProtectedRoute><Page /></ProtectedRoute>} />
+            <Route path="/lop-hoc-phan/bai-kiem-tra/:idLopHocPhan" element={<ProtectedRoute><BaiKiemTraList /></ProtectedRoute>} />
+            <Route path="/bai-kiem-tra/:idBaiKiemTra" element={<ProtectedRoute><BaiKiemTraDetail /></ProtectedRoute>} />
+            <Route path="/create-question" element={<ProtectedRoute><CreateQuestionPage /></ProtectedRoute>} />
+            <Route path="/bai-kiem-tra/:idBaiKiemTra/create-question-test" element={<ProtectedRoute><CreateQuestionForTest /></ProtectedRoute>} />
+            <Route path="/select-from-bank" element={<ProtectedRoute><SelectFromBankPage /></ProtectedRoute>} />
+          </Route>
+
+          {/* Mặc định mở app vào login */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </ThemeProvider>
+    </BrowserRouter>
   );
 }
 
