@@ -1,29 +1,40 @@
-import React, { ReactNode } from "react";
+// ./overalllayout/mainlayout.tsx
+import React, { FC } from "react";
 import MenuBar from "../common/menubar";
-
-type MainLayoutProps = {
-  children: ReactNode;
-};
-
-export default function MainLayout({ children }: MainLayoutProps) {
+import { Outlet } from "react-router-dom";
+import {
+  Box,
+  Stack,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  Pagination,
+  Menu,
+  MenuItem,
+  IconButton,
+} from "@mui/material";
+const MainLayout: FC = () => {
   return (
-    <div
-    style={{
-        display: "flex",        // layout 2 cột
-        width: "100vw",         // full chiều ngang màn hình
-        height: "100vh",        // full chiều cao màn hình
-        overflow: "hidden",     // không cho MainLayout scroll
+    <Box
+      style={{
+        display: "flex",
+        width: "100vw",
+        height: "100vh",
+        overflow: "hidden",
       }}
     >
       {/* MenuBar bên trái */}
-      <div style={{ flexShrink: 0 }}>  {/* không co lại */}
+      <Box style={{ flexShrink: 0 }}>
         <MenuBar />
-      </div>
+      </Box>
 
       {/* Nội dung bên phải */}
-      <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
-        {children}
-      </div>
-    </div>
+      <Box style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
+        <Outlet /> {/* Nested routes sẽ render ở đây */}
+      </Box>
+    </Box>
   );
-}
+};
+
+export default MainLayout;

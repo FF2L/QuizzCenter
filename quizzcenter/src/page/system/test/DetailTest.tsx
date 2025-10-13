@@ -142,7 +142,7 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
   }, [idBaiKiemTra, page, bai]);
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 3, backgroundColor:"#F8F9FA", width: "100%", minHeight: "100vh"}}>
       {bai && (
         <>
           {/* Header */}
@@ -181,7 +181,6 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
                 >
                   Tạo bằng tay
                 </MenuItem>
-
                <MenuItem
   onClick={async () => {
     handleClose();
