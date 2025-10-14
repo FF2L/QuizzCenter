@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsPositive, IsString } from "class-validator";
+import { IsInt, IsNotEmpty, IsOptional, IsPositive, IsString } from "class-validator";
 
 export class CreateChuongDto {
     @IsString()
@@ -10,6 +10,7 @@ export class CreateChuongDto {
     thuTu: number
 
     @IsInt()
+    @IsOptional()
     idGiangVien: number
 
     @IsInt()

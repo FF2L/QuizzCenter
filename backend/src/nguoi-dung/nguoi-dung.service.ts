@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateNguoiDungDto } from './dto/create-nguoi-dung.dto';
 import { UpdateNguoiDungDto } from './dto/update-nguoi-dung.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -32,7 +32,8 @@ export class NguoiDungService {
     });
     if(!nguoiDung) 
       throw new NotFoundException();
-    return nguoiDung
+    const {matKhau, ...nguoiDungLoaiBoMatKhau} = nguoiDung
+    return nguoiDungLoaiBoMatKhau
   }
 
   update(id: number, updateNguoiDungDto: UpdateNguoiDungDto) {
@@ -44,6 +45,17 @@ export class NguoiDungService {
   }
   //Phục vụ cho xác thực và lưu refesh token mới
   async timVaUpdateRefeshToken(idNguoiDung: number, hashRefeshToken:string){
+
      return await this.nguoiDungRepo.update({id: idNguoiDung},{hashRefeshToken: hashRefeshToken})
+  }
+
+  async capNhatMatKhauTheoId(id:number, newPass: string){
+    try {
+      return await this.nguoiDungRepo.update(id, { matKhau: newPass})
+     
+    } catch (error) {
+          console.error(error);
+        throw new InternalServerErrorException('Cập nhật mật khẩu thất bại');
+    }
   }
 }

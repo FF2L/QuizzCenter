@@ -12,6 +12,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import refeshJwtConfig from 'src/config/refeshJwt.config';
 import { RefeshJwtStrategy } from './strategies/refesh-jwt.stategy';
 import { PassportModule } from '@nestjs/passport';
+import { MailModule } from 'src/mail/mail.module';
+import { NguoiDungModule } from 'src/nguoi-dung/nguoi-dung.module';
+import { OtpModule } from 'src/otp/otp.module';
 
 
 @Module({
@@ -20,7 +23,9 @@ import { PassportModule } from '@nestjs/passport';
     TypeOrmModule.forFeature([NguoiDung]),
     JwtModule.registerAsync(jwtConfig.asProvider()),
     ConfigModule.forFeature(jwtConfig), //đăng ký jwt như repository để có thể sử dụng jwt config
-    ConfigModule.forFeature(refeshJwtConfig)
+    ConfigModule.forFeature(refeshJwtConfig),
+    MailModule,
+    OtpModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, NguoiDungService, LocalStrategy, JwtStrategy, RefeshJwtStrategy],

@@ -33,6 +33,16 @@ export class MonHocService {
     });
   }
 
+    async layTatCaMonHocV2(pagination: Pagination, userId:number) {
+    const qb =  this.monHocRepo.createQueryBuilder('mh')
+                .innerJoin('mh.giangVien', 'gv')
+                .where('gv.idNguoiDung = :userId', {userId})
+                .orderBy('mh.create_at', 'DESC')
+                .skip(pagination.skip ?? 0)
+                .take(pagination.limit ?? DEFAULT_PAGE_LIMIT)
+    return await qb.getMany();
+  }
+
   findOne(id: number) {
     return `This action returns a #${id} monHoc`;
   }

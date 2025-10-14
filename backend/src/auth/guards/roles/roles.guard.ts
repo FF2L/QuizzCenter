@@ -24,6 +24,8 @@ export class RolesGuard implements CanActivate {
     const nguoiDung = context.switchToHttp().getRequest().user
 
     const coRoleCanThiet = rolesCanThiet.some(role => nguoiDung.role === role)
+    if(!coRoleCanThiet)
+      return false
     return true
   }
 }
