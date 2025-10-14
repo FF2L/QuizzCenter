@@ -107,22 +107,6 @@ import React, { useState } from "react";
     }}
   />
 
-          <Tab
-            label="Các môn học"
-            sx={{
-              backgroundColor: selectedTab === 1 ? "#245d51" : "#e7e7e7",
-              color: selectedTab === 1 ? "white" : "black",
-              minHeight: 56,
-              minWidth: 200,
-              fontFamily: "Poppins, Helvetica",
-              fontWeight: "medium",
-              fontSize: "20px",
-              textTransform: "none",
-              "&:hover": {
-                backgroundColor: selectedTab === 1 ? "#245d51" : "#d0d0d0",
-              },
-            }}
-          />
         </Tabs>
         <Stack direction="row" spacing={2} alignItems="center" sx={{ pt: 4 }}>
           <Autocomplete
@@ -178,7 +162,6 @@ import React, { useState } from "react";
         {/* Course List */}
         <Box
           sx={{
-            backgroundColor: "#F8F8F8",
             borderRadius: "10px",
             p: 4,
           }}
@@ -189,14 +172,7 @@ import React, { useState } from "react";
             {monHoc.map((course) => (
               <Card
                 key={course.id}
-                sx={{
-                  borderRadius: "20px",
-                  cursor: "pointer",
-                  "&:hover": {
-                    transform: "translateY(-2px)",
-                    transition: "transform 0.2s ease-in-out",
-                  },
-                }}
+                
               >
                 <CardContent sx={{ p: 3 }}>
                   <Stack direction="row" spacing={3} alignItems="center">
@@ -204,15 +180,7 @@ import React, { useState } from "react";
                      <Box sx={{ flex: 1 }}>
     <Typography
        onClick={() =>navigate(`/page/${course.id}`, { state: { tenMonHoc: course.tenMonHoc } })
-      }
-      variant="h5"
-      sx={{
-        fontFamily: "Poppins, Helvetica",
-        fontWeight: "normal",
-        fontSize: "20px",
-        color: "black",
-        textAlign: "left",   // căn trái
-      }}
+      } 
     >
       {course.tenMonHoc}
     </Typography>

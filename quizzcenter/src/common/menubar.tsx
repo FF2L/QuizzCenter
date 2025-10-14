@@ -10,7 +10,6 @@ import {
   ListItemText,
   Paper,
   Typography,
-  Collapse,
 } from "@mui/material";
 import React, { useState } from "react";
 
@@ -23,14 +22,14 @@ type MenuItem = {
 };
 
 const menuItems: MenuItem[] = [
-  { id: 0, title: "Trang chủ", icon: <Home sx={{ fontSize: 40 }} />, path: "/home" },
-  { id: 1, title: "Môn học", icon: <MenuBook sx={{ fontSize: 40 }} />, path: "/course" },
+  { id: 0, title: "Trang chủ", icon: <Home sx={{ fontSize: 40, fontFamily: "Inter" }} />, path: "/home" },
+  { id: 1, title: "Môn học", icon: <MenuBook sx={{ fontSize: 40, fontFamily: "Inter" }} />, path: "/course" },
 ];
 
 export default function MenuBar() {
   const navigate = useNavigate();
   const [openParent, setOpenParent] = useState<number | null>(null);
-  const [selected, setSelected] = useState<number | null>(null); // lưu id item đã chọn
+  const [selected, setSelected] = useState<number | null>(null);
 
   const handleToggle = (id: number) => {
     setOpenParent(openParent === id ? null : id);
@@ -43,26 +42,13 @@ export default function MenuBar() {
         height: "100vh",
         position: "relative",
         overflow: "hidden",
+        backgroundColor:"#245D51",
       }}
     >
-      {/* Gradient background */}
-      <Box
-        sx={{
-          position: "absolute",
-          width: "100%",
-          height: "100%",
-          top: 0,
-          left: 0,
-          background: "#245d51",
-          zIndex: 0,
-        }}
-      />
-
-      {/* Nội dung overlay */}
+      {/* Nội dung */}
       <Box
         sx={{
           position: "relative",
-          zIndex: 1,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -80,13 +66,15 @@ export default function MenuBar() {
           sx={{
             mt: 3,
             fontWeight: 500,
-            color: "white",
             fontSize: "28px",
             lineHeight: "20px",
+            fontFamily: "Inter",
+            color:"white"
           }}
         >
           Giảng Viên
         </Typography>
+
         {/* Menu Items */}
         <Box
           sx={{
@@ -97,73 +85,73 @@ export default function MenuBar() {
           }}
         >
           <List disablePadding>
-            {menuItems.map((item, index) => (
-              <React.Fragment key={item.id}>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    width: "100%",
-                    borderRadius: 0,
-                    borderTop: index === 0 ? "1px solid #a1b4ab" : "none",
-                    borderBottom: "1px solid #a1b4ab",
-                    backgroundColor: "white",
-                  }}
-                >
-                  <ListItem
-                    onClick={() => {
-                      setSelected(item.id);
-                      item.children
-                        ? handleToggle(item.id)
-                        : item.path && navigate(item.path);
-                    }}
-                    sx={{
-                      height: "50px",
-                      cursor: "pointer",
-                      backgroundColor:
-                        selected === item.id
-                          ? "#C7C7C7"
-                          : "transparent",
-                      "&:hover": { backgroundColor: "rgba(0,0,0,0.04)" },
-                    }}
-                  >
-                    <ListItemIcon
-                      sx={{
-                        minWidth: 60,
-                        color: selected === item.id ? "black" : "#000",
-                      }}
-                    >
-                      {item.icon}
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={item.title}
-                      primaryTypographyProps={{
-                        fontWeight: 500,
-                        color: selected === item.id ? "black" : "#000000",
-                        fontSize: 18,
-                        letterSpacing: "-0.40px",
-                        lineHeight: "20px",
-                      }}
-                    />
-                    {item.children && (
-                      <ExpandMore
-                        sx={{
-                          color: selected === item.id ? "#245d51" : "#000",
-                          fontSize: 24,
-                          transform:
-                            openParent === item.id
-                              ? "rotate(180deg)"
-                              : "rotate(0deg)",
-                          transition: "transform 0.2s",
-                        }}
-                      />
-                    )}
-                  </ListItem>
-                </Paper>
+  {menuItems.map((item, index) => (
+    <React.Fragment key={item.id}>
+      <Paper
+        elevation={0}
+        sx={{
+          width: "100%",
+          backgroundColor:"#245D51"
+        }}
+      >
+        <ListItem
+          onClick={() => {
+            setSelected(item.id);
+            item.children
+              ? handleToggle(item.id)
+              : item.path && navigate(item.path);
+          }}
+          sx={{
+            height: "50px",
+            cursor: "pointer",
+            backgroundColor:
+              selected === item.id ? "#FFFFFF" : "transparent", // ✅ Nền khi chọn
+            "&:hover": {
+              backgroundColor:
+                selected === item.id ? "#1E4E44" : "rgba(0,0,0,0.04)",
+            },
+            transition: "all 0.3s ease",
+     
+            
+          }}
+        >
+          <ListItemIcon
+            sx={{
+              minWidth: 60,
+              color: selected === item.id ? "#000000" : "#FFFFFF", // ✅ Icon trắng khi chọn
+            }}
+          >
+            {item.icon}
+          </ListItemIcon>
 
-                {/* Submenu */}
-              </React.Fragment>
-            ))}
-          </List>
+          <ListItemText
+            primary={item.title}
+            primaryTypographyProps={{
+              fontWeight: 500,
+              color: selected === item.id ? "#000000" : "#FFFFFF", // ✅ Chữ trắng khi chọn
+              fontSize: 18,
+              letterSpacing: "-0.40px",
+              lineHeight: "20px",
+            }}
+          />
+
+          {item.children && (
+            <ExpandMore
+              sx={{
+                color: selected === item.id ? "#FFFFFF" : "#000000",
+                fontSize: 24,
+                transform:
+                  openParent === item.id ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 0.2s",
+              }}
+            />
+          )}
+        </ListItem>
+      </Paper>
+    </React.Fragment>
+  ))}
+</List>
+
         </Box>
       </Box>
     </Box>

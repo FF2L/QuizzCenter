@@ -142,7 +142,7 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
   }, [idBaiKiemTra, page, bai]);
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 3, backgroundColor:"#F8F9FA", width: "100%", minHeight: "100vh"}}>
       {bai && (
         <>
           {/* Header */}
@@ -181,7 +181,6 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
                 >
                   Tạo bằng tay
                 </MenuItem>
-
                <MenuItem
   onClick={async () => {
     handleClose();
@@ -214,26 +213,41 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
           </Stack>
 
           {/* Thông tin */}
-          <Stack direction="row" spacing={4} mb={3}>
-            <Typography>Loại: {bai.loaiKiemTra}</Typography>
-            <Typography>Số lần làm: {bai.soLanLam}</Typography>
+          
+          <Stack direction="column" spacing={2} mb={3} mt={15} sx={{ width: "fit-content",p: 5,backgroundColor:"rgba(0, 201, 75, 0.08)", borderRadius:"15px", border:"1px solid rgba(0, 201, 75, 1)"}}>
+            <Typography><span style={{ fontWeight: "bold" }}>Loại:</span> {bai.loaiKiemTra}</Typography>
+            <Typography><span style={{ fontWeight: "bold" }}>Số lần làm:</span> {bai.soLanLam}</Typography>
             <Typography>
-              Thời gian:{" "}
+            <span style={{ fontWeight: "bold" }}>Thời gian:{" "}</span>
               {new Date(bai.thoiGianBatDau).toLocaleString()} -{" "}
               {new Date(bai.thoiGianKetThuc).toLocaleString()}
             </Typography>
-            <Typography>Thời gian làm: {bai.thoiGianLam / 60} phút</Typography>
+            <Typography>  <span style={{ fontWeight: "bold" }}>Thời gian làm:</span> {bai.thoiGianLam / 60} phút</Typography>
           </Stack>
 
           {/* Danh sách câu hỏi */}
           <Stack spacing={2}>
-            {cauHoiList.map((item: any) => (
-              <Card key={item.id}>
-                <CardContent>
-                  <Typography variant="h6">
+          <Box
+    sx={{
+      border: "1px solid #ddd",
+      borderRadius: "12px",
+      p: 2,
+      backgroundColor: "#fafafa",
+    }}
+  >
+            {cauHoiList.map((item: any,index) => (
+              <Card key={item.id} sx={{mb: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+              "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}}>
+                <CardContent sx={{ height:"20px",}}>
+                  <Stack spacing={2} direction="row">
+                <Typography sx={{ fontWeight: "bold" }}>
+               Câu {index + 1}:
+              </Typography>
+                  <Typography >
                     {item.__cauHoi__?.tenHienThi}
                   </Typography>
-                  <Typography>
+                  </Stack>
+                  <Typography sx={{color:"#898989"}}>
                     {item.__cauHoi__?.noiDungCauHoi}
                   </Typography>
 
@@ -248,10 +262,7 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
                     justifyContent="space-between"
                     mt={1}
                   >
-                  <Stack direction="row" spacing={2} mt={1}>
-                    <Typography>Loại: {item.__cauHoi__?.loaiCauHoi}</Typography>
-                    <Typography>Độ khó: {item.__cauHoi__?.doKho}</Typography>
-                  </Stack>
+                  
 
                   <Stack direction="row" spacing={1}  sx={{ flexShrink: 0 }}>
                     
@@ -295,6 +306,7 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
                 </CardContent>
               </Card>
             ))}
+            </Box>
           </Stack>
                  <QuestionDetailDialog
                   open={openDetailDialog}
