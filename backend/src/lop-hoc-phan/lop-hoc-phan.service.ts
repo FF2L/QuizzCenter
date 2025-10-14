@@ -41,10 +41,21 @@ export class LopHocPhanService {
     const {skip, limit} = pageDto
     const qb = this.lopHocPhanRep.createQueryBuilder('lhp')
     .innerJoin('lhp.sinhVien', 'sv', 'sv.idNguoiDung = :idSinhVien', {idSinhVien})
+    .leftJoin('lhp.monHoc', 'mh')
     .orderBy('lhp.thoiGianKetThuc', 'ASC')
-    .skip(skip ?? 0)
-    .take(limit ?? 10)
-    return await qb.getMany();
+    .select([
+        'lhp.id AS lhp_id',                      // BẮT BUỘC nếu bạn còn muốn dùng sau
+      'lhp.tenLopHoc AS tenLHP',
+      'lhp.hocKy AS hocKy',
+      'lhp.thoiGianBatDau AS thoiGianBatDau',
+      'lhp.thoiGianKetThuc AS thoiGianKetThuc',
+      'mh.maMonHoc AS maMonHoc',
+      'mh.tenMonHoc AS tenMonHoc',
+    ])
+    .orderBy('lhp.thoiGianKetThuc', 'ASC')
+    .offset(skip ?? 0)                         // dùng offset/limit thay vì skip/take
+    .limit(limit ?? 10);
+    return await qb.getRawMany();
 
   }
 

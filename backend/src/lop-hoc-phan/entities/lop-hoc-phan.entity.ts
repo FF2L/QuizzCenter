@@ -14,6 +14,9 @@ export class LopHocPhan extends BaseEntity{
     @Column()
     tenLopHoc: string
 
+    @Column({nullable: true})
+    hocKy: string
+
     @Column()
     thoiGianBatDau: Date
 
