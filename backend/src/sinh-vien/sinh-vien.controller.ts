@@ -1,7 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { SinhVienService } from './sinh-vien.service';
 import { CreateSinhVienDto } from './dto/create-sinh-vien.dto';
 import { UpdateSinhVienDto } from './dto/update-sinh-vien.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles/roles.guard';
+
+import { Roles } from 'src/common/decorations/roles.decorator';
+import { Role } from 'src/common/enum/role.enum';
 
 @Controller('sinh-vien')
 export class SinhVienController {
@@ -12,14 +17,12 @@ export class SinhVienController {
     return this.sinhVienService.create(createSinhVienDto);
   }
 
+  @Roles(Role.SinhVien)
+  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard)
   @Get()
-  findAll() {
-    return this.sinhVienService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.sinhVienService.findOne(+id);
+  async findOne(@Req() req) {
+    return await this.sinhVienService.findOne(req.user.id);
   }
 
   @Patch(':id')

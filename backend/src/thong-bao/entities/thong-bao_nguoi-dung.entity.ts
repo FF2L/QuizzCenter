@@ -13,9 +13,12 @@ export class ThongBaoNguoiDung{
 
     @ManyToOne(() => NguoiDung, (idNguoiDung) => idNguoiDung.thongBaoNguoiDung,{lazy: true})
     @JoinColumn({name: 'idNguoiDung'})
-    idNguoiDung:  Promise<NguoiDung>;
+    nguoiDung:  Promise<NguoiDung>;
+    @Column() idNguoiDung: number
 
     @ManyToOne(() => ThongBao, (thongBao) => thongBao.thongBaoNguoiDung, {lazy: true} )
     @JoinColumn({name: 'idThongBao'})
-    idThongBao: Promise<ThongBao>
+    thongBao: Promise<ThongBao>
+    @Column() idThongBao: number
+
 }

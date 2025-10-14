@@ -20,10 +20,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_PIPE } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { GuiFileModule } from './gui-file/gui-file.module';
+import { MailModule } from './mail/mail.module';
+import { RedisModule } from './redis/redis.module';
+import { OtpModule } from './otp/otp.module';
 
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     ConfigModule.forRoot({
     isGlobal: true, // Để biến môi trường có thể sử dụng toàn cục trong ứng dụng
   expandVariables: true, // Để có thể sử dụng biến môi trường trong biến moi trường khác trong file .env 
@@ -33,7 +37,7 @@ import { GuiFileModule } from './gui-file/gui-file.module';
       useFactory: dbPostgresConfig, // sử dụng khi dbPostgressCOnfig file trả về một hàm trả về instance của PostgresConnectionOptions
      })
     ,
-    NguoiDungModule, ThongBaoModule, KhoaModule, MonHocModule, GiangVienModule, SinhVienModule, ChuongModule, CauHoiModule, DapAnModule, FileDinhKemModule, LopHocPhanModule, BaiKiemTraModule, BaiLamSinhVienModule, AuthModule, GuiFileModule],
+    NguoiDungModule, ThongBaoModule, KhoaModule, MonHocModule, GiangVienModule, SinhVienModule, ChuongModule, CauHoiModule, DapAnModule, FileDinhKemModule, LopHocPhanModule, BaiKiemTraModule, BaiLamSinhVienModule, AuthModule, GuiFileModule, MailModule, RedisModule, OtpModule],
   controllers: [AppController],
   providers: [AppService,
     {

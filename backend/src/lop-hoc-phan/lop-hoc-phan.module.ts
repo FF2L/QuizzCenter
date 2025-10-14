@@ -5,10 +5,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MonHocModule } from 'src/mon-hoc/mon-hoc.module';
 import { LopHocPhan } from './entities/lop-hoc-phan.entity';
 import { GiangVienModule } from 'src/giang-vien/giang-vien.module';
+import { LopHocPhanV2Controller } from './lop-hoc-phan-v2.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([LopHocPhan]), MonHocModule, GiangVienModule],
-  controllers: [LopHocPhanController],
+  controllers: [LopHocPhanController, LopHocPhanV2Controller],
   providers: [LopHocPhanService],
   exports: [LopHocPhanService]
 })

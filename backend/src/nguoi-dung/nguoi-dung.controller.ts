@@ -15,7 +15,7 @@ export class NguoiDungController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
- async findAll(@Req() req) {
+  async findAll(@Req() req) {
     return await this.nguoiDungService.timMotNguoiDungTheoId(req.user.id)
   }
 
@@ -23,7 +23,7 @@ export class NguoiDungController {
   // findOne(@Param('id') id: string) {
   //   return this.nguoiDungService.findOne(+id);
   // }
-
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateNguoiDungDto: UpdateNguoiDungDto) {
     return this.nguoiDungService.update(+id, updateNguoiDungDto);

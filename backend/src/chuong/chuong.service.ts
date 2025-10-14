@@ -43,12 +43,46 @@ export class ChuongService {
     
   }
 
+  async taoMotChuongV2 (createChuongDto: CreateChuongDto,id:number){
+    const giangVien = await this.giangVienService.timGiangVienTheoId(id)
+    const monHoc = await this.monHocService.timMotMonHocTheoId(createChuongDto.idMonHoc)
+
+    const chuong = this.chuongRepo.create({ //create là hàm tạo instance từ entity kiểm tra xem có đúng kiểu không trước khi import vào
+      tenChuong: createChuongDto.tenChuong,
+      thuTu: createChuongDto.thuTu,
+      idGiangVien: id, 
+      idMonHoc: createChuongDto.idMonHoc,  
+    })
+
+    try{
+      return await this.chuongRepo.save(chuong)
+    }catch (err) {
+        // if (err.code === '23505') throw new BadRequestException('Thứ tự này đã tồn tại trong môn học'); // Postgres duplicate unique 
+        
+        throw new InternalServerErrorException('Không thể tạo chương');
+    }
+
+  }
+
   async timTatCaChuongTheoIdMonHoc(idMonHoc: number) {
       const monHoc = await this.monHocService.timMotMonHocTheoId(idMonHoc)
 
       try{
         return await this.chuongRepo.find({
           where: {idMonHoc: idMonHoc}, 
+          order: {thuTu: 'ASC'} //thứ tự tăng dần
+        })
+      }catch(err){
+        throw new InternalServerErrorException('Tìm tất cả chương theo môn học không thành công')
+      }
+  }
+    async timTatCaChuongTheoIdMonHocV2(idMonHoc: number,idNguoiDUng: number) {
+      const giangVien = await this.giangVienService.timGiangVienTheoId(idNguoiDUng)
+      const monHoc = await this.monHocService.timMotMonHocTheoId(idMonHoc)
+
+      try{
+        return await this.chuongRepo.find({
+          where: {idMonHoc: idMonHoc,idGiangVien: idNguoiDUng}, 
           order: {thuTu: 'ASC'} //thứ tự tăng dần
         })
       }catch(err){

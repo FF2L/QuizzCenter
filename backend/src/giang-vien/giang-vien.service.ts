@@ -15,7 +15,23 @@ export class GiangVienService {
 
 
   async timGiangVienTheoId(idGiangVien: number){
-    const giangVien = await this.nguoiDungService.timMotNguoiDungTheoId(idGiangVien)
+    const giangVien = await this.giangVienRepo.findOne({where: {idNguoiDung: idGiangVien},
+      relations: ['nguoiDung'],
+      select: {
+        nguoiDung: {
+          id: true,
+          hoTen: true,
+          email: true,
+          maNguoiDung:true,
+          anhDaiDien:true,
+          gioiTinh:true,
+          soDienThoai:true,
+          idKhoa:true,
+          ngaySinh:true,
+          vaiTro:true 
+        },
+      },}
+    )
     if (!giangVien) throw new NotFoundException('Không tìm thấy giảng viên')
     return giangVien
   }
@@ -24,13 +40,6 @@ export class GiangVienService {
     return 'This action adds a new giangVien';
   }
 
-  findAll() {
-    return `This action returns all giangVien`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} giangVien`;
-  }
 
   update(id: number, updateGiangVienDto: UpdateGiangVienDto) {
     return `This action updates a #${id} giangVien`;

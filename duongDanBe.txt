@@ -247,3 +247,143 @@ put: localhost:3000/bai-kiem-tra/chi-tiet-cau-hoi này trả vê danh sách câu
     "idBaiKiemTra": 4,
     "mangIdCauHoi": [183]
 }
+
+-------------13/10---------------- 
+Lưu ý là một số api có v2 tức là api cũ vẫn còn hoạt động có thể thay thế từ từ nếu không thay thế kịp
+nhưng api có v2 thì nó mới hoạt động đúng theo phân quyền
+
+
+***Phần đăng nhập đăng xuất****
+đăng nhập: trả về accesstoken, refesh token, Role
+post: localhost:3000/auth/login
+body:
+{
+    email: "hotanloc9517@gmail.com"
+    matKhau: 12312345
+}
+
+
+
+refesh đăng nhập: do token chỉ có hạn trong 1 ngày nếu token hết hạn gọi lại cái này gửi vào refeshtoken, trả về accesstoken, refeshtoken,role 
+cung cấp:
+    Authorization: Bearer Token gửi refeshtoken
+post: localhost:3000/auth/refesh
+
+
+đăng xuất: trả về {
+    "generatedMaps": [],
+    "raw": [],
+    "affected": 1
+} nếu affected = 1 thì đã đăng xuất còn lại thì chưa đăng xuất
+cung cấp:
+    Authorization: Bearer Token gửi refeshtoken
+post: localhost:3000/auth/logout
+
+
+quên mật khẩu: sẽ gửi otp tới email mà mình đã hi
+post: localhost:3000/auth/forgot-pass
+body:{
+    email: "hotanloc9517@gmail.com"
+}
+mở email đã cung cấp ra nhận cái otp 6 số 
+
+
+gửi lại otp:
+post: localhost:3000/auth/resend-otp
+body:{
+    email: "hotanloc9517@gmail.com"
+}
+
+xác thực otp: trả về : {
+    "ok": true,
+    "resetToken": "6ab3d747662d5e6ca593ae4f9523eebf2c7606efd5ef1eb4ad4e7570ac9b603d",
+    "ttlSec": 900
+} trong đó ttlSec là thời gian sống của resetToken, khi đổi lại mật khẩu cần phải có resetToken
+post: localhost:3000/auth/verify-otp
+body:{
+    "email": "hotanloc9517@gmail.com",
+    "code" : "930637"
+}
+
+đổi mật khẩu khi đã xác thực: token là nơi điền resetToken đã có ở chỗ xác thực otp
+post: localhost:3000/auth/reset-password-token
+body:{
+    "token": "6ab3d747662d5e6ca593ae4f9523eebf2c7606efd5ef1eb4ad4e7570ac9b603d",
+    "newPassword": "12345678"
+}
+
+
+***End phần đăng nhập đăng xuất****
+
+
+***Phần người dùng***
+lấy thông tin người dùng sau khi đăng nhập:
+get: localhost:3000/nguoi-dung
+Cung cấp:
+    Authorization: Bearer Token gửi accessToken
+***End phần người dùng****
+
+
+***Phần Sinh Vien***
+Lấy thông tin sinh viên: chỉ những người có vai trò là sinhVien mới xài được cái này
+get: localhost:3000/sinh-vien/
+Cung cấp:
+    Authorization: Bearer Token gửi accessToken
+***End pPhần Sinh Vien****
+
+***Phần giảng viên***
+Lấy thông tin giảng viên: chỉ những người có vai trò là giangVien mới xài được cái này
+get: localhost:3000/giang-vien/
+Cung cấp:
+    Authorization: Bearer Token gửi accessToken
+***End pPhần giảng Vien****
+
+
+***PHần Thông báo***
+Lấy Tát cả thông báo thuộc về người dùng: mặc định lấy 10 cái đầu tiên sort theo ngày tạo
+get: localhost:3000/thong-bao?skip=0&limit=5
+Cung cấp:
+    Authorization: Bearer Token gửi accessToken
+***End PHần Thông báo***
+
+
+***Phân môn học***
+Lấy tất cả môn học của giảng viên có thể  sử dụng phiên bản cũ nhưng ở đây lấy môn học thuộc
+ về giảng viên, chỉ user là giảng viên mới lây được thông tin
+get:localhost:3000/v2/mon-hoc
+Cung cấp:
+    Authorization: Bearer Token gửi accessToken
+***End Phân môn học***
+
+****Phần Chương***
+tạo chương v2 chỉ user có role là giaoVIen mới thực hiện dược
+post localhost:3000/v2/chuong
+Cung cấp:
+    Authorization: Bearer Token gửi accessToken
+    body:{
+    "tenChuong": "test",
+    "thuTu": 3,
+    "idMonHoc": 2
+}
+
+lấy tất cả chương thuộc về giang3 viên v2 chỉ user có role là giaoVien mới thực hiện được
+get: localhost:3000/v2/chuong/mon-hoc/:idMonHoc 
+Cung cấp:
+    Authorization: Bearer Token gửi accessToken
+
+lấy thông tin một chương: lấy thông tin một chương chỉ user có role là giáo viên mới thực hiện được
+get:localhost:3000/v2/chuong/:idChuong
+localhost:3000/v2/chuong/13
+****End Phần Chương***
+
+***Phần Lớp học phần****
+lấy tất cả lớp học phần thuộc về  sinh viên: chỉ sinh viên
+localhost:3000/v2/lop-hoc-phan
+Cung cấp:
+    Authorization: Bearer Token gửi accessToken
+****End Phần Lớp học phần ****
+
+***Phần đề hay thêm câu hỏi vào đề cần có Cung cấp:
+    Authorization: Bearer Token gửi accessToken
+
+

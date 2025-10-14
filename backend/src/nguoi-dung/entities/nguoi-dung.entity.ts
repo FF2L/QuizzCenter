@@ -34,6 +34,20 @@ export class NguoiDung  extends BaseEntity{
     @Column()
     gioiTinh: boolean
 
+    //Otp
+
+    // @Column({nullable: true})
+    // otp: string
+
+    // @Column({nullable: true})
+    // thoiGianTaoOtp: Date
+    
+    // @Column({nullable: true})
+    // thoiGIanHetHanOtp: Date
+
+      //Otp
+
+
     @Column()
     anhDaiDien: string
 

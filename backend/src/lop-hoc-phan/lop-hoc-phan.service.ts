@@ -7,6 +7,7 @@ import { MoreThanOrEqual, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MonHocService } from 'src/mon-hoc/mon-hoc.service';
 import { GiangVienService } from 'src/giang-vien/giang-vien.service';
+import { Pagination } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class LopHocPhanService {
@@ -34,6 +35,17 @@ export class LopHocPhanService {
       return await this.lopHocPhanRep.find({where: {idMonHoc, thoiGianKetThuc: MoreThanOrEqual(new Date())}})
     }
     
+  }
+
+  async layTatCaLopHocPhanCuaSinhVien(pageDto: Pagination, idSinhVien: number) {
+    const {skip, limit} = pageDto
+    const qb = this.lopHocPhanRep.createQueryBuilder('lhp')
+    .innerJoin('lhp.sinhVien', 'sv', 'sv.idNguoiDung = :idSinhVien', {idSinhVien})
+    .orderBy('lhp.thoiGianKetThuc', 'ASC')
+    .skip(skip ?? 0)
+    .take(limit ?? 10)
+    return await qb.getMany();
+
   }
 
   async timMotLopHocPhanTheoId(idlopHocPHan: number){
