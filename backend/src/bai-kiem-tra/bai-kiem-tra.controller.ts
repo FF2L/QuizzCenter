@@ -1,11 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query, Put, UseGuards } from '@nestjs/common';
 import { BaiKiemTraService } from './bai-kiem-tra.service';
 import { CreateBaiKiemTraDto } from './dto/create-bai-kiem-tra.dto';
 import { UpdateBaiKiemTraDto } from './dto/update-bai-kiem-tra.dto';
 import { Pagination } from 'src/common/dto/pagination.dto';
 import { CreateChiTietBaiKiemTraDto } from './dto/create-chi-tiet-bai-kiem-tra.dto';
 import { FilterChiTietBaiKiemTraDto } from './dto/filter-chi-tiet-bai-kiem-tra.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles/roles.guard';
+import { Roles } from 'src/common/decorations/roles.decorator';
+import { Role } from 'src/common/enum/role.enum';
 
+@Roles(Role.GiaoVien)
+@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('bai-kiem-tra')
 export class BaiKiemTraController {
   constructor(private readonly baiKiemTraService: BaiKiemTraService) {}

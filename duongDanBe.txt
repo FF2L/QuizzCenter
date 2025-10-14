@@ -383,6 +383,7 @@ Cung cấp:
     Authorization: Bearer Token gửi accessToken
 ****End Phần Lớp học phần ****
 
-
+***Phần đề hay thêm câu hỏi vào đề cần có Cung cấp:
+    Authorization: Bearer Token gửi accessToken
 
 
