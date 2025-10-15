@@ -28,13 +28,13 @@ export default function MenuBar() {
 
     if (role === "GiaoVien") {
       setMenuItems([
-        { id: 0, title: "Trang chủ", icon: <Home />, path: "/home" },
+        { id: 0, title: "Trang chủ", icon: <Home />, path: "/" },
         { id: 1, title: "Môn học", icon: <MenuBook />, path: "/course" },
       ]);
     } else {
       setMenuItems([
-        { id: 0, title: "Trang chủ", icon: <Home />, path: "/student-home" },
-        { id: 1, title: "Lớp học phần", icon: <MenuBook />, path: "/classes" },
+        { id: 0, title: "Trang chủ", icon: <Home />, path: "/" },
+        { id: 1, title: "Lớp học phần", icon: <MenuBook />, path: "/" },
       ]);
     }
   }, [role]);
