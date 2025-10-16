@@ -39,7 +39,7 @@ const App: FC = () => {
             <Route index element={<Navigate to="my/course" replace />} />
             <Route path="my" element={<CollegeDashBoard />} />
             <Route path="my/course" element={<CollegeMyCourse />} />
-            <Route path="/course/test/:idLopHocPhan" element={<CollegeTest />} />
+            <Route path="course/test/:idLopHocPhan" element={<CollegeTest />} />
             </Route>
 
 
