@@ -12,14 +12,14 @@ const PAGE_SIZE = 10;
 
 
 
-const Thumbnail = () => (
-  <Box sx={{
-    width: 180, height: 100, borderRadius: 1.5,
-    background:
-      "repeating-linear-gradient(45deg,#a8c0ff,#a8c0ff 10px,#3f2b96 10px,#3f2b96 20px)",
-    mr: 2, flexShrink: 0,
-  }}/>
-);
+// const Thumbnail = () => (
+//   <Box sx={{
+//     width: 180, height: 100, borderRadius: 1.5,
+//     background:
+//       "repeating-linear-gradient(45deg,#a8c0ff,#a8c0ff 10px,#3f2b96 10px,#3f2b96 20px)",
+//     mr: 2, flexShrink: 0,
+//   }}/>
+// );
 
 const RowSkeleton = () => (
   <Paper sx={{ p: 2, mb: 1.5 }}>
@@ -167,9 +167,18 @@ const CollegeMyCourse: React.FC = () => {
         ? Array.from({ length: 4 }).map((_, i) => <RowSkeleton key={i} />)
         : hasRows &&
           rows.map((r) => (
-            <Paper key={r.lhp_id} sx={{ p: 2, mb: 1.5 }} onClick={() => navigate(`/quizzcenter/course/test/${r.lhp_id}`)}>
+            <Paper 
+    key={r.lhp_id} 
+    sx={{ p: 2, mb: 1.5 }} 
+    onClick={() => navigate(`/quizzcenter/course/test/${r.lhp_id}`, {
+      state: {
+        tenMonHoc: r.tenmonhoc,
+        maMonHoc: r.mamonhoc
+      }
+    })}
+  >
               <Stack direction="row" alignItems="flex-start" spacing={2}>
-                <Thumbnail />
+                {/* <Thumbnail /> */}
                 <Box sx={{ flex: 1, pr: 1 }}>
                   <Typography variant="subtitle1" sx={{ color: "#ff6a00", fontWeight: 600, mb: 0.5 }}>
                     {r.tenmonhoc} ({r.mamonhoc})
