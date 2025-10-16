@@ -75,7 +75,7 @@ const LoginPage: FC = () => {
       // Chuyển trang theo vai trò
       setTimeout(() => {
         if (vaiTro === 'GiaoVien') navigate('/course');
-        else if (vaiTro === 'SinhVien') navigate('/page/1');
+        else if (vaiTro === 'SinhVien') navigate('/quizzcenter/my/course');
       }, 1000);
     } catch (err: any) {
       console.error('Login error:', err);
