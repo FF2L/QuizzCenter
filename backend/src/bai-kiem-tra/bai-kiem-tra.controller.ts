@@ -10,9 +10,9 @@ import { RolesGuard } from 'src/auth/guards/roles/roles.guard';
 import { Roles } from 'src/common/decorations/roles.decorator';
 import { Role } from 'src/common/enum/role.enum';
 
-@Roles(Role.GiaoVien)
-@UseGuards(RolesGuard)
-@UseGuards(JwtAuthGuard)
+// @Roles(Role.GiaoVien)
+// @UseGuards(RolesGuard)
+// @UseGuards(JwtAuthGuard)
 @Controller('bai-kiem-tra')
 export class BaiKiemTraController {
   constructor(private readonly baiKiemTraService: BaiKiemTraService) {}

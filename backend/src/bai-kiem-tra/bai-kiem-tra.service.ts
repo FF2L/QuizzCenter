@@ -22,8 +22,8 @@ export class BaiKiemTraService {
     @InjectRepository(ChiTietCauHoiBaiKiemTra) private chiTietCauHoiBaiKiemTraRepo: Repository<ChiTietCauHoiBaiKiemTra>,
     private lopHocPhanService: LopHocPhanService,
     private cauHoiService: CauHoiService,
-    @Inject(forwardRef(() => BaiLamSinhVienService))
-    private baiLamSinhVienService: BaiLamSinhVienService,
+    // @Inject(forwardRef(() => BaiLamSinhVienService))
+    // private baiLamSinhVienService: BaiLamSinhVienService,
   ) {}
 
   /**CRUD bài kiểm tra */
@@ -50,11 +50,11 @@ export class BaiKiemTraService {
       const baiKiemTraSaved = await this.baiKiemTraRepo.save(baiKiemTra);
       
       // Tự động tạo bài làm cho tất cả sinh viên trong lớp
-      await this.baiLamSinhVienService.taoBaiLamChoTatCaSinhVien(
-        baiKiemTraSaved.id,
-        createBaiKiemTraDto.idLopHocPhan,
-        createBaiKiemTraDto.soLanLam,
-      );
+      // await this.baiLamSinhVienService.taoBaiLamChoTatCaSinhVien(
+      //   baiKiemTraSaved.id,
+      //   createBaiKiemTraDto.idLopHocPhan,
+      //   createBaiKiemTraDto.soLanLam,
+      // );
       
       return baiKiemTraSaved;
     } catch (error) {
@@ -111,15 +111,15 @@ export class BaiKiemTraService {
 
     try {
       // Cập nhật số lần làm nếu thay đổi
-      if (updateBaiKiemTraDto.soLanLam && updateBaiKiemTraDto.soLanLam !== entity.soLanLam) {
-        await this.baiLamSinhVienService.capNhatSoLanLamBai(
-          idBaiKiemTra,
-          entity.idLopHocPhan,
-          updateBaiKiemTraDto.soLanLam,
-        );
-      }
+      // if (updateBaiKiemTraDto.soLanLam && updateBaiKiemTraDto.soLanLam !== entity.soLanLam) {
+      //   await this.baiLamSinhVienService.capNhatSoLanLamBai(
+      //     idBaiKiemTra,
+      //     entity.idLopHocPhan,
+      //     updateBaiKiemTraDto.soLanLam,
+      //   );
+      // }
 
-      Object.assign(entity, updateBaiKiemTraDto);
+      // Object.assign(entity, updateBaiKiemTraDto);
       return await this.baiKiemTraRepo.save(entity);
     } catch (err) {
       throw new InternalServerErrorException('Cập nhật bài kiểm tra không thành công');
@@ -131,7 +131,7 @@ export class BaiKiemTraService {
 
     try {
       // Xóa tất cả bài làm của sinh viên trước
-      await this.baiLamSinhVienService.xoaTatCaBaiLamTheoIdBaiKiemTra(idBaiKiemTra);
+      // await this.baiLamSinhVienService.xoaTatCaBaiLamTheoIdBaiKiemTra(idBaiKiemTra);
       
       // Xóa bài kiểm tra
       return await this.baiKiemTraRepo.delete(idBaiKiemTra);
@@ -220,8 +220,8 @@ export class BaiKiemTraService {
       const chiTietSaved = await this.chiTietCauHoiBaiKiemTraRepo.save(danhSachChiTietBaiKiemTra);
 
       // Tự động thêm chi tiết bài làm cho tất cả sinh viên
-      const mangIdChiTiet = chiTietSaved.map(ct => ct.id);
-      await this.baiLamSinhVienService.themChiTietBaiLamKhiThemCauHoi(idBaiKiemTra, mangIdChiTiet);
+      // const mangIdChiTiet = chiTietSaved.map(ct => ct.id);
+      // await this.baiLamSinhVienService.themChiTietBaiLamKhiThemCauHoi(idBaiKiemTra, mangIdChiTiet);
 
       return chiTietSaved;
     } catch (error) {
@@ -241,7 +241,7 @@ export class BaiKiemTraService {
       if (ids.length === 0) {
         await chiTietRepo.delete({ idBaiKiemTra });
         // Xóa chi tiết bài làm tương ứng
-        await this.baiLamSinhVienService.capNhatChiTietBaiLamKhiCapNhatCauHoi(idBaiKiemTra, []);
+        // await this.baiLamSinhVienService.capNhatChiTietBaiLamKhiCapNhatCauHoi(idBaiKiemTra, []);
         return [];
       }
 
@@ -279,7 +279,7 @@ export class BaiKiemTraService {
         .map(e => e.id)
         .concat(newChiTietIds);
 
-      await this.baiLamSinhVienService.capNhatChiTietBaiLamKhiCapNhatCauHoi(idBaiKiemTra, finalIds);
+      // await this.baiLamSinhVienService.capNhatChiTietBaiLamKhiCapNhatCauHoi(idBaiKiemTra, finalIds);
 
       // 4) Trả về danh sách đã đồng bộ
       return await chiTietRepo.find({
@@ -293,7 +293,7 @@ export class BaiKiemTraService {
   async xoaCauHoiCoTrongBaiKiemTra(idChiTietBaiKiemTra: number) {
     try {
       // Xóa chi tiết bài làm trước
-      await this.baiLamSinhVienService.xoaChiTietBaiLamKhiXoaCauHoi(idChiTietBaiKiemTra);
+      // await this.baiLamSinhVienService.xoaChiTietBaiLamKhiXoaCauHoi(idChiTietBaiKiemTra);
       
       // Xóa chi tiết câu hỏi
       return await this.chiTietCauHoiBaiKiemTraRepo.delete(idChiTietBaiKiemTra);
