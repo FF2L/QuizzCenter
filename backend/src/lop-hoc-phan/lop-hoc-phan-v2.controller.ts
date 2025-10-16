@@ -8,6 +8,7 @@ import { RolesGuard } from 'src/auth/guards/roles/roles.guard';
 import { Roles } from 'src/common/decorations/roles.decorator';
 import { Role } from 'src/common/enum/role.enum';
 import { Pagination } from 'src/common/dto/pagination.dto';
+import { FilterLopHocPhanSinhVienDto } from './dto/filter-lop-hoc-phan-sv.dto';
 
 @Controller('v2/lop-hoc-phan')
 export class LopHocPhanV2Controller {
@@ -26,9 +27,12 @@ export class LopHocPhanV2Controller {
   @UseGuards(RolesGuard)
   @UseGuards((JwtAuthGuard))
   @Get()
-  async layTatCaLopHocPhanCuaSinhVien(@Req() req, @Query() pageDto:Pagination){
-    return await this.lopHocPhanService.layTatCaLopHocPhanCuaSinhVien(pageDto,req.user.id);
+  async layTatCaLopHocPhanCuaSinhVien(@Req() req, @Query() lhpSVDto: FilterLopHocPhanSinhVienDto){
+    return await this.lopHocPhanService.layTatCaLopHocPhanCuaSinhVien(lhpSVDto,req.user.id);
   }
+
+
+
 
   // @Get(':id')
   // findOne(@Param('id') id: string) {
