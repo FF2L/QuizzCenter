@@ -17,6 +17,10 @@ import SelectFromBankPage from './page/system/test/chonCauHoiTuNganHangCauhoi';
 import ForgotPasswordPage from './page/system/auth/forgotPassWord';
 import OTPVerifyPage from './page/system/auth/verifyOtp';
 import ResetPasswordPage from './page/system/auth/resetPassword';
+import QuizzCenter from './page/system/college-quizz-center';
+import CollegeDashBoard from './component/college/dashboard';
+import CollegeMyCourse from './component/college/my-course';
+import CollegeTest from './component/college/test';
 
 const App: FC = () => {
   return (
@@ -30,9 +34,19 @@ const App: FC = () => {
             <Route path="/otp" element={<OTPVerifyPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
 
+            {/*Các route cho phần sinh viên*/ }
+            <Route path="quizzcenter" element={<ProtectedRoute><QuizzCenter /></ProtectedRoute>}>
+            <Route index element={<Navigate to="my/course" replace />} />
+            <Route path="my" element={<CollegeDashBoard />} />
+            <Route path="my/course" element={<CollegeMyCourse />} />
+            <Route path="/course/test/:idLopHocPhan" element={<CollegeTest />} />
+            </Route>
+
+
             {/* Các route cần đăng nhập */}
             <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
               <Route path="/course" element={<Course />} />
+
               <Route path="/page/:idMonHoc" element={<Page />} />
               <Route path="/lop-hoc-phan/bai-kiem-tra/:idLopHocPhan" element={<BaiKiemTraList />} />
               <Route path="/bai-kiem-tra/:idBaiKiemTra" element={<BaiKiemTraDetail />} />
