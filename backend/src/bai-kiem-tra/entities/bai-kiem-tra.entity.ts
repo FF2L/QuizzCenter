@@ -21,6 +21,9 @@ export class BaiKiemTra extends BaseEntity {
     @Column()
     soLanLam: number
 
+    @Column({nullable: true,default: true})
+    phatHanhBaKiemTra: boolean
+
     @Column()
     xemBaiLam: boolean
 
