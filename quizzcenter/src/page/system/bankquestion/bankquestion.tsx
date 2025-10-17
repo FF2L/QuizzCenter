@@ -178,21 +178,37 @@ const BankQuestion = () => {
     <Box sx={{ width: "100%", minHeight: "100vh", borderRadius: "10px", padding: 0 }}>
       <Stack spacing={10}>
         {/* Header + Search */}
-        <Box sx={{ flexDirection: "row", display: "flex", alignItems: "center"  }}>
-        <Breadcrumbs
-         sx={{ color: "black" }}
-      aria-label="breadcrumb"
-      separator="•" 
-    >
-          <Typography >
-            Môn học(
-                             <span style={{ color: "red" }}>{tenMonHoc}</span>
-                              )
-          </Typography>
-          
-          <Typography sx={{ml:1,color:'#898989'}}> Ngân hàng câu hỏi</Typography>
-          </Breadcrumbs>
-        </Box>
+        <Box
+  sx={{
+    display: "flex",
+    alignItems: "center",
+    mb: 2,
+    backgroundColor: "#f9f9f9",
+    p: 1.5,
+    borderRadius: 2,
+    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+  }}
+>
+  <Breadcrumbs
+    aria-label="breadcrumb"
+    separator="›"
+    sx={{
+      color: "#555",
+      "& .MuiTypography-root": { fontSize: 15 },
+    }}
+  >
+    <Typography sx={{ color: "#666" }}>
+      Môn học (
+      <span style={{ color: "#e91e63", fontWeight: 600 }}>{tenMonHoc}</span>
+      )
+    </Typography>
+
+    <Typography sx={{ fontWeight: 600, color: "#000" }}>
+      Ngân hàng câu hỏi
+    </Typography>
+  </Breadcrumbs>
+</Box>
+
        
           
           <Box sx={{ display:'flex', alignItems:'center', mt: 2 }}>

@@ -21,7 +21,8 @@ import QuizzCenter from './page/system/college-quizz-center';
 import CollegeDashBoard from './component/college/dashboard';
 import CollegeMyCourse from './component/college/my-course';
 import CollegeTest from './component/college/test';
-
+import CollegeTestDetail from "./component/college/testDetail";
+import Home from './page/system/home/home';
 const App: FC = () => {
   return (
     <UserProvider>
@@ -40,13 +41,14 @@ const App: FC = () => {
             <Route path="my" element={<CollegeDashBoard />} />
             <Route path="my/course" element={<CollegeMyCourse />} />
             <Route path="course/test/:idLopHocPhan" element={<CollegeTest />} />
+            <Route path="bai-kiem-tra-chi-tiet/:idBaiKiemTra" element={<CollegeTestDetail />} />
             </Route>
 
 
             {/* Các route cần đăng nhập */}
             <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+              <Route path="/home" element={<Home />} />
               <Route path="/course" element={<Course />} />
-
               <Route path="/page/:idMonHoc" element={<Page />} />
               <Route path="/lop-hoc-phan/bai-kiem-tra/:idLopHocPhan" element={<BaiKiemTraList />} />
               <Route path="/bai-kiem-tra/:idBaiKiemTra" element={<BaiKiemTraDetail />} />
