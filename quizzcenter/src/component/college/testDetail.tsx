@@ -36,8 +36,11 @@ const CollegeTestDetail: React.FC = () => {
   }, [baiKiemTra]);
 
   const handleLamBai = () => {
-    // Navigate đến trang làm bài
-    navigate(`/quizzcenter/lam-bai/${baiKiemTra.id}`);
+    navigate(`/quizzcenter/lam-bai/${baiKiemTra.id}`, {
+      state: {
+        baiKiemTra: baiKiemTra  // Truyền toàn bộ thông tin
+      }
+    });
   };
 
   if (!baiKiemTra) {
