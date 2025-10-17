@@ -62,7 +62,7 @@ export class BaiKiemTraService {
     }
   }
 
-  async timTatCaBaiKiemTraTheoIdLopHocPhan(idLopHocPhan: number, filter: FilterChiTietBaiKiemTraDto) {
+  async timTatCaBaiKiemTraTheoIdLopHocPhan(idLopHocPhan: number, filter?: FilterChiTietBaiKiemTraDto) {
     await this.lopHocPhanService.timMotLopHocPhanTheoId(idLopHocPhan);
     return await this.baiKiemTraRepo.find({
       where: { idLopHocPhan },
@@ -110,16 +110,6 @@ export class BaiKiemTraService {
     }
 
     try {
-      // Cập nhật số lần làm nếu thay đổi
-      // if (updateBaiKiemTraDto.soLanLam && updateBaiKiemTraDto.soLanLam !== entity.soLanLam) {
-      //   await this.baiLamSinhVienService.capNhatSoLanLamBai(
-      //     idBaiKiemTra,
-      //     entity.idLopHocPhan,
-      //     updateBaiKiemTraDto.soLanLam,
-      //   );
-      // }
-
-      // Object.assign(entity, updateBaiKiemTraDto);
       return await this.baiKiemTraRepo.save(entity);
     } catch (err) {
       throw new InternalServerErrorException('Cập nhật bài kiểm tra không thành công');
@@ -130,10 +120,6 @@ export class BaiKiemTraService {
     await this.timMotBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra);
 
     try {
-      // Xóa tất cả bài làm của sinh viên trước
-      // await this.baiLamSinhVienService.xoaTatCaBaiLamTheoIdBaiKiemTra(idBaiKiemTra);
-      
-      // Xóa bài kiểm tra
       return await this.baiKiemTraRepo.delete(idBaiKiemTra);
     } catch (err) {
       throw new InternalServerErrorException('Xóa bài kiểm tra không thành công');
@@ -219,9 +205,6 @@ export class BaiKiemTraService {
       // Lưu chi tiết câu hỏi bài kiểm tra
       const chiTietSaved = await this.chiTietCauHoiBaiKiemTraRepo.save(danhSachChiTietBaiKiemTra);
 
-      // Tự động thêm chi tiết bài làm cho tất cả sinh viên
-      // const mangIdChiTiet = chiTietSaved.map(ct => ct.id);
-      // await this.baiLamSinhVienService.themChiTietBaiLamKhiThemCauHoi(idBaiKiemTra, mangIdChiTiet);
 
       return chiTietSaved;
     } catch (error) {
@@ -240,8 +223,6 @@ export class BaiKiemTraService {
       // Nếu mảng rỗng: xóa hết chi tiết của bài kiểm tra
       if (ids.length === 0) {
         await chiTietRepo.delete({ idBaiKiemTra });
-        // Xóa chi tiết bài làm tương ứng
-        // await this.baiLamSinhVienService.capNhatChiTietBaiLamKhiCapNhatCauHoi(idBaiKiemTra, []);
         return [];
       }
 
@@ -292,8 +273,6 @@ export class BaiKiemTraService {
 
   async xoaCauHoiCoTrongBaiKiemTra(idChiTietBaiKiemTra: number) {
     try {
-      // Xóa chi tiết bài làm trước
-      // await this.baiLamSinhVienService.xoaChiTietBaiLamKhiXoaCauHoi(idChiTietBaiKiemTra);
       
       // Xóa chi tiết câu hỏi
       return await this.chiTietCauHoiBaiKiemTraRepo.delete(idChiTietBaiKiemTra);

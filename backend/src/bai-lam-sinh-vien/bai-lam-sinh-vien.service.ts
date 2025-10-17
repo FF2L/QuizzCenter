@@ -1,10 +1,15 @@
-import { forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, DeepPartial } from 'typeorm';
+import { Repository, In, DeepPartial, DataSource, Any } from 'typeorm';
 import { BaiLamSinhVien } from './entities/bai-lam-sinh-vien.entity';
 import { ChiTietBaiLam } from './entities/chi-tiet-bai-lam.entity';
 import { TrangThaiBaiLam } from 'src/common/enum/trangThaiBaiLam.enum';
 import { LopHocPhanService } from 'src/lop-hoc-phan/lop-hoc-phan.service';
+import { CreateBaiLamSinhVienDto } from './dto/create-bai-lam-sinh-vien.dto';
+import { SinhVienService } from 'src/sinh-vien/sinh-vien.service';
+import { BaiKiemTraService } from 'src/bai-kiem-tra/bai-kiem-tra.service';
+import { ChiTietCauHoiBaiKiemTra } from 'src/bai-kiem-tra/entities/chi-tiet-cau-hoi-bai-kiem-tra';
+import { UpdateChiTietCauHoiDto, UpdateDanhSachChiTietDto } from './dto/update-chi-tiet-cau-hoi.dto';
 
 @Injectable()
 export class BaiLamSinhVienService {
@@ -13,325 +18,372 @@ export class BaiLamSinhVienService {
     private baiLamSinhVienRepo: Repository<BaiLamSinhVien>,
     @InjectRepository(ChiTietBaiLam)
     private chiTietBaiLamRepo: Repository<ChiTietBaiLam>,
-    @Inject(forwardRef(() => LopHocPhanService))
-    private lopHocPhanService: LopHocPhanService,
+    @Inject(forwardRef(() => LopHocPhanService)) private lopHocPhanService: LopHocPhanService,
+    private readonly dataSource: DataSource,
+   
+    private sinhVienService: SinhVienService,
+    private baiKiemTraService: BaiKiemTraService
   ) {}
 
   /**
-   * Tạo bài làm cho tất cả sinh viên trong lớp học phần khi tạo đề mới
+   * Tạo bài làm cho sinh viên
    */
-  async taoBaiLamChoTatCaSinhVien(
-    idBaiKiemTra: number,
-    idLopHocPhan: number,
-    soLanLam: number,
-  ) {
-    try {
-      // Lấy danh sách sinh viên trong lớp
-      const lopHocPhan = await this.lopHocPhanService.timMotLopHocPhanTheoId(idLopHocPhan);
-      const danhSachSinhVien = await lopHocPhan.sinhVien;
+    async sinhVienLamBai(
+      createBLSVDto: CreateBaiLamSinhVienDto,
+      idSinhVien: number,
+    ) {
+      const { idBaiKiemTra } = createBLSVDto;
 
-      if (!danhSachSinhVien || danhSachSinhVien.length === 0) {
-        return []; // Không có sinh viên trong lớp
-      }
-
-      const danhSachBaiLam: BaiLamSinhVien[] = [];
-
-      // Tạo bài làm cho mỗi sinh viên theo số lần làm
-      for (const sinhVien of danhSachSinhVien) {
-        for (let lan = 1; lan <= soLanLam; lan++) {
-          const payload: DeepPartial<BaiLamSinhVien> = {
-            trangThaiBaiLam: TrangThaiBaiLam.ChuaLam,
-            // tongDiem: null,
-            // thoiGianBatDau: null,
-            // thoiGianketThuc: null, // dùng đúng tên như entity hiện tại
-            lanLamThu: lan,
-            idSinhVien: sinhVien.idNguoiDung,
-            idBaiKiemTra: idBaiKiemTra,
-          };
-          const baiLam = this.baiLamSinhVienRepo.create(payload); // trả về 1 object, không annotate mảng
-          danhSachBaiLam.push(baiLam);
-        }
-      }
-
-      return await this.baiLamSinhVienRepo.save(danhSachBaiLam);
-    } catch (error) {
-      console.error('Error in taoBaiLamChoTatCaSinhVien:', error);
-      throw new InternalServerErrorException(
-        'Lỗi khi tạo bài làm cho sinh viên',
-      );
-    }
-  }
-
-  /**
-   * Xóa tất cả bài làm của sinh viên khi xóa đề
-   */
-  async xoaTatCaBaiLamTheoIdBaiKiemTra(idBaiKiemTra: number) {
-    try {
-      // Lấy danh sách bài làm trước
-      const danhSachBaiLam = await this.baiLamSinhVienRepo.find({
-        where: { idBaiKiemTra },
-        select: ['id']
-      });
-
-      if (danhSachBaiLam.length === 0) {
-        return { deleted: 0 };
-      }
-
-      const mangIdBaiLam = danhSachBaiLam.map(bl => bl.id);
-
-      // Xóa chi tiết bài làm trước
-      await this.chiTietBaiLamRepo.delete({
-        idBaiLamSinhVien: In(mangIdBaiLam)
-      });
-
-      // Xóa bài làm
-      const result = await this.baiLamSinhVienRepo.delete({ idBaiKiemTra });
-      return result;
-    } catch (error) {
-      console.error('Error in xoaTatCaBaiLamTheoIdBaiKiemTra:', error);
-      throw new InternalServerErrorException(
-        'Lỗi khi xóa bài làm của sinh viên',
-      );
-    }
-  }
-
-  /**
-   * Thêm chi tiết bài làm khi thêm câu hỏi vào đề
-   */
-  async themChiTietBaiLamKhiThemCauHoi(
-    idBaiKiemTra: number,
-    mangIdChiTietCauHoiBaiKiemTra: number[],
-  ) {
-    try {
-      // Lấy tất cả bài làm của đề này
-      const danhSachBaiLam = await this.baiLamSinhVienRepo.find({
-        where: { idBaiKiemTra },
-      });
-
-      if (danhSachBaiLam.length === 0) {
-        return []; // Không có bài làm nào
-      }
-
-      const danhSachChiTiet: ChiTietBaiLam[] = [];
-
-      // Tạo chi tiết bài làm cho mỗi bài làm
-      for (const baiLam of danhSachBaiLam) {
-        for (const idChiTiet of mangIdChiTietCauHoiBaiKiemTra) {
-          const chiTiet = this.chiTietBaiLamRepo.create({
-            diemDat: 0,
-            idCauHoiBaiKiemTra: idChiTiet,
-            idBaiLamSinhVien: baiLam.id,
-            idDapAn: null, // Sinh viên chưa chọn đáp án
-          });
-          danhSachChiTiet.push(chiTiet);
-        }
-      }
-
-      return await this.chiTietBaiLamRepo.save(danhSachChiTiet);
-    } catch (error) {
-      console.error('Error in themChiTietBaiLamKhiThemCauHoi:', error);
-      throw new InternalServerErrorException(
-        'Lỗi khi thêm chi tiết bài làm',
-      );
-    }
-  }
-
-  /**
-   * Xóa chi tiết bài làm khi xóa câu hỏi khỏi đề
-   */
-  async xoaChiTietBaiLamKhiXoaCauHoi(idChiTietCauHoiBaiKiemTra: number) {
-    try {
-      return await this.chiTietBaiLamRepo.delete({
-        idCauHoiBaiKiemTra: idChiTietCauHoiBaiKiemTra,
-      });
-    } catch (error) {
-      console.error('Error in xoaChiTietBaiLamKhiXoaCauHoi:', error);
-      throw new InternalServerErrorException(
-        'Lỗi khi xóa chi tiết bài làm',
-      );
-    }
-  }
-
-  /**
-   * Cập nhật chi tiết bài làm khi cập nhật danh sách câu hỏi
-   */
-  async capNhatChiTietBaiLamKhiCapNhatCauHoi(
-    idBaiKiemTra: number,
-    mangIdChiTietMoi: number[],
-  ) {
-    try {
-      // Lấy danh sách bài làm
-      const danhSachBaiLam = await this.baiLamSinhVienRepo.find({
-        where: { idBaiKiemTra },
-        select: ['id']
-      });
-
-      if (danhSachBaiLam.length === 0) {
-        return { xoa: 0, them: 0 };
-      }
-
-      const mangIdBaiLam = danhSachBaiLam.map(bl => bl.id);
-
-      // Lấy chi tiết hiện tại
-      const chiTietHienTai = await this.chiTietBaiLamRepo.find({
-        where: {
-          idBaiLamSinhVien: In(mangIdBaiLam),
-        },
-      });
-
-      const mapChiTietHienTai = new Map<string, ChiTietBaiLam>();
-      chiTietHienTai.forEach((ct) => {
-        const key = `${ct.idBaiLamSinhVien}-${ct.idCauHoiBaiKiemTra}`;
-        mapChiTietHienTai.set(key, ct);
-      });
-
-      // Xác định chi tiết cần xóa
-      const chiTietCanXoa: number[] = [];
-      const setIdMoi = new Set(mangIdChiTietMoi);
-
-      chiTietHienTai.forEach((ct) => {
-        if (!setIdMoi.has(ct.idCauHoiBaiKiemTra)) {
-          chiTietCanXoa.push(ct.id);
-        }
-      });
-
-      // Xóa chi tiết không còn trong danh sách
-      if (chiTietCanXoa.length > 0) {
-        await this.chiTietBaiLamRepo.delete(chiTietCanXoa);
-      }
-
-      // Thêm chi tiết mới
-      const chiTietCanThem: ChiTietBaiLam[] = [];
-      for (const baiLam of danhSachBaiLam) {
-        for (const idChiTiet of mangIdChiTietMoi) {
-          const key = `${baiLam.id}-${idChiTiet}`;
-          if (!mapChiTietHienTai.has(key)) {
-            const chiTiet = this.chiTietBaiLamRepo.create({
-              diemDat: 0,
-              idCauHoiBaiKiemTra: idChiTiet,
-              idBaiLamSinhVien: baiLam.id,
-              idDapAn: null,
-            });
-            chiTietCanThem.push(chiTiet);
-          }
-        }
-      }
-
-      if (chiTietCanThem.length > 0) {
-        await this.chiTietBaiLamRepo.save(chiTietCanThem);
-      }
-
-      return { xoa: chiTietCanXoa.length, them: chiTietCanThem.length };
-    } catch (error) {
-      console.error('Error in capNhatChiTietBaiLamKhiCapNhatCauHoi:', error);
-      throw new InternalServerErrorException(
-        'Lỗi khi cập nhật chi tiết bài làm',
-      );
-    }
-  }
-
-  /**
-   * Cập nhật số lần làm bài
-   */
-  async capNhatSoLanLamBai(
-    idBaiKiemTra: number,
-    idLopHocPhan: number,
-    soLanLamMoi: number,
-  ) {
-    try {
-      // Lấy danh sách sinh viên
-      const lopHocPhan = await this.lopHocPhanService.timMotLopHocPhanTheoId(idLopHocPhan);
-      const danhSachSinhVien = await lopHocPhan.sinhVien;
-
-      if (!danhSachSinhVien || danhSachSinhVien.length === 0) {
-        return { them: 0, xoa: 0 };
-      }
-
-      // Lấy bài làm hiện tại
-      const baiLamHienTai = await this.baiLamSinhVienRepo.find({
-        where: { idBaiKiemTra },
-      });
-
-      // Nhóm theo sinh viên
-      const mapBaiLam = new Map<number, BaiLamSinhVien[]>();
-      baiLamHienTai.forEach((bl) => {
-        const idSV = bl.idSinhVien;
-        if (!mapBaiLam.has(idSV)) {
-          mapBaiLam.set(idSV, []);
-        }
-        mapBaiLam.get(idSV)?.push(bl);
-      });
-
-      const baiLamCanThem: BaiLamSinhVien[] = [];
-      const baiLamCanXoa: number[] = [];
-
-      for (const sv of danhSachSinhVien) {
-        const baiLamCuaSV = mapBaiLam.get(sv.idNguoiDung) || [];
-        const soLanHienTai = baiLamCuaSV.length;
-
-        if (soLanHienTai < soLanLamMoi) {
-          // Thêm bài làm
-          for (let lan = soLanHienTai + 1; lan <= soLanLamMoi; lan++) {
-            const payload: DeepPartial<BaiLamSinhVien> = {
-            trangThaiBaiLam: TrangThaiBaiLam.ChuaLam,
-            // tongDiem: null,
-            // thoiGianBatDau: null,
-            // thoiGianketThuc: null, // dùng đúng tên như entity hiện tại
-            lanLamThu: lan,
-            idSinhVien: sv.idNguoiDung,
-            idBaiKiemTra: idBaiKiemTra,
-          };
-          const baiLam = this.baiLamSinhVienRepo.create(payload); 
-            baiLamCanThem.push(baiLam);
-          }
-        } else if (soLanHienTai > soLanLamMoi) {
-          // Xóa bài làm thừa (xóa từ lần làm lớn nhất)
-          const baiLamSapXep = baiLamCuaSV.sort((a, b) => b.lanLamThu - a.lanLamThu);
-          for (let i = 0; i < soLanHienTai - soLanLamMoi; i++) {
-            baiLamCanXoa.push(baiLamSapXep[i].id);
-          }
-        }
-      }
-
-      if (baiLamCanThem.length > 0) {
-        await this.baiLamSinhVienRepo.save(baiLamCanThem);
-      }
-
-      if (baiLamCanXoa.length > 0) {
-        // Xóa chi tiết trước
-        await this.chiTietBaiLamRepo.delete({
-          idBaiLamSinhVien: In(baiLamCanXoa),
+      return this.dataSource.transaction(async (manager) => {
+        // 1) Lấy tất cả câu hỏi của bài kiểm tra
+        const dsChiTietCauHoi = await manager.find(ChiTietCauHoiBaiKiemTra, {
+          where: { idBaiKiemTra },
+          // để tránh rối với lazy, ta sẽ tự await quan hệ bên dưới
+          order: { id: 'ASC' },
         });
-        await this.baiLamSinhVienRepo.delete(baiLamCanXoa);
+
+        if (dsChiTietCauHoi.length === 0) {
+          throw new BadRequestException('Bài kiểm tra chưa có câu hỏi nào.');
+        }
+
+        // 2) Tạo bài làm (đang làm)
+        const baiLam = manager.create(BaiLamSinhVien, {
+          trangThaiBaiLam: TrangThaiBaiLam.DangLam,
+          thoiGianBatDau: new Date(),
+          idSinhVien,
+          idBaiKiemTra,
+        });
+        await manager.save(baiLam);
+
+        // 3) Tạo hàng loạt ChiTietBaiLam (snapshot link theo idCauHoiBaiKiemTra)
+        const toCreate = dsChiTietCauHoi.map((ctch) =>
+          manager.create(ChiTietBaiLam, {
+            idBaiLamSinhVien: baiLam.id,
+            idCauHoiBaiKiemTra: ctch.id,
+            // diemDat: 0,
+            mangIdDapAn: null, // SV chưa chọn
+            // nếu bạn có thêm cột orderIndex/markedForReview/gradingStatus… thì set ở đây
+          }),
+        );
+        // Lưu và lấy lại bản đã có id
+        const chiTietSaved = await manager.save(ChiTietBaiLam, toCreate);
+
+        // Map nhanh: idCauHoiBaiKiemTra -> ChiTietBaiLam đã lưu
+        const mapCT = new Map<number, ChiTietBaiLam>(
+          chiTietSaved.map((row) => [row.idCauHoiBaiKiemTra, row]),
+        );
+
+        // 4) Chuẩn hóa dữ liệu trả về: bài làm + câu hỏi + đáp án + id chi tiết
+        const payload = {
+          baiLam: {
+            id: baiLam.id,
+            idSinhVien: baiLam.idSinhVien,
+            idBaiKiemTra: baiLam.idBaiKiemTra,
+            trangThaiBaiLam: baiLam.trangThaiBaiLam,
+            thoiGianBatDau: baiLam.thoiGianBatDau,
+          },
+          cauHoi: await Promise.all(
+            dsChiTietCauHoi.map(async (ctch) => {
+              const cauHoi = await ctch.cauHoi;     // lazy -> cần await
+              const dapAn = await cauHoi.dapAn;     // lazy -> cần await
+              const ct = mapCT.get(ctch.id)!;
+
+              return {
+                idChiTietBaiLam: ct.id,
+                idCauHoiBaiKiemTra: ctch.id,
+                cauHoi: {
+                  id: cauHoi.id,
+                  noiDung: cauHoi.noiDungCauHoi,
+                  loai: cauHoi.loaiCauHoi,
+                  tenHienThi: cauHoi.tenHienThi,
+                },
+                dapAn: dapAn.map((da) => ({
+                  id: da.id,
+                  noiDung: da.noiDung,
+                  // KHÔNG trả isCorrect cho SV đang làm bài
+                })),
+                // lựa chọn hiện tại của SV (lúc mới tạo là rỗng)
+                luaChon: {
+                  mangIdDapAn: ct.mangIdDapAn ?? [],
+                },
+              };
+            }),
+          ),
+        };
+
+        return payload;
+      });
+    }
+
+    async luuTamDapAn(
+    idBaiLamSinhVien: number,
+    danhSach: UpdateChiTietCauHoiDto[],
+  ) {
+    return this.dataSource.transaction(async (manager) => {
+      const dsChiTiet = await manager.find(ChiTietBaiLam, {
+        where: { idBaiLamSinhVien },
+      });
+
+      const mapCT = new Map<number, ChiTietBaiLam>(
+        dsChiTiet.map((ct) => [ct.idCauHoiBaiKiemTra, ct]),
+      );
+
+      for (const item of danhSach) {
+        const ct = mapCT.get(item.idCauHoiBaiKiemTra);
+        if (ct) {
+          ct.mangIdDapAn = item.mangIdDapAn;
+          await manager.save(ct);
+        }
       }
 
-      return { them: baiLamCanThem.length, xoa: baiLamCanXoa.length };
-    } catch (error) {
-      console.error('Error in capNhatSoLanLamBai:', error);
-      throw new InternalServerErrorException(
-        'Lỗi khi cập nhật số lần làm bài',
-      );
+      return { message: 'Lưu tạm thành công' };
+    });
     }
-  }
 
-  // Các method cũ
-  create(createBaiLamSinhVienDto: any) {
-    return 'This action adds a new baiLamSinhVien';
-  }
+ async nopbai(idBaiLamSinhVien: number) {
+  return this.dataSource.transaction(async (manager) => {
+    const baiLam = await manager.findOne(BaiLamSinhVien, {
+      where: { id: idBaiLamSinhVien },
+    });
 
-  findAll() {
-    return `This action returns all baiLamSinhVien`;
-  }
+    if (!baiLam) {
+      throw new NotFoundException('Không tìm thấy bài làm.');
+    }
 
-  findOne(id: number) {
-    return `This action returns a #${id} baiLamSinhVien`;
-  }
+    if (baiLam.trangThaiBaiLam === TrangThaiBaiLam.DaNop) {
+      throw new BadRequestException('Bài làm đã được nộp trước đó.');
+    }
 
-  update(id: number, updateBaiLamSinhVienDto: any) {
-    return `This action updates a #${id} baiLamSinhVien`;
-  }
+    // --- TÍNH ĐIỂM ---
+    const dsChiTiet = await manager.find(ChiTietBaiLam, {
+      where: { idBaiLamSinhVien },
+    });
 
-  remove(id: number) {
-    return `This action removes a #${id} baiLamSinhVien`;
+    let tongDapAnDung = 0;
+    let tongDapAnToanBo = 0;
+
+    for (const ct of dsChiTiet) {
+      const ctch = await manager.findOne(ChiTietCauHoiBaiKiemTra, {
+        where: { id: ct.idCauHoiBaiKiemTra },
+        relations: ['cauHoi', 'cauHoi.dapAn'],
+      });
+
+      const cauHoi = await ctch?.cauHoi;
+      if (!cauHoi) continue;
+
+      const dsDapAn = await cauHoi.dapAn;
+      const dapAnDung = dsDapAn.filter(d => d.dapAnDung).map(d => d.id);
+
+      tongDapAnToanBo += dapAnDung.length;
+
+      const daChon = ct.mangIdDapAn ?? [];
+      const soDung = daChon.filter(id => dapAnDung.includes(id)).length;
+      tongDapAnDung += soDung;
+    }
+
+    const tongDiem = tongDapAnToanBo === 0 
+      ? 0 
+      : Number(((tongDapAnDung / tongDapAnToanBo) * 10).toFixed(2));
+
+    // Cập nhật
+    baiLam.trangThaiBaiLam = TrangThaiBaiLam.DaNop;
+    baiLam.thoiGianketThuc = new Date();
+    baiLam.tongDiem = tongDiem;
+
+    await manager.save(baiLam);
+
+    return {
+      message: 'Nộp bài thành công',
+      tongDiem,
+      tongDapAnDung,
+      tongDapAnToanBo,
+    };
+  });
+}
+
+    async xemLaiBaiLam(idBaiLamSinhVien: number) {
+    // 1) Lấy bài làm
+    const blRepo = this.dataSource.getRepository(BaiLamSinhVien);
+    const ctblRepo = this.dataSource.getRepository(ChiTietBaiLam);
+    const ctchRepo = this.dataSource.getRepository(ChiTietCauHoiBaiKiemTra);
+
+    const baiLam = await blRepo.findOne({ where: { id: idBaiLamSinhVien } });
+    if (!baiLam) throw new NotFoundException('Không tìm thấy bài làm.');
+
+    // 2) Kiểm tra quyền xem: đã nộp hoặc GV/ADMIN
+
+    const choPhepXem = baiLam.trangThaiBaiLam === TrangThaiBaiLam.DaNop
+
+    if (!choPhepXem) {
+      throw new ForbiddenException('Bạn chưa thể xem lại bài khi chưa nộp.');
+    }
+
+    // 3) Lấy toàn bộ chi tiết
+    const dsChiTiet = await ctblRepo.find({
+      where: { idBaiLamSinhVien },
+      order: { id: 'ASC' },
+    });
+    if (!dsChiTiet.length) {
+      throw new NotFoundException('Bài làm chưa có chi tiết.');
+    }
+
+    // 4) Duyệt từng câu: lấy câu hỏi + đáp án đúng, gắn cờ selected cho từng đáp án
+    let tongDapAnDung = 0;
+    let tongDapAnToanBo = 0;
+
+    const items = await Promise.all(
+      dsChiTiet.map(async (ct) => {
+        const ctch = await ctchRepo.findOne({ where: { id: ct.idCauHoiBaiKiemTra } });
+        if (!ctch) {
+          return {
+            idChiTietBaiLam: ct.id,
+            idCauHoiBaiKiemTra: ct.idCauHoiBaiKiemTra,
+            cauHoi: null,
+            dapAn: [],
+            daChon: ct.mangIdDapAn ?? [],
+          };
+        }
+
+        const cauHoi = await ctch.cauHoi;      // lazy
+        const dsDapAn = await cauHoi.dapAn;    // lazy
+
+        const dungIds = dsDapAn.filter(d => d.dapAnDung).map(d => d.id);
+        const daChonSet = new Set(ct.mangIdDapAn ?? []);
+
+        tongDapAnToanBo += dungIds.length;
+        // số đáp án đúng mà SV đã chọn ở câu này
+        const soDungCau = (ct.mangIdDapAn ?? []).reduce(
+          (acc, id) => acc + (dungIds.includes(id) ? 1 : 0),
+          0,
+        );
+        tongDapAnDung += soDungCau;
+
+        return {
+          idChiTietBaiLam: ct.id,
+          idCauHoiBaiKiemTra: ctch.id,
+          cauHoi: {
+            id: cauHoi.id,
+            tenHienThi: cauHoi.tenHienThi,
+            noiDung: cauHoi.noiDungCauHoi,
+            loai: cauHoi.loaiCauHoi,
+          },
+          daChon: ct.mangIdDapAn ?? [],
+          dapAn: dsDapAn.map((d) => ({
+            id: d.id,
+            noiDung: d.noiDung,
+            isCorrect: !!d.dapAnDung,
+            selected: daChonSet.has(d.id),
+          })),
+        };
+      })
+    );
+
+    // 5) Tính điểm thang 10 theo tổng số đáp án đúng
+    const diemThang10 =
+      tongDapAnToanBo === 0 ? 0 : Number(((tongDapAnDung / tongDapAnToanBo) * 10).toFixed(2));
+
+    return {
+      baiLam: {
+        id: baiLam.id,
+        idSinhVien: baiLam.idSinhVien,
+        idBaiKiemTra: baiLam.idBaiKiemTra,
+        trangThai: baiLam.trangThaiBaiLam,
+        tongDiem: baiLam.tongDiem, // nếu trước đó bạn đã lưu; có thể khác với tính lại nếu chưa đồng bộ
+        diemTinhLai: diemThang10,  // điểm tính realtime theo công thức hiện tại
+        thoiGianBatDau: baiLam.thoiGianBatDau,
+        thoiGianketThuc: baiLam.thoiGianketThuc,
+      },
+      thongKe: {
+        tongCau: dsChiTiet.length,
+        tongDapAnDung,
+        tongDapAnToanBo,
+        diemThang10,
+      },
+      chiTiet: items,
+    };
   }
+    async tiepTucLamBai(idBaiLamSinhVien: number) {
+      return this.dataSource.transaction(async (manager) => {
+        // 1) Bài làm phải thuộc SV và đang "Đang làm"
+        const baiLam = await manager.findOne(BaiLamSinhVien, {
+          where: { id: idBaiLamSinhVien, trangThaiBaiLam: TrangThaiBaiLam.DangLam },
+        });
+        if (!baiLam) {
+          throw new NotFoundException('Không tìm thấy bài làm đang làm dở.');
+        }
+
+        // 2) Lấy toàn bộ chi tiết bài làm (để lấy lựa chọn đã chọn)
+        const dsChiTiet = await manager.find(ChiTietBaiLam, {
+          where: { idBaiLamSinhVien },
+          order: { id: 'ASC' }, // hoặc orderIndex nếu bạn có
+        });
+        if (!dsChiTiet.length) {
+          throw new NotFoundException('Bài làm chưa có chi tiết.');
+        }
+
+        // 3) Lấy lại danh sách câu hỏi của đề theo idBaiKiemTra (giữ cùng thứ tự như khi tạo)
+        const dsChiTietCauHoi = await manager.find(ChiTietCauHoiBaiKiemTra, {
+          where: { idBaiKiemTra: baiLam.idBaiKiemTra },
+        });
+
+        // Map: idCauHoiBaiKiemTra -> ChiTietBaiLam (để lấy id chi tiết + lựa chọn)
+        const mapCT = new Map<number, ChiTietBaiLam>(
+          dsChiTiet.map((ct) => [ct.idCauHoiBaiKiemTra, ct]),
+        );
+
+        // 4) Chuẩn hóa dữ liệu trả về: đúng format yêu cầu
+        const payload = {
+          baiLam: {
+            id: baiLam.id,
+            idSinhVien: baiLam.idSinhVien,
+            idBaiKiemTra: baiLam.idBaiKiemTra,
+            trangThaiBaiLam: baiLam.trangThaiBaiLam,
+            thoiGianBatDau: baiLam.thoiGianBatDau,
+          },
+          cauHoi: await Promise.all(
+            dsChiTietCauHoi.map(async (ctch) => {
+              const cauHoi = await ctch.cauHoi;      // lazy -> cần await
+              const dapAn = await cauHoi.dapAn;      // lazy -> cần await
+              const ct = mapCT.get(ctch.id);         // chi tiết tương ứng (đã lưu từ lúc start)
+
+              return {
+                idChiTietBaiLam: ct?.id ?? null,     // phòng khi record thiếu
+                idCauHoiBaiKiemTra: ctch.id,
+                cauHoi: {
+                  id: cauHoi.id,
+                  noiDung: cauHoi.noiDungCauHoi,
+                  loai: cauHoi.loaiCauHoi,
+                  tenHienThi: cauHoi.tenHienThi,
+                },
+                dapAn: (dapAn ?? []).map((da) => ({
+                  id: da.id,
+                  noiDung: da.noiDung,
+                  // KHÔNG trả đáp án đúng ở chế độ tiếp tục làm bài
+                })),
+                luaChon: {
+                  mangIdDapAn: ct?.mangIdDapAn ?? [],
+                },
+              };
+            }),
+          ),
+        };
+
+        return payload;
+      });
+    }
+
+async layBaiLamSinhVien(idDeThi: number) {
+  return this.baiLamSinhVienRepo
+    .createQueryBuilder('bl')
+    .leftJoin('bl.baiKiemTra', 'bk')
+    .where('"bk"."id" = :idDeThi', { idDeThi })   
+    .orderBy('"bl"."update_at"', 'ASC')               
+    .getMany();
+}
+
+
+
+
+
+
 }

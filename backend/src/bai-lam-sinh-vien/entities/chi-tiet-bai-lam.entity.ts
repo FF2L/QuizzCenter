@@ -22,9 +22,8 @@ export class ChiTietBaiLam {
     baiLamSinhVien: Promise<BaiLamSinhVien>
     @Column() idBaiLamSinhVien: number
 
-    // Đáp án mà sinh viên đã chọn (nullable vì ban đầu chưa chọn)
-    @ManyToOne(() => DapAn, (dapAn) => dapAn.chiTietBaiLam, {lazy: true, nullable: true, onDelete: 'SET NULL'})
-    @JoinColumn({name: 'idDapAn'})
-    dapAn: Promise<DapAn | null>
-    @Column({ nullable: true }) idDapAn: number | null
+    // @ManyToOne(() => DapAn, (dapAn) => dapAn.chiTietBaiLam, {lazy: true, nullable: true, onDelete: 'SET NULL'})
+    // @JoinColumn({name: 'idDapAn'})
+    // dapAn: Promise<DapAn | null>
+    @Column({ nullable: true, array: true,type: 'int' }) mangIdDapAn: number[] | null
 }

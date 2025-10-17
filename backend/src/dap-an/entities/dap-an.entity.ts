@@ -24,7 +24,7 @@ export class DapAn  extends BaseEntity{
     @Column()
     idCauHoi: number; 
 
-    @OneToMany(() => ChiTietBaiLam, (chiTietBaiLam) => chiTietBaiLam.dapAn,{lazy:true, cascade:true})
-    chiTietBaiLam: Promise<ChiTietBaiLam[]>
+    // @OneToMany(() => ChiTietBaiLam, (chiTietBaiLam) => chiTietBaiLam.dapAn,{lazy:true, cascade:true})
+    // chiTietBaiLam: Promise<ChiTietBaiLam[]>
 
 }

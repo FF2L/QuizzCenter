@@ -7,6 +7,7 @@ import { LopHocPhanModule } from 'src/lop-hoc-phan/lop-hoc-phan.module';
 import { ChiTietCauHoiBaiKiemTra } from './entities/chi-tiet-cau-hoi-bai-kiem-tra';
 import { CauHoiModule } from 'src/cau-hoi/cau-hoi.module';
 import { BaiLamSinhVienModule } from 'src/bai-lam-sinh-vien/bai-lam-sinh-vien.module';
+import { SinhVienModule } from 'src/sinh-vien/sinh-vien.module';
 
 @Module({
   imports:[TypeOrmModule.forFeature([BaiKiemTra,ChiTietCauHoiBaiKiemTra]),LopHocPhanModule,CauHoiModule,  forwardRef(() => BaiLamSinhVienModule)],

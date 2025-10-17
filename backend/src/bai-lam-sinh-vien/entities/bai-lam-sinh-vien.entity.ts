@@ -6,7 +6,6 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToMany, Unique } from "typeor
 import { ChiTietBaiLam } from "./chi-tiet-bai-lam.entity";
 
 @Entity()
-@Unique(['idSinhVien', 'idBaiKiemTra', 'lanLamThu']) // Đảm bảo không trùng lần làm
 export class BaiLamSinhVien extends BaseEntity{
     
     @Column({
@@ -33,8 +32,8 @@ export class BaiLamSinhVien extends BaseEntity{
     })
     thoiGianketThuc: Date
 
-    @Column()
-    lanLamThu: number
+    // @Column()
+    // lanLamThu: number
 
     @ManyToOne(() => SinhVien, (sv) => sv.baiLamSInhVien, {lazy: true})
     @JoinColumn({name: 'idSinhVien'})
