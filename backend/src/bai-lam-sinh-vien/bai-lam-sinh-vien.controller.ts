@@ -15,9 +15,10 @@ export class BaiLamSinhVienController {
   //lấy tát cả bài làm sinh viên có trong đề
   @UseGuards(JwtAuthGuard)
   @Get(':idDeThi')
-  findAll(@Param('idDeThi', ParseIntPipe) idDeThi: number) {
-    return this.baiLamSinhVienService.layBaiLamSinhVien(idDeThi);
+  findAll(@Param('idDeThi', ParseIntPipe) idDeThi: number, @Req() req) {
+    return this.baiLamSinhVienService.layBaiLamSinhVien(idDeThi, req.user.id);
   }
+
   
   //tạo bài làm cho sinh viên
   @UseGuards(JwtAuthGuard)
@@ -50,7 +51,7 @@ export class BaiLamSinhVienController {
   tiepTucLamBai(@Param('idBaiLamSinhVien', ParseIntPipe) idBaiLamSinhVien: number) {
     return this.baiLamSinhVienService.tiepTucLamBai(idBaiLamSinhVien);
   }
-
+ 
 
 
 
