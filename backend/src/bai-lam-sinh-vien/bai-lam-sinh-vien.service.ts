@@ -93,13 +93,13 @@ export class BaiLamSinhVienService {
                 idCauHoiBaiKiemTra: ctch.id,
                 cauHoi: {
                   id: cauHoi.id,
-                  noiDung: cauHoi.noiDungCauHoi,
+                  noiDung: cauHoi.noiDungCauHoiHTML,
                   loai: cauHoi.loaiCauHoi,
                   tenHienThi: cauHoi.tenHienThi,
                 },
                 dapAn: dapAn.map((da) => ({
                   id: da.id,
-                  noiDung: da.noiDung,
+                  noiDung: da.noiDungHTML,
                   // KHÔNG trả isCorrect cho SV đang làm bài
                 })),
                 // lựa chọn hiện tại của SV (lúc mới tạo là rỗng)
@@ -264,13 +264,13 @@ export class BaiLamSinhVienService {
           cauHoi: {
             id: cauHoi.id,
             tenHienThi: cauHoi.tenHienThi,
-            noiDung: cauHoi.noiDungCauHoi,
+            noiDung: cauHoi.noiDungCauHoiHTML,
             loai: cauHoi.loaiCauHoi,
           },
           daChon: ct.mangIdDapAn ?? [],
           dapAn: dsDapAn.map((d) => ({
             id: d.id,
-            noiDung: d.noiDung,
+            noiDung: d.noiDungHTML,
             isCorrect: !!d.dapAnDung,
             selected: daChonSet.has(d.id),
           })),
@@ -372,11 +372,13 @@ export class BaiLamSinhVienService {
       });
     }
 
-async layBaiLamSinhVien(idDeThi: number) {
+async layBaiLamSinhVien(idDeThi: number , idSinhVien: number) {
   return this.baiLamSinhVienRepo
     .createQueryBuilder('bl')
     .leftJoin('bl.baiKiemTra', 'bk')
-    .where('"bk"."id" = :idDeThi', { idDeThi })   
+    .leftJoin('bl.sinhVien', 'sv')
+    .where('"bk"."id" = :idDeThi', { idDeThi })
+    .where('"sv"."id" = :idSinhVien', { idSinhVien })  
     .orderBy('"bl"."update_at"', 'ASC')               
     .getMany();
 }
