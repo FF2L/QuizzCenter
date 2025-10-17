@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams,useLocation } from "react-router-dom";
 import {
   Box,
   Stack,
@@ -17,6 +17,12 @@ import { Delete, Edit, Visibility } from "@mui/icons-material";
 import QuestionDetailDialog from "../bankquestion/deTailDialog";
 import DeleteConfirmDialog from "../bankquestion/deleteConfirmDialog";
 import UpdateQuestionDialog from "../bankquestion/updateQuestionDialog";
+import CategoryIcon from "@mui/icons-material/Category";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import TimerIcon from "@mui/icons-material/Timer";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import Breadcrumbs from "@mui/material/Breadcrumbs";
 
 const BaiKiemTraDetail: React.FC = () => {
   const { idBaiKiemTra } = useParams<{ idBaiKiemTra: string }>();
@@ -32,8 +38,9 @@ const BaiKiemTraDetail: React.FC = () => {
   const [openDetailDialog, setOpenDetailDialog] = useState(false);
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
   const [monHoc, setMonHoc] = useState<  any | null>(null);  
+  const location = useLocation();
+  const { tenMonHoc,tenLopHoc,tenBaiKiemTra } = location.state || {};
   const limit = 5;
-
   // menu state
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -143,6 +150,46 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
 
   return (
     <Box sx={{ p: 3, backgroundColor:"#F8F9FA", width: "100%", minHeight: "100vh"}}>
+      <Box
+  sx={{
+    display: "flex",
+    alignItems: "center",
+    mb: 2,
+    backgroundColor: "#f9f9f9",
+    p: 1.5,
+    borderRadius: 2,
+    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+  }}
+>
+  <Breadcrumbs
+    aria-label="breadcrumb"
+    separator="›"
+    sx={{
+      color: "#555",
+      "& .MuiTypography-root": { fontSize: 15 },
+    }}
+  >
+    <Typography sx={{ color: "#555" }}>
+      Môn học (
+      <span style={{ color: "#e91e63" }}>{tenMonHoc}</span>
+      )
+    </Typography>
+
+    <Typography sx={{ color: "#555" }}>
+      Lớp học (
+      <span style={{ color: "#007CD5" }}>{tenLopHoc}</span>
+      )
+    </Typography>
+
+    <Typography sx={{ color: "#555" }}>
+      Bài kiểm tra
+    </Typography>
+
+    <Typography sx={{ color: "black" }}>
+    <span style={{ fontWeight:"bold" }}>{tenBaiKiemTra}</span>
+    </Typography>
+  </Breadcrumbs>
+</Box>
       {bai && (
         <>
           {/* Header */}
@@ -152,7 +199,12 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
             alignItems="center"
             mb={2}
           >
-            <Typography variant="h4">{bai.tenBaiKiemTra}</Typography>
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+            <IconButton onClick={() => navigate(-1)}>
+            <ArrowBackIcon />
+            </IconButton>
+            <Typography variant="h3" sx={{ fontWeight: "medium", fontSize: "30px", color: "black"}}>{bai.tenBaiKiemTra}</Typography>
+            </Box>
             <div>
               <Button
                 variant="contained"
@@ -214,16 +266,53 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
 
           {/* Thông tin */}
           
-          <Stack direction="column" spacing={2} mb={3} mt={15} sx={{ width: "fit-content",p: 5,backgroundColor:"rgba(0, 201, 75, 0.08)", borderRadius:"15px", border:"1px solid rgba(0, 201, 75, 1)"}}>
-            <Typography><span style={{ fontWeight: "bold" }}>Loại:</span> {bai.loaiKiemTra}</Typography>
-            <Typography><span style={{ fontWeight: "bold" }}>Số lần làm:</span> {bai.soLanLam}</Typography>
-            <Typography>
-            <span style={{ fontWeight: "bold" }}>Thời gian:{" "}</span>
-              {new Date(bai.thoiGianBatDau).toLocaleString()} -{" "}
-              {new Date(bai.thoiGianKetThuc).toLocaleString()}
-            </Typography>
-            <Typography>  <span style={{ fontWeight: "bold" }}>Thời gian làm:</span> {bai.thoiGianLam / 60} phút</Typography>
-          </Stack>
+          <Box
+  sx={{
+    display: "grid",
+    gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+    gap: 2,
+    p: 3,
+    borderRadius: 3,
+    border: "1px solid #c8f5d4",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+    width: "100%",
+  }}
+>
+  {/* Loại kiểm tra */}
+  <Box sx={{ display: "flex", alignItems: "center" }}>
+    <CategoryIcon sx={{ color: "#00bfa5", mr: 1 }} />
+    <Typography variant="body1">
+      <strong>Loại:</strong>&nbsp;{bai.loaiKiemTra}
+    </Typography>
+  </Box>
+
+  {/* Số lần làm */}
+  <Box sx={{ display: "flex", alignItems: "center" }}>
+    <AssignmentIcon sx={{ color: "#00796b", mr: 1 }} />
+    <Typography variant="body1">
+      <strong>Số lần làm:</strong>&nbsp;{bai.soLanLam}
+    </Typography>
+  </Box>
+
+  {/* Thời gian */}
+  <Box sx={{ display: "flex", alignItems: "center" }}>
+    <AccessTimeIcon sx={{ color: "#00acc1", mr: 1 }} />
+    <Typography variant="body1">
+      <strong>Thời gian:</strong>&nbsp;
+      {new Date(bai.thoiGianBatDau).toLocaleString()} - {new Date(bai.thoiGianKetThuc).toLocaleString()}
+    </Typography>
+  </Box>
+
+  {/* Thời gian làm */}
+  <Box sx={{ display: "flex", alignItems: "center" }}>
+    <TimerIcon sx={{ color: "#0288d1", mr: 1 }} />
+    <Typography variant="body1">
+      <strong>Thời gian làm:</strong>&nbsp;{bai.thoiGianLam / 60} phút
+    </Typography>
+  </Box>
+</Box>
+
+
 
           {/* Danh sách câu hỏi */}
           <Stack spacing={2}>

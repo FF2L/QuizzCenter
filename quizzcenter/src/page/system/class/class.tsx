@@ -4,6 +4,7 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import CategoryIcon from "@mui/icons-material/Category";
 import SearchIcon from "@mui/icons-material/Search";
+import Breadcrumbs from "@mui/material/Breadcrumbs";
 import {
   Autocomplete,
   Box,
@@ -58,22 +59,51 @@ const Class = () => {
         width: "100%",
         minHeight: "100vh",
         borderRadius: "10px",
-        padding: 2,
       }}
     >
+      <Box
+  sx={{
+    display: "flex",
+    alignItems: "center",
+    mb: 2,
+    backgroundColor: "#f9f9f9",
+    p: 1.5,
+    borderRadius: 2,
+    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+  }}
+>
+  <Breadcrumbs
+    aria-label="breadcrumb"
+    separator="›"
+    sx={{
+      color: "#555",
+      "& .MuiTypography-root": { fontSize: 15 },
+    }}
+  >
+    <Typography sx={{ color: "#666" }}>
+      Môn học (
+      <span style={{ color: "#e91e63", fontWeight: 600 }}>{tenMonHoc}</span>
+      )
+    </Typography>
+
+    <Typography sx={{ fontWeight: 600, color: "#000" }}>
+      Lớp học phần
+    </Typography>
+  </Breadcrumbs>
+</Box>
+<Typography variant="h3" sx={{ fontWeight: "medium", fontSize: "30px", color: "black", mt:10 }}>
+               Lớp học của tôi
+            </Typography>   
       <Stack spacing={3}>
-        {/* Search */}
-        <Stack direction="row" spacing={-1} alignItems="center" justifyContent="center">
-          <Box sx={{ mt: "20px", display: "flex", gap: 1, flexWrap: "wrap" }}>
-            <Autocomplete
+        {/* Header */} 
+        <Box sx={{ display: "flex", flexWrap: "wrap" }}>
+        <Autocomplete
               options={[]}
               sx={{
-                mt: "50px",
-                width: "350px",
+                width: "300px",
                 "& .MuiOutlinedInput-root": {
                   backgroundColor: "white",
-                  height: "45px",
-                  "& fieldset": { border: "none" },
+                  height: "50px",
                 },
               }}
               renderInput={(params) => (
@@ -82,7 +112,7 @@ const Class = () => {
                   placeholder="Tìm kiếm lớp học phần ..."
                   sx={{
                     "& .MuiInputBase-input": {
-                      color: "#959595",
+                      color: "black",
                       fontSize: "16px",
                       fontWeight: "medium",
                       fontFamily: "Poppins",
@@ -91,47 +121,6 @@ const Class = () => {
                 />
               )}
             />
-            <Button
-              variant="contained"
-              startIcon={<SearchIcon />}
-              sx={{
-                backgroundColor: "#245d51",
-                mt: "50px",
-                height: "45px",
-                width: "130px",
-                fontSize: "16px",
-                fontWeight: "medium",
-                boxShadow: "none",
-                textTransform: "none",
-                "&:hover": { backgroundColor: "#1a4a3e" },
-              }}
-            >
-              Tìm kiếm
-            </Button>
-          </Box>
-        </Stack>
-
-        {/* Header */}
-        <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Box sx={{ width: "50px", height: "50px", backgroundColor: "#245d51", borderRadius: "32px" }}>
-              <CategoryIcon sx={{ fontSize: 40, color: "white" }} />
-            </Box>
-            <Typography variant="h3" sx={{ fontWeight: "medium", fontSize: "30px", color: "black" }}>
-               Lớp học của tôi
-            </Typography>
-            
-          </Stack>
-
-        </Stack>
-        <Box sx={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
-          <Typography sx={{fontWeight:'bold',fontSize:"18px"}}>
-            Môn học:
-          </Typography>
-          <Box sx={{backgroundColor:"rgba(255, 0, 0, 0.04)", borderRadius:"10px", height:"30px", width:"180px", display:"flex", justifyContent:'center', alignItems:"center"}}>
-          <Typography sx={{color:"rgba(255, 0, 0, 1)", ml:1, fontWeight:'bold',fontSize:"18px"}}>{tenMonHoc}</Typography>
-          </Box>
-          <Typography sx={{ml:1,fontWeight:'bold',fontSize:"18px"}}> → Lớp học</Typography>
           </Box>
         {/* Danh sách lớp học phần */}
         <Stack spacing={2}>

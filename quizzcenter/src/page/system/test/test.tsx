@@ -19,6 +19,7 @@ import ViewBaiKiemTraDialog from "../test/testDetailDalog";
 import UpdateBaiKiemTraDialog from "../test/updateTestDialog"; 
 import { useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import Breadcrumbs from "@mui/material/Breadcrumbs";
 
 const BaiKiemTraList = () => {
   const { idLopHocPhan } = useParams<{ idLopHocPhan: string }>();
@@ -157,20 +158,44 @@ const handleDelete = async (id: number) => {
           Tạo bài kiểm tra
         </Button>
       </Stack>
-      <Box sx={{ flexDirection: "row", display: "flex", alignItems: "center" }}>
-          <Typography sx={{fontWeight:'bold',fontSize:"18px"}}>
-            Môn học:
-          </Typography>
+      <Box
+  sx={{
+    display: "flex",
+    alignItems: "center",
+    mb: 2,
+    backgroundColor: "#f9f9f9",
+    p: 1.5,
+    borderRadius: 2,
+    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+  }}
+>
+  <Breadcrumbs
+    aria-label="breadcrumb"
+    separator="›"
+    sx={{
+      color: "#555",
+      "& .MuiTypography-root": { fontSize: 15 },
+    }}
+  >
+    <Typography sx={{ color: "#555" }}>
+      Môn học (
+      <span style={{ color: "#e91e63" }}>{tenMonHoc}</span>
+      )
+    </Typography>
 
-          <Box sx={{backgroundColor:"rgba(255, 0, 0, 0.04)", borderRadius:"10px", height:"30px", width:"180px", display:"flex", justifyContent:'center', alignItems:"center"}}>
-          <Typography sx={{color:"rgba(255, 0, 0, 1)", ml:1, fontWeight:'bold',fontSize:"18px"}}>{tenMonHoc}</Typography>
-          </Box>
-          <Typography sx={{ml:1,fontWeight:'bold',fontSize:"18px"}}> → Lớp học (
-                             <span style={{ color: "#007CD5" }}>{tenLopHoc}</span>
-                              )</Typography>
-                              <Typography sx={{ml:1,fontWeight:'bold',fontSize:"18px"}}> → Bài kiểm tra
-                           </Typography>   
-          </Box>
+    <Typography sx={{ color: "#555" }}>
+      Lớp học (
+      <span style={{ color: "#007CD5" }}>{tenLopHoc}</span>
+      )
+    </Typography>
+
+    <Typography sx={{ color: "#555", fontWeight:"bold" }}>
+      Bài kiểm tra
+    </Typography>
+  </Breadcrumbs>
+</Box>
+
+
       {/* Danh sách */}
       <Stack spacing={2}>
         {loading && <Typography>Đang tải...</Typography>}
@@ -180,7 +205,7 @@ const handleDelete = async (id: number) => {
 
         {!loading &&
           baiKiemTraList.map((bai) => (
-            <Card   onClick={() => navigate(`/bai-kiem-tra/${bai.id}`)} 
+            <Card   onClick={() => navigate(`/bai-kiem-tra/${bai.id}`,{ state: { tenLopHoc: tenLopHoc,tenMonHoc,  tenBaiKiemTra: bai.tenBaiKiemTra  } })} 
                     key={bai.id} 
                    >
               <CardContent>
