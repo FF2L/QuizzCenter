@@ -16,7 +16,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import { BaiKiemTraApi } from "../../api/bai-kiem-tra.api";
-
+import { useNavigate } from "react-router-dom";
 interface BaiKiemTra {
   id: number;
   tenBaiKiemTra: string;
@@ -35,7 +35,7 @@ const CollegeTest: React.FC = () => {
   const { idLopHocPhan } = useParams<{ idLopHocPhan: string }>();
   const location = useLocation();
   const { tenMonHoc, maMonHoc } = location.state || { tenMonHoc: "", maMonHoc: "" };
-  
+  const navigate = useNavigate();
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [baiKiemTraList, setBaiKiemTraList] = useState<BaiKiemTra[]>([]);
@@ -98,6 +98,7 @@ const CollegeTest: React.FC = () => {
 
   const BaiKiemTraItem = ({ item }: { item: BaiKiemTra }) => (
     <Paper
+    onClick={() => navigate(`/quizzcenter/bai-kiem-tra-chi-tiet/${item.id}`, { state: item })}
       sx={{
         p: 2,
         mb: 1.5,

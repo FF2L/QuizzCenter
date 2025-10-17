@@ -131,20 +131,35 @@ const CategoryTab = () => {
         {/* Header */}
         <Stack direction="column" spacing={2}>
       
-          <Box sx={{ flexDirection: "row", display: "flex"  }}>
-        <Breadcrumbs
-         sx={{ color: "black" }}
-      aria-label="breadcrumb"
-      separator="•" 
-    >
-          <Typography >
-            Môn học(
-                             <span style={{ color: "red" }}>{tenMonHoc}</span>
-                              )
-          </Typography>
-          <Typography sx={{ml:1,color:'#898989'}}> Danh mục</Typography>
-          </Breadcrumbs>
-        </Box>
+        <Box
+  sx={{
+    display: "flex",
+    alignItems: "center",
+    mb: 2,
+    p: 1.5,
+    borderRadius: 2,
+    backgroundColor: "#f9f9f9",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+  }}
+>
+  <Breadcrumbs
+    aria-label="breadcrumb"
+    separator="›"
+    sx={{
+      "& .MuiTypography-root": { fontSize: 15, color: "#555" },
+    }}
+  >
+    <Typography>
+      Môn học (
+      <span style={{ color: "#e91e63", fontWeight: 600 }}>{tenMonHoc}</span>
+      )
+    </Typography>
+    <Typography sx={{ fontWeight:"bold", color: "#898989" }}>
+      Danh mục
+    </Typography>
+  </Breadcrumbs>
+</Box>
+
            
         </Stack>
 

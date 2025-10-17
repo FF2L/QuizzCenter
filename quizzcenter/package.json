@@ -19,6 +19,7 @@
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "axios": "^1.12.2",
+    "dayjs": "^1.11.18",
     "quill": "^2.0.3",
     "quill-image-resize-module--fix-imports-error": "^3.0.0",
     "quill-image-resize-module-react": "^3.0.0",
