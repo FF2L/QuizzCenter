@@ -387,5 +387,4 @@ async layBaiLamSinhVien(idBaiKiemTra: number, idSinhVien: number) {
 
 
 
-
 }

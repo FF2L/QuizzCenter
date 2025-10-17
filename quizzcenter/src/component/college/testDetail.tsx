@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Box, Typography, Button, Paper } from "@mui/material";
 import dayjs from "dayjs";
 
@@ -14,6 +14,7 @@ interface BaiKiemTra {
 
 const CollegeTestDetail: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const baiKiemTra = location.state as BaiKiemTra;
 
   const [trangThai, setTrangThai] = useState("");
@@ -35,7 +36,11 @@ const CollegeTestDetail: React.FC = () => {
   }, [baiKiemTra]);
 
   const handleLamBai = () => {
-    alert(`Bắt đầu làm bài: ${baiKiemTra.tenBaiKiemTra}`);
+    navigate(`/quizzcenter/lam-bai/${baiKiemTra.id}`, {
+      state: {
+        baiKiemTra: baiKiemTra  // Truyền toàn bộ thông tin
+      }
+    });
   };
 
   if (!baiKiemTra) {
@@ -49,7 +54,7 @@ const CollegeTestDetail: React.FC = () => {
           {baiKiemTra.tenBaiKiemTra}
         </Typography>
         <Typography sx={{ mt: 2 }}>
-          <strong>Loại:</strong> {baiKiemTra.loaiKiemTra}
+          <strong>Loại:</strong> {baiKiemTra.loaiKiemTra === "BaiKiemTra" ? "Bài kiểm tra" : "Luyện tập"}
         </Typography>
         <Typography>
           <strong>Bắt đầu:</strong> {dayjs(baiKiemTra.thoiGianBatDau).format("HH:mm DD/MM/YYYY")}
@@ -58,7 +63,7 @@ const CollegeTestDetail: React.FC = () => {
           <strong>Kết thúc:</strong> {dayjs(baiKiemTra.thoiGianKetThuc).format("HH:mm DD/MM/YYYY")}
         </Typography>
         <Typography>
-        <strong>Thời gian làm:</strong> {Math.floor(baiKiemTra.thoiGianLam / 60)} phút
+          <strong>Thời gian làm:</strong> {Math.floor(baiKiemTra.thoiGianLam / 60)} phút
         </Typography>
       </Paper>
 
@@ -74,7 +79,18 @@ const CollegeTestDetail: React.FC = () => {
         </Typography>
       )}
       {trangThai === "dangDienRa" && (
-        <Button variant="contained" color="success" onClick={handleLamBai}>
+        <Button 
+          variant="contained" 
+          color="success" 
+          onClick={handleLamBai}
+          size="large"
+          sx={{
+            py: 1.5,
+            px: 4,
+            fontWeight: 600,
+            fontSize: "1.1rem"
+          }}
+        >
           Làm bài ngay
         </Button>
       )}
