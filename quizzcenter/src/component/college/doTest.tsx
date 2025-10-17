@@ -40,7 +40,9 @@ const DoTestPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  const baiKiemTraInfo = location.state as BaiKiemTraInfo;
+  const state = location.state 
+  const baiKiemTraInfo = state.baiKiemTra as BaiKiemTraInfo;
+
 
   const [loading, setLoading] = useState(true);
   const [baiLamData, setBaiLamData] = useState<BaiLamResponse | null>(null);
@@ -90,9 +92,11 @@ const DoTestPage: React.FC = () => {
         setDapAnDaChon(dapAnKhoiPhuc);
 
         // Tính thời gian còn lại
-        const thoiGianLam = baiKiemTraInfo?.thoiGianLam || 3600;
+        const thoiGianLam = baiKiemTraInfo.thoiGianLam;
+ 
         const thoiGianBatDau = new Date(baiLamResponse.baiLam.thoiGianBatDau).getTime();
         const thoiGianHienTai = new Date().getTime();
+
         const thoiGianDaLam = Math.floor((thoiGianHienTai - thoiGianBatDau) / 1000);
         const thoiGianConLai = Math.max(0, thoiGianLam - thoiGianDaLam);
         
