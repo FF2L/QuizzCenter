@@ -140,66 +140,66 @@ export class BaiLamSinhVienService {
     });
     }
 
- async nopbai(idBaiLamSinhVien: number) {
-  return this.dataSource.transaction(async (manager) => {
-    const baiLam = await manager.findOne(BaiLamSinhVien, {
-      where: { id: idBaiLamSinhVien },
-    });
+    async nopbai(idBaiLamSinhVien: number) {
+      return this.dataSource.transaction(async (manager) => {
+        const baiLam = await manager.findOne(BaiLamSinhVien, {
+          where: { id: idBaiLamSinhVien },
+        });
 
-    if (!baiLam) {
-      throw new NotFoundException('Không tìm thấy bài làm.');
-    }
+        if (!baiLam) {
+          throw new NotFoundException('Không tìm thấy bài làm.');
+        }
 
-    if (baiLam.trangThaiBaiLam === TrangThaiBaiLam.DaNop) {
-      throw new BadRequestException('Bài làm đã được nộp trước đó.');
-    }
+        if (baiLam.trangThaiBaiLam === TrangThaiBaiLam.DaNop) {
+          throw new BadRequestException('Bài làm đã được nộp trước đó.');
+        }
 
-    // --- TÍNH ĐIỂM ---
-    const dsChiTiet = await manager.find(ChiTietBaiLam, {
-      where: { idBaiLamSinhVien },
-    });
+        // --- TÍNH ĐIỂM ---
+        const dsChiTiet = await manager.find(ChiTietBaiLam, {
+          where: { idBaiLamSinhVien },
+        });
 
-    let tongDapAnDung = 0;
-    let tongDapAnToanBo = 0;
+        let tongDapAnDung = 0;
+        let tongDapAnToanBo = 0;
 
-    for (const ct of dsChiTiet) {
-      const ctch = await manager.findOne(ChiTietCauHoiBaiKiemTra, {
-        where: { id: ct.idCauHoiBaiKiemTra },
-        relations: ['cauHoi', 'cauHoi.dapAn'],
+        for (const ct of dsChiTiet) {
+          const ctch = await manager.findOne(ChiTietCauHoiBaiKiemTra, {
+            where: { id: ct.idCauHoiBaiKiemTra },
+            relations: ['cauHoi', 'cauHoi.dapAn'],
+          });
+
+          const cauHoi = await ctch?.cauHoi;
+          if (!cauHoi) continue;
+
+          const dsDapAn = await cauHoi.dapAn;
+          const dapAnDung = dsDapAn.filter(d => d.dapAnDung).map(d => d.id);
+
+          tongDapAnToanBo += dapAnDung.length;
+
+          const daChon = ct.mangIdDapAn ?? [];
+          const soDung = daChon.filter(id => dapAnDung.includes(id)).length;
+          tongDapAnDung += soDung;
+        }
+
+        const tongDiem = tongDapAnToanBo === 0 
+          ? 0 
+          : Number(((tongDapAnDung / tongDapAnToanBo) * 10).toFixed(2));
+
+        // Cập nhật
+        baiLam.trangThaiBaiLam = TrangThaiBaiLam.DaNop;
+        baiLam.thoiGianketThuc = new Date();
+        baiLam.tongDiem = tongDiem;
+
+        await manager.save(baiLam);
+
+        return {
+          message: 'Nộp bài thành công',
+          tongDiem,
+          tongDapAnDung,
+          tongDapAnToanBo,
+        };
       });
-
-      const cauHoi = await ctch?.cauHoi;
-      if (!cauHoi) continue;
-
-      const dsDapAn = await cauHoi.dapAn;
-      const dapAnDung = dsDapAn.filter(d => d.dapAnDung).map(d => d.id);
-
-      tongDapAnToanBo += dapAnDung.length;
-
-      const daChon = ct.mangIdDapAn ?? [];
-      const soDung = daChon.filter(id => dapAnDung.includes(id)).length;
-      tongDapAnDung += soDung;
     }
-
-    const tongDiem = tongDapAnToanBo === 0 
-      ? 0 
-      : Number(((tongDapAnDung / tongDapAnToanBo) * 10).toFixed(2));
-
-    // Cập nhật
-    baiLam.trangThaiBaiLam = TrangThaiBaiLam.DaNop;
-    baiLam.thoiGianketThuc = new Date();
-    baiLam.tongDiem = tongDiem;
-
-    await manager.save(baiLam);
-
-    return {
-      message: 'Nộp bài thành công',
-      tongDiem,
-      tongDapAnDung,
-      tongDapAnToanBo,
-    };
-  });
-}
 
     async xemLaiBaiLam(idBaiLamSinhVien: number) {
     // 1) Lấy bài làm
@@ -301,7 +301,7 @@ export class BaiLamSinhVienService {
       },
       chiTiet: items,
     };
-  }
+   }
     async tiepTucLamBai(idBaiLamSinhVien: number) {
       return this.dataSource.transaction(async (manager) => {
         // 1) Bài làm phải thuộc SV và đang "Đang làm"
@@ -372,13 +372,13 @@ export class BaiLamSinhVienService {
       });
     }
 
-async layBaiLamSinhVien(idDeThi: number, idSinhVien: number) {
+async layBaiLamSinhVien(idBaiKiemTra: number, idSinhVien: number) {
   return this.baiLamSinhVienRepo
     .createQueryBuilder('bl')
     .leftJoin('bl.baiKiemTra', 'bk')
     .leftJoin('bl.sinhVien', 'sv')
-    .where('"bk"."idDeThi" = :idDeThi', { idDeThi })   
-    .andWhere('"sv"."id" = :idSinhVien', { idSinhVien }) 
+    .where('"bk"."id" = :idBaiKiemTra', { idBaiKiemTra })   
+    .andWhere('"sv"."idNguoiDung" = :idSinhVien', { idSinhVien }) 
     .orderBy('"bl"."update_at"', 'DESC') 
     .getMany();
 }

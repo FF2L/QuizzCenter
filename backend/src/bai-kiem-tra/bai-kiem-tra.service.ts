@@ -117,11 +117,13 @@ export class BaiKiemTraService {
   }
 
   async xoaBaiKiemTRaTheoIdBaiKiemTRa(idBaiKiemTra: number) {
-    await this.timMotBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra);
+    console.log('Xóa bài kiểm tra id:', idBaiKiemTra);
+    // await this.timMotBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra);
 
     try {
       return await this.baiKiemTraRepo.delete(idBaiKiemTra);
     } catch (err) {
+      console.error(err);
       throw new InternalServerErrorException('Xóa bài kiểm tra không thành công');
     }
   }
