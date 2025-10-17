@@ -372,14 +372,14 @@ export class BaiLamSinhVienService {
       });
     }
 
-async layBaiLamSinhVien(idDeThi: number , idSinhVien: number) {
+async layBaiLamSinhVien(idDeThi: number, idSinhVien: number) {
   return this.baiLamSinhVienRepo
     .createQueryBuilder('bl')
     .leftJoin('bl.baiKiemTra', 'bk')
     .leftJoin('bl.sinhVien', 'sv')
-    .where('"bk"."id" = :idDeThi', { idDeThi })
-    .where('"sv"."id" = :idSinhVien', { idSinhVien })  
-    .orderBy('"bl"."update_at"', 'ASC')               
+    .where('"bk"."idDeThi" = :idDeThi', { idDeThi })   
+    .andWhere('"sv"."id" = :idSinhVien', { idSinhVien }) 
+    .orderBy('"bl"."update_at"', 'DESC') 
     .getMany();
 }
 
