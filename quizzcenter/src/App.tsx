@@ -22,7 +22,9 @@ import CollegeDashBoard from './component/college/dashboard';
 import CollegeMyCourse from './component/college/my-course';
 import CollegeTest from './component/college/test';
 import CollegeTestDetail from "./component/college/testDetail";
+import LamBaiPage from './component/college/doTest';
 import Home from './page/system/home/home';
+
 const App: FC = () => {
   return (
     <UserProvider>
@@ -37,11 +39,13 @@ const App: FC = () => {
 
             {/*Các route cho phần sinh viên*/ }
             <Route path="quizzcenter" element={<ProtectedRoute><QuizzCenter /></ProtectedRoute>}>
-            <Route index element={<Navigate to="my/course" replace />} />
-            <Route path="my" element={<CollegeDashBoard />} />
-            <Route path="my/course" element={<CollegeMyCourse />} />
-            <Route path="course/test/:idLopHocPhan" element={<CollegeTest />} />
-            <Route path="bai-kiem-tra-chi-tiet/:idBaiKiemTra" element={<CollegeTestDetail />} />
+              <Route index element={<Navigate to="my/course" replace />} />
+              <Route path="my" element={<CollegeDashBoard />} />
+              <Route path="my/course" element={<CollegeMyCourse />} />
+              <Route path="course/test/:idLopHocPhan" element={<CollegeTest />} />
+              <Route path="bai-kiem-tra-chi-tiet/:idBaiKiemTra" element={<CollegeTestDetail />} />
+              {/* Route mới cho trang làm bài */}
+              <Route path="lam-bai/:idBaiKiemTra" element={<LamBaiPage />} />
             </Route>
 
 
