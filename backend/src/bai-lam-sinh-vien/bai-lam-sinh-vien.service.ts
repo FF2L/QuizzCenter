@@ -372,7 +372,7 @@ export class BaiLamSinhVienService {
       });
     }
 
-  async layBaiLamSinhVien(idBaiKiemTra: number, idSinhVien: number) {
+    async layBaiLamSinhVien(idBaiKiemTra: number, idSinhVien: number) {
       return this.baiLamSinhVienRepo
         .createQueryBuilder('bl')
         .leftJoin('bl.baiKiemTra', 'bk')
@@ -382,6 +382,10 @@ export class BaiLamSinhVienService {
         .orderBy('"bl"."update_at"', 'DESC') 
         .getMany();
     }
+
+
+
+
 
 
 }
