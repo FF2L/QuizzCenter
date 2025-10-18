@@ -11,6 +11,7 @@ interface BaiKiemTra {
   thoiGianBatDau: string;
   thoiGianKetThuc: string;
   thoiGianLam: number; // seconds
+  soLanLam: number;    // <-- dùng để giới hạn số lần
   xemBaiLam?: boolean;
   hienThiKetQua?: boolean;
 }
@@ -62,7 +63,7 @@ const CollegeTestDetail: React.FC = () => {
 
   useEffect(() => {
     void fetchAttempts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baiKiemTra?.id]);
 
   const attemptsSorted = useMemo(
@@ -74,6 +75,13 @@ const CollegeTestDetail: React.FC = () => {
       ),
     [attempts]
   );
+
+  // === NEW: Tính trạng thái đạt giới hạn số lần làm ===
+  const maxAttempts = baiKiemTra?.soLanLam;
+  const reachedAttemptLimit = useMemo(() => {
+    if (typeof maxAttempts !== "number" || !Number.isFinite(maxAttempts)) return false;
+    return attempts.length >= maxAttempts; // đủ/bằng số lần cho phép thì chặn
+  }, [attempts.length, maxAttempts]);
 
   // Auto-submit nếu attempt DangLam quá hạn đề
   const autoSubmittedIdsRef = useRef<Set<number>>(new Set());
@@ -109,13 +117,12 @@ const CollegeTestDetail: React.FC = () => {
         }
       }
 
-      // Refresh lại danh sách để cập nhật trạng thái/điểm
       await fetchAttempts();
     };
 
     const id = setInterval(checkAndSubmit, 1000);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attempts, baiKiemTra]);
 
   const formatRemain = (start?: string) => {
@@ -145,6 +152,9 @@ const CollegeTestDetail: React.FC = () => {
   };
 
   const handleLamBai = async () => {
+    // === NEW: chặn tạo attempt nếu đã đạt giới hạn ===
+    if (reachedAttemptLimit) return;
+
     const baiLamMoi = await BaiLamSinhVienApi.taoBaiLam(baiKiemTra.id);
     navigate(`/quizzcenter/lam-bai/${baiKiemTra.id}`, {
       state: { baiKiemTra, baiLamMoi },
@@ -152,7 +162,6 @@ const CollegeTestDetail: React.FC = () => {
   };
 
   const handleQuayLaiLam = async (attId: number) => {
-    // lấy dữ liệu tiếp tục làm bài (để đảm bảo state đầy đủ ở trang làm bài)
     const tiepTuc = await BaiLamSinhVienApi.tiepTucLamBai(attId);
     navigate(`/quizzcenter/lam-bai/${baiKiemTra.id}`, {
       state: { baiKiemTra, baiLamMoi: tiepTuc },
@@ -224,7 +233,9 @@ const CollegeTestDetail: React.FC = () => {
           ⏰ Đã hết thời gian làm bài
         </Typography>
       )}
-      {trangThai === "dangDienRa" && (
+
+      {/* === NEW: chỉ hiện nút khi chưa đạt giới hạn số lần === */}
+      {trangThai === "dangDienRa" && !reachedAttemptLimit && (
         <Button
           variant="contained"
           color="success"
@@ -234,6 +245,11 @@ const CollegeTestDetail: React.FC = () => {
         >
           Làm bài ngay
         </Button>
+      )}
+      {trangThai === "dangDienRa" && reachedAttemptLimit && (
+        <Typography sx={{ color: "text.secondary", fontWeight: 600, mb: 2 }}>
+          Bạn đã đạt số lần làm tối đa {maxAttempts} cho bài kiểm tra này.
+        </Typography>
       )}
 
       {/* Danh sách bài làm */}
@@ -309,7 +325,7 @@ const CollegeTestDetail: React.FC = () => {
                     <Button
                       variant="outlined"
                       onClick={() => handleQuayLaiLam(att.id)}
-                      sx={{ fontWeight: 600 }}
+                      sx={{ fontWeight: 600,  color: "#000",   }}
                     >
                       Quay lại làm bài
                     </Button>
@@ -318,7 +334,7 @@ const CollegeTestDetail: React.FC = () => {
                       variant="text"
                       onClick={() => handleXemBaiLam(att.id)}
                       disabled={loadingView === att.id}
-                      sx={{ fontWeight: 600 }}
+                      sx={{ fontWeight: 600, color: "#000" }}
                     >
                       {loadingView === att.id ? "Đang mở…" : "Xem chi tiết"}
                     </Button>

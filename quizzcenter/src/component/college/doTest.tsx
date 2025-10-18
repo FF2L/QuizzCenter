@@ -226,7 +226,7 @@ const DoTestPage: React.FC = () => {
                 )}
                 {savingQuestionId === item.idCauHoiBaiKiemTra && (
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                    (đang lưu…)
+                    {/* (đang lưu…) */}
                   </Typography>
                 )}
               </Box>
