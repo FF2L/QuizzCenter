@@ -17,6 +17,7 @@ export class BaiLamSinhVien extends BaseEntity{
 
     @Column({
         nullable: true,
+        type: 'float',
     })
     tongDiem: number
 

@@ -24,6 +24,7 @@ import CollegeTest from './component/college/test';
 import CollegeTestDetail from "./component/college/testDetail";
 import LamBaiPage from './component/college/doTest';
 import Home from './page/system/home/home';
+import XemLaiBaiLamPage from './component/college/viewDidTest';
 
 const App: FC = () => {
   return (
@@ -44,6 +45,7 @@ const App: FC = () => {
               <Route path="my/course" element={<CollegeMyCourse />} />
               <Route path="course/test/:idLopHocPhan" element={<CollegeTest />} />
               <Route path="bai-kiem-tra-chi-tiet/:idBaiKiemTra" element={<CollegeTestDetail />} />
+              <Route path="/quizzcenter/xem-lai/:idBaiLam" element={<XemLaiBaiLamPage />} />
               {/* Route mới cho trang làm bài */}
               <Route path="lam-bai/:idBaiKiemTra" element={<LamBaiPage />} />
             </Route>

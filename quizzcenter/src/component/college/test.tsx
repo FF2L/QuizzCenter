@@ -20,10 +20,13 @@ import { useNavigate } from "react-router-dom";
 interface BaiKiemTra {
   id: number;
   tenBaiKiemTra: string;
-  loaiKiemTra: string;
+  loaiKiemTra: string; // "BaiKiemTra" | "LuyenTap"
   thoiGianBatDau: string;
   thoiGianKetThuc: string;
-  thoiGianLam: number;
+  thoiGianLam: number; // seconds
+  soLanLam:number;
+  xemBaiLam?: boolean;
+  hienThiKetQua?: boolean;
 }
 
 interface GroupedData {
