@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Box, Typography, Button, Paper, CircularProgress, Divider, Chip } from "@mui/material";
 import dayjs from "dayjs";
-import { BaiLamSinhVienApi } from "../../api/bai-lam-sinh-vien.api";
+import { BaiLamSinhVienApi } from "../../services/bai-lam-sinh-vien.api";
 
 interface BaiKiemTra {
   id: number;

@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AssignmentIcon from "@mui/icons-material/Assignment";
-import { BaiKiemTraApi } from "../../api/bai-kiem-tra.api";
+import { BaiKiemTraApi } from "../../services/bai-kiem-tra.api";
 import { useNavigate } from "react-router-dom";
 interface BaiKiemTra {
   id: number;
