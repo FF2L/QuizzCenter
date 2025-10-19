@@ -4,7 +4,7 @@ import {
   Box, Stack, Paper, Typography, IconButton, Pagination, Skeleton,
   TextField, MenuItem, Select, InputLabel, FormControl
 } from "@mui/material";
-import { LopHocPhanApi, LopHocPhanItem } from "../../api/lop-hoc-phan.api";
+import { LopHocPhanApi, LopHocPhanItem } from "../../services/lop-hoc-phan.api";
 import { useNavigate } from "react-router-dom";
 
 

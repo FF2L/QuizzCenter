@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   Box, Typography, Paper, Chip, CircularProgress, Alert, Checkbox, FormControlLabel
 } from "@mui/material";
-import { BaiLamSinhVienApi } from "../../api/bai-lam-sinh-vien.api";
+import { BaiLamSinhVienApi } from "../../services/bai-lam-sinh-vien.api";
 
 interface DapAnReview {
   id: number;

@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@emotion/react';
 import { theme } from './theme/theme';
 import MainLayout from './overalllayout/mainlayout';
-import Login from './page/system/auth/login';
+
 import ProtectedRoute from './page/system/auth/protectedRoute';
 import { UserProvider } from './page/system/auth/userContext';
 
@@ -14,9 +14,9 @@ import BaiKiemTraDetail from './page/system/test/DetailTest';
 import CreateQuestionPage from './page/system/bankquestion/createQuestion';
 import CreateQuestionForTest from './page/system/test/nhapTayCauHoiChoBaiKiemtra';
 import SelectFromBankPage from './page/system/test/chonCauHoiTuNganHangCauhoi';
-import ForgotPasswordPage from './page/system/auth/forgotPassWord';
-import OTPVerifyPage from './page/system/auth/verifyOtp';
-import ResetPasswordPage from './page/system/auth/resetPassword';
+
+import OTPVerifyPage from './component/login/verifyOtp';
+import ResetPasswordPage from './component/login/resetPassword';
 import QuizzCenter from './page/system/college-quizz-center';
 import CollegeDashBoard from './component/college/dashboard';
 import CollegeMyCourse from './component/college/my-course';
@@ -25,6 +25,10 @@ import CollegeTestDetail from "./component/college/testDetail";
 import LamBaiPage from './component/college/doTest';
 import Home from './page/system/home/home';
 import XemLaiBaiLamPage from './component/college/viewDidTest';
+import LoginPage from './page/system/login-quizz-center';
+import Login from './component/login/login';
+import ForgotPassword from './component/login/forgotPassWord';
+
 
 const App: FC = () => {
   return (
@@ -33,10 +37,14 @@ const App: FC = () => {
         <ThemeProvider theme={theme}>
           <Routes>
             {/* Login và forgot password không cần ProtectedRoute */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/otp" element={<OTPVerifyPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route element={<LoginPage />}>
+              <Route index element={<Navigate to="login" replace />} />
+              <Route path="login" element={<Login />} />
+              <Route path="forgot-password" element={<ForgotPassword />} />
+              <Route path="otp" element={<OTPVerifyPage />} />
+              <Route path="reset-password" element={<ResetPasswordPage />} />
+            </Route>
+
 
             {/*Các route cho phần sinh viên*/ }
             <Route path="quizzcenter" element={<ProtectedRoute><QuizzCenter /></ProtectedRoute>}>

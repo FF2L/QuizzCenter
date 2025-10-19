@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { BaiLamSinhVienApi, UpdateDapAnDto, BaiLamResponse } from "../../api/bai-lam-sinh-vien.api";
+import { BaiLamSinhVienApi, UpdateDapAnDto, BaiLamResponse } from "../../services/bai-lam-sinh-vien.api";
 
 type DapAnDaChon = Record<number, number[]>;
 
