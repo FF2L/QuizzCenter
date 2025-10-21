@@ -12,6 +12,9 @@ export class CreateMotDapAn {
         @IsOptional()
         dapAnDung: boolean
 
+        @IsOptional()
+        publicId: string
+
         @Transform(({ value }) => sanitizeHtml(value ?? '', SANITIZE_OPTS))
         @IsString()
         @IsOptional()

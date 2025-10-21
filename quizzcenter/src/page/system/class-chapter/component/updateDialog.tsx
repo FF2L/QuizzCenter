@@ -2,12 +2,14 @@ import React from "react";
 import { useEffect, useState, use } from "react";
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from "@mui/material";
 import  { Chuong } from "../../../../common/model";
+import { LectureService } from "../../../../services/lecture.api";
 interface UpdateDialogProps {
   open: boolean;
   onClose: () => void;
   idMonHoc: number; // bắt buộc truyền vào từ parent
   nextThuTu?: number; // optional: nếu bạn muốn frontend tính vị trí tiếp theo
   idGiangVien?: number; // optional: lấy từ auth nếu có
+  accessToken?: string;
   onCreated?: (newChuong: Chuong) => void;
   currentChuong?: Chuong | null; 
 }
@@ -19,11 +21,14 @@ export default function UpdateDialog({
   idMonHoc,
   currentChuong,
   nextThuTu,
+  accessToken,
   idGiangVien,
   onCreated, }: UpdateDialogProps) {
     const [tenChuong, setTenChuong] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [err, setErr] = useState("");
     useEffect(() => {
+      setErr("");
         if (open && currentChuong) {
           setTenChuong(currentChuong.tenChuong);
         } else {
@@ -32,32 +37,25 @@ export default function UpdateDialog({
       }, [open, currentChuong]);
 
     const handleUpdate = async () => {
-      if (!tenChuong.trim()) return;
-  
+      setErr("");
+      if (!tenChuong.trim()) {
+        setErr("Tên chương không được để trống");
+        return;
+      }
       setSubmitting(true);
       try {
-        const body: any = {
-          tenChuong: tenChuong.trim(),
-          thuTu: currentChuong?.thuTu,
-          idMonHoc,
-        };
 
-        // idGiangVien nên lấy từ auth; nếu chưa có, fallback tạm  (nhớ sửa)
-        if (typeof idGiangVien !== "undefined") body.idGiangVien = idGiangVien;
-  
-        const res = await fetch(`http://localhost:3000/chuong/${currentChuong?.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-  
+        // // idGiangVien nên lấy từ auth; nếu chưa có, fallback tạm  (nhớ sửa)
+        // if (typeof idGiangVien !== "undefined") body.idGiangVien = idGiangVien;
+
+        const res = await LectureService.capNhatChuong(currentChuong?.id || 0, tenChuong, accessToken?? "")
         if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(txt || res.statusText);
+          setErr('Lỗi cập nhật chương');
+          return;
         }
-  
-        const newChuong: Chuong = await res.json();
-  
+
+        const newChuong: Chuong = await res.data;
+
         // gọi về parent để cập nhật list (parent có thể refetch để đảm bảo thứ tự chính xác)
         onCreated?.(newChuong);
   
@@ -89,6 +87,9 @@ export default function UpdateDialog({
       <DialogContent>
         <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
           <Typography>Tên danh mục:</Typography>
+            {err && (
+              <Typography color="error" fontSize= "body2">{err}</Typography>
+            )}
           <TextField
             size="small"
             value={tenChuong}

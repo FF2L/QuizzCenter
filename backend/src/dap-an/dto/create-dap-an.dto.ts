@@ -13,6 +13,9 @@ export class DapAnDto {
     @IsOptional()
     noiDungHTML: string
 
+    @IsOptional()
+    publicId: string
+
     @IsBoolean()
     @IsOptional()
     dapAnDung: boolean

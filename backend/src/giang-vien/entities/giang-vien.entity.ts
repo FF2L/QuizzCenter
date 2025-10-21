@@ -26,6 +26,6 @@ export class GiangVien {
     @OneToMany(() => LopHocPhan, (lopHocPhan) => lopHocPhan.idGiangVien, {cascade: true, lazy: true})
     lopHocPhan: Promise<LopHocPhan []>
 
-    @ManyToMany(() => MonHoc, (monHoc) => monHoc.giangVien, {lazy: true})
-    monHoc: Promise<MonHoc[]>
+    // @ManyToMany(() => MonHoc, (monHoc) => monHoc.giangVien, {lazy: true})
+    // monHoc: Promise<MonHoc[]>
 }

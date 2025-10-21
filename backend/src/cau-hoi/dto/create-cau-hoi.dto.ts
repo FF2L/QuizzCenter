@@ -27,6 +27,9 @@ class CauHoitDto {
     @IsOptional()
     loaiCauHoi: LoaiCauHoi
 
+    @IsOptional()
+    idPublic:string
+
     @IsEnum(DoKho,{
         message: 'doKho phải là một trong các giá trị: ' + Object.values(DoKho).join(', ')
     })

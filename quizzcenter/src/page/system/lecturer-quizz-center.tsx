@@ -1,20 +1,11 @@
 // ./overalllayout/mainlayout.tsx
-import React, { FC } from "react";
-import MenuBar from "../common/menubar";
+import  { FC } from "react";
+import MenuBar from "../../common/menubar";
 import { Outlet } from "react-router-dom";
-import {
-  Box,
-  Stack,
-  Typography,
-  Button,
-  Card,
-  CardContent,
-  Pagination,
-  Menu,
-  MenuItem,
-  IconButton,
-} from "@mui/material";
-const MainLayout: FC = () => {
+import {Box,} from "@mui/material";
+const LecturerQuizzCenter: FC = () => {
+  const role= "GiaoVien"
+  console.log("Role in MainLayout:", role);
   return (
     <Box
       style={{
@@ -26,15 +17,15 @@ const MainLayout: FC = () => {
     >
       {/* MenuBar bên trái */}
       <Box style={{ flexShrink: 0 }}>
-        <MenuBar />
+        <MenuBar role={role} />
       </Box>
 
       {/* Nội dung bên phải */}
       <Box style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
-        <Outlet /> {/* Nested routes sẽ render ở đây */}
+         <Outlet />
       </Box>
     </Box>
   );
 };
 
-export default MainLayout;
+export default LecturerQuizzCenter;

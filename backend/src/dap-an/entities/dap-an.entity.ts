@@ -14,6 +14,10 @@ export class DapAn  extends BaseEntity{
     @Column({default : false})
     dapAnDung: boolean
 
+    @Column({nullable: true})
+    publicId: string
+
+
 
     @ManyToOne(() => CauHoi, (qh) => qh.dapAn, {
     onDelete: 'CASCADE',

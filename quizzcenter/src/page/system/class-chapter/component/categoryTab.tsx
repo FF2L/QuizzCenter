@@ -10,7 +10,7 @@ import UpdateDialog from "./updateDialog";
 import { IconButton } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
-
+import { LectureService } from "../../../../services/lecture.api";
 
 import {
   Autocomplete,
@@ -24,8 +24,6 @@ import {
   Menu, MenuItem 
 } from "@mui/material";
 
-
-
 const CategoryTab = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);  //menu con
   const open = Boolean(anchorEl);
@@ -38,6 +36,7 @@ const CategoryTab = () => {
   const idMonHocNumber = Number(idMonHoc); 
   //mở create-dialog
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const accessToken = localStorage.getItem('accessTokenGV') || '';
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
   const navigate = useNavigate();
   const handleOpenCreateDialog = () => setOpenCreateDialog(true);
@@ -50,6 +49,7 @@ const CategoryTab = () => {
     setOpenCreateDialog(false);
     setOpenUpdateDialog(false);
   }
+
   useEffect(() => {
     const fetchChuong = async () => {
       if (!idMonHoc) return;
@@ -59,15 +59,16 @@ const CategoryTab = () => {
       try {
         console.log("Fetching chương với idMonHoc:", idMonHocNumber);
 
-                 const res = await fetch(`http://localhost:3000/chuong?idMonHoc=${idMonHocNumber}`, {
-                 method: 'GET',
-                 headers: { 'Content-Type': 'application/json' },
-                 });
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-        const data: Chuong[] = await res.json();
-        setChuongList(data);
-        console.log(data)
+       
+        
+        const result = await LectureService.layTatCaChuongTheoMonHoc(idMonHocNumber, accessToken);
+        
+        if (result.ok) {
+          setChuongList(result.data);
+          console.log(result.data);
+        } else {
+          console.error("Lỗi khi fetch chương:", result.error);
+        }
       } catch (err) {
         console.error("Lỗi khi fetch chương:", err);
       } finally {
@@ -76,7 +77,7 @@ const CategoryTab = () => {
     };
 
     fetchChuong();
-  }, [idMonHoc]);
+  }, [idMonHoc, idMonHocNumber]);
 
   if (loading) return <p>Đang tải chương...</p>;
   
@@ -100,23 +101,25 @@ const CategoryTab = () => {
     if (!confirmDelete) return;
   
     try {
-      const res = await fetch(`http://localhost:3000/chuong/${chuong.id}`, {
-        method: "DELETE",
-      });
-  
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  
-      // Xóa chương khỏi state
-      setChuongList((prev) => prev.filter((c) => c.id !== chuong.id));
-  
-      alert("Xóa chương thành công!");
+      // Lấy token từ localStorage hoặc context
+      const accessToken = localStorage.getItem('accessToken') || '';
+      
+      const result = await LectureService.xoaChuongTheoIdChuong(chuong.id, accessToken);
+      
+      if (result.ok) {
+        // Xóa chương khỏi state
+        setChuongList((prev) => prev.filter((c) => c.id !== chuong.id));
+        alert("Xóa chương thành công!");
+      } else {
+        console.error("Lỗi khi xóa chương:", result.error);
+        alert("Xóa chương thất bại!");
+      }
     } catch (err: any) {
       console.error(err);
       alert("Xóa chương thất bại: " + err.message);
     }
   };
   
-
   return (
     <Box
       sx={{
@@ -149,18 +152,8 @@ const CategoryTab = () => {
       "& .MuiTypography-root": { fontSize: 15, color: "#555" },
     }}
   >
-    <Typography>
-      Môn học (
-      <span style={{ color: "#e91e63", fontWeight: 600 }}>{tenMonHoc}</span>
-      )
-    </Typography>
-    <Typography sx={{ fontWeight:"bold", color: "#898989" }}>
-      Danh mục
-    </Typography>
   </Breadcrumbs>
-</Box>
-
-           
+</Box>     
         </Stack>
 
         {/* Category List */}
@@ -182,12 +175,12 @@ const CategoryTab = () => {
           {chuongList.map((chuong) => (
             <Card key={chuong.id} 
             onClick={() =>
-              navigate(`/page/${idMonHoc}`, {
+              navigate(`/lecturer/course/${idMonHoc}`, {
                 state: {
                   idChuong: chuong.id,
                   tenChuong: chuong.tenChuong,
                   tenMonHoc: tenMonHoc,
-                  tab: 2, // chuyển sang tab Ngân hàng câu hỏi
+                  tab: 1, // chuyển sang tab Ngân hàng câu hỏi
                 },
               })
             }
@@ -225,7 +218,8 @@ const CategoryTab = () => {
         >
           <Edit />
         </IconButton>
-        <IconButton
+        {chuong.soLuongCauHoi === 0 &&
+      <IconButton
           sx={{ color: "#d32f2f" }}
           onClick={(event) =>{ 
             event.stopPropagation();
@@ -233,6 +227,8 @@ const CategoryTab = () => {
         >
           <Delete />
         </IconButton>
+        }
+        
       </Stack>
               </CardContent>
             </Card>
@@ -242,6 +238,7 @@ const CategoryTab = () => {
       <CreateDialog 
        idMonHoc={idMonHocNumber}
        idGiangVien={2}
+       accessToken={accessToken}
        open={openCreateDialog} 
        onClose={handleCloseDialog} 
        onCreated={(newChuong) => {
@@ -264,6 +261,7 @@ const CategoryTab = () => {
     <UpdateDialog
       idMonHoc={idMonHocNumber}
       idGiangVien={2}
+      accessToken={accessToken}
        open={openUpdateDialog} 
        onClose={handleCloseDialog} 
        currentChuong={currentChuong}

@@ -4,7 +4,7 @@ import { CreateDapAnDto, DapAnDto } from './dto/create-dap-an.dto';
 import { UpdateDapAnDto } from './dto/update-dap-an.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DapAn } from './entities/dap-an.entity';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, In, Repository } from 'typeorm';
 import { CauHoiService } from 'src/cau-hoi/cau-hoi.service';
 import { LoaiCauHoi } from 'src/common/enum/loaicauhoi.enum';
 import { CreateMotDapAn } from './dto/create-mot-dap-an.dto';
@@ -37,6 +37,7 @@ export class DapAnService {
     const dapAn = this.dapAnRepo.create({
       noiDung: createMotDapAn.noiDung,
       noiDungHTML: createMotDapAn.noiDungHTML,
+      publicId: createMotDapAn?.publicId,
       dapAnDung: createMotDapAn.dapAnDung,
       idCauHoi: createMotDapAn.idCauHoi
   })
@@ -48,18 +49,20 @@ export class DapAnService {
       }
   }
 
-  findAll() {
-    return `This action returns all dapAn`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} dapAn`;
-  }
   async timNhieuDapAnTheoIdCauHoi (id:number){
     return await this.dapAnRepo.find({
       where: {idCauHoi: id}
     })
 
+  }
+  async xoaTatCaDapAnTheoIdCauHoi(idCauHoi:number){
+    const mangDapAn = await this.timNhieuDapAnTheoIdCauHoi(idCauHoi)
+    const manIdDapAN = mangDapAn.map(da => da.id)
+    try{
+      return await this.dapAnRepo.delete({ idCauHoi: In(manIdDapAN) });
+    }catch(err){
+      throw new InternalServerErrorException('Lỗi xóa đáp án theo id câu hỏi')
+    }
   }
 
 async capNhatMotDapAn(id: number, dto: UpdateDapAnDto, manager?: EntityManager) {

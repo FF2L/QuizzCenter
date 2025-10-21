@@ -14,15 +14,16 @@ import {
 } from "@mui/material";
 import { BaiKiemTra, CauHoiPayload } from "../../../common/model";
 import { Delete, Edit, Visibility } from "@mui/icons-material";
-import QuestionDetailDialog from "../bankquestion/deTailDialog";
-import DeleteConfirmDialog from "../bankquestion/deleteConfirmDialog";
-import UpdateQuestionDialog from "../bankquestion/updateQuestionDialog";
+
 import CategoryIcon from "@mui/icons-material/Category";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import TimerIcon from "@mui/icons-material/Timer";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
+import QuestionDetailDialog from "../bankquestion/deTailDialog";
+import DeleteConfirmDialog from "../bankquestion/deleteConfirmDialog";
+import UpdateQuestionDialog from "../bankquestion/updateQuestionDialog";
 
 const BaiKiemTraDetail: React.FC = () => {
   const { idBaiKiemTra } = useParams<{ idBaiKiemTra: string }>();

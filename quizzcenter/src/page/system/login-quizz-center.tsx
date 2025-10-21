@@ -1,7 +1,6 @@
-import React, { FC, useState } from 'react';
+import { FC, useState } from 'react';
 import {
-
-    Alert,
+  Alert,
   Box,
   Card,
   CardContent,
@@ -20,11 +19,10 @@ const LoginPage: FC = () => {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [nextPath, setNextPath] = useState('')
+    const [role, setRole] = useState('')
     const navigate = useNavigate();
     const location = useLocation()
     const email = location.state?.email || ''
-
-  
 
   return (
     <Box
@@ -86,7 +84,7 @@ const LoginPage: FC = () => {
             onClose={() => {
                 setSnackbarOpen(false);
                 if(nextPath){
-                    navigate(nextPath);
+                    navigate((nextPath), {state: {role: role}});
                     setNextPath('');
                 }
             }}

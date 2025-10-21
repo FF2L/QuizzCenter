@@ -9,42 +9,57 @@ import { Pagination } from 'src/common/dto/pagination.dto';
 import { LoaiCauHoi } from 'src/common/enum/loaicauhoi.enum';
 import { DoKho } from 'src/common/enum/dokho.enum';
 import { FilterCauHoiQueryDto } from 'src/cau-hoi/dto/filter_cau-hoi_query.dto';
+import { Roles } from 'src/common/decorations/roles.decorator';
+import { RolesGuard } from 'src/auth/guards/roles/roles.guard';
+import { Role } from 'src/common/enum/role.enum';
 
 @Controller('chuong')
 export class ChuongController {
   constructor(private readonly chuongService: ChuongService) {}
 
+  //tao chương mới 
+  @Roles(Role.GiaoVien)
+  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard)
   @Post()
-  async create(@Body() createChuongDto: CreateChuongDto) {
-    return await this.chuongService.taoMotChuong(createChuongDto);
+  async create(@Body() createChuongDto: CreateChuongDto, @Req() req) {
+    console.log("Creating chapter:", createChuongDto);
+    return await this.chuongService.taoMotChuong(createChuongDto,req.user.id);
   }
-  // @UseGuards(JwtAuthGuard)
+
+  // lấy tất cả chương theo môn học và người dùng
+
+  @Roles(Role.GiaoVien)
+  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard)
   @Get()
-  async findAll(@Query('idMonHoc', ParseIntPipe) idMonHoc : number
-  /**, @Req() req */) {
-    return await this.chuongService.timTatCaChuongTheoIdMonHoc(idMonHoc/**, req.user.id */);
+  async findAll(@Query('idMonHoc', ParseIntPipe) idMonHoc : number, @Req() req) {
+    return await this.chuongService.layTatCaChuongTheoMonHocVaNguoiDung(idMonHoc, req.user.id);
 
   }
-  
-  @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
-    return await this.chuongService.timMotChuongTheoId(id);
-  }
 
+  // lấy tất cả câu hỏi theo chương
+  @Roles(Role.GiaoVien)
+  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard)
   @Get(':id/cau-hoi')
   async layTatCaCauHoiTheoChuong(
     @Param('id', ParseIntPipe) idChuong: number, 
-    @Query() filterCauHoiDto :FilterCauHoiQueryDto)
-  {
-    return await this.chuongService.layTatCauHoiTheoChuong(idChuong, filterCauHoiDto)
+    @Query('skip') skip?: number,
+    @Query('limit') limit?: number,
+    @Query('doKho') doKho?: DoKho,
+    @Query('noiDungCauHoi') noiDungCauHoi?: string
+  ) {
+    return await this.chuongService.layTatCauHoiTheoChuong(idChuong, { skip, limit, doKho, noiDungCauHoi});
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateChuongDto: UpdateChuongDto) {
     return await this.chuongService.capNhatChuong(+id, updateChuongDto);
   }
 
-
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async remove(@Param('id',ParseIntPipe) id: number) {
     return this.chuongService.xoaChuongTheoIdChuong(id);

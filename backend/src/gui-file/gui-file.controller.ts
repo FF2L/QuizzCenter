@@ -39,23 +39,12 @@ export class GuiFileController {
     return { ok: true, idChuong, ...result };
   }
 
-  @Get()
-  findAll() {
-    return this.guiFileService.findAll();
+  @Post('anh')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadMotAnh(@UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('Chưa chọn file!');
+    const publicId = await this.guiFileService.uploadMotAnh(file);
+    return { publicId };     // <=== trả về đúng yêu cầu
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.guiFileService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateGuiFileDto: UpdateGuiFileDto) {
-    return this.guiFileService.update(+id, updateGuiFileDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.guiFileService.remove(+id);
-  }
 }

@@ -1,8 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req } from '@nestjs/common';
 import { MonHocService } from './mon-hoc.service';
 import { CreateMonHocDto } from './dto/create-mon-hoc.dto';
 import { UpdateMonHocDto } from './dto/update-mon-hoc.dto';
 import { Pagination } from 'src/common/dto/pagination.dto';
+import { Roles } from 'src/common/decorations/roles.decorator';
+import { RolesGuard } from 'src/auth/guards/roles/roles.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth/jwt-auth.guard';
+import { Role } from 'src/common/enum/role.enum';
+import { skip } from 'node:test';
 
 @Controller('mon-hoc')
 export class MonHocController {
@@ -13,11 +18,13 @@ export class MonHocController {
     return this.monHocService.create(createMonHocDto);
   }
 
+  // @Roles(Role.GiaoVien)
+  // @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard)
   @Get()
-  async findAll(@Query() pagination: Pagination) {
-    return await this.monHocService.layTatCaMonHoc(pagination);
+  async findAll(@Req() req, @Query('skip') skip: number, @Query('limit') limit: number, @Query('maMon') maMon: string, @Query('tenMon') tenMon: string) {
+    return await this.monHocService.layTatCaMonHocTheoKhoaCuaGiangVien({ skip, limit, maMon, tenMon }, req.user.id);
   }
-
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.monHocService.findOne(+id);

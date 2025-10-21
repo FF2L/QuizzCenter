@@ -11,7 +11,6 @@ import { SinhVienModule } from './sinh-vien/sinh-vien.module';
 import { ChuongModule } from './chuong/chuong.module';
 import { CauHoiModule } from './cau-hoi/cau-hoi.module';
 import { DapAnModule } from './dap-an/dap-an.module';
-import { FileDinhKemModule } from './file-dinh-kem/file-dinh-kem.module';
 import { LopHocPhanModule } from './lop-hoc-phan/lop-hoc-phan.module';
 import { BaiKiemTraModule } from './bai-kiem-tra/bai-kiem-tra.module';
 import { BaiLamSinhVienModule } from './bai-lam-sinh-vien/bai-lam-sinh-vien.module';
@@ -37,7 +36,7 @@ import { OtpModule } from './otp/otp.module';
       useFactory: dbPostgresConfig, // sử dụng khi dbPostgressCOnfig file trả về một hàm trả về instance của PostgresConnectionOptions
      })
     ,
-    NguoiDungModule, ThongBaoModule, KhoaModule, MonHocModule, GiangVienModule, SinhVienModule, ChuongModule, CauHoiModule, DapAnModule, FileDinhKemModule, LopHocPhanModule, BaiKiemTraModule, BaiLamSinhVienModule, AuthModule, GuiFileModule, MailModule, RedisModule, OtpModule],
+    NguoiDungModule, ThongBaoModule, KhoaModule, MonHocModule, GiangVienModule, SinhVienModule, ChuongModule, CauHoiModule, DapAnModule, LopHocPhanModule, BaiKiemTraModule, BaiLamSinhVienModule, AuthModule, GuiFileModule, MailModule, RedisModule, OtpModule],
   controllers: [AppController],
   providers: [AppService,
     {

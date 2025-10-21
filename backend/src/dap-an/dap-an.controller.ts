@@ -13,16 +13,6 @@ export class DapAnController {
     return await this.dapAnService.taoMotDapAn(creatMotDapAnDto);
   }
 
-  @Get()
-  findAll() {
-    return this.dapAnService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.dapAnService.findOne(+id);
-  }
-
   @Patch(':id')
   update(@Param('id',ParseIntPipe) id: number, @Body() updateDapAnDto: UpdateDapAnDto) {
     return this.dapAnService.capNhatMotDapAn (id, updateDapAnDto);

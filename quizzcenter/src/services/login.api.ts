@@ -49,4 +49,14 @@ export class LoginService {
             return {ok: false, error}
         }
     }
+    static logout = async (accessToken: string) =>{
+        try{
+            const res = await axios.post(`${API_URL}/auth/logout`, {}, {
+                headers: { Authorization: `Bearer ${accessToken}` }
+            });
+            return {ok: true, data: res.data}
+        }catch(error){
+            throw error;
+        }
+    }
 }

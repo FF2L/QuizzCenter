@@ -24,53 +24,71 @@ export class GuiFileService {
   ) {}
 
   /**Phần upload ảnh */
-    async uploadMotAnh( fileBuffer: Buffer, options: UploadApiOptions ={}) : Promise<UploadApiResponse>{
-      return new Promise ((resolve,rejects) => {
-        const uploadStream = this.cloudianry.uploader.upload_stream({
-          folder: process.env.CLOUDINARY_FOLDER || 'imagesQuizzCenter',
-          resource_type: 'image',
-          ...options
-        },
-        (error, result) =>{error? rejects(error) : resolve(result as UploadApiResponse)}
-      )
-      streamifier.createReadStream(fileBuffer).pipe(uploadStream)
-      })
-    }
+    // async uploadMotAnh1( fileBuffer: Buffer, options: UploadApiOptions ={}) : Promise<UploadApiResponse>{
+    //   return new Promise ((resolve,rejects) => {
+    //     const uploadStream = this.cloudianry.uploader.upload_stream({
+    //       folder: process.env.CLOUDINARY_FOLDER || 'imagesQuizzCenter',
+    //       resource_type: 'image',
+    //       ...options
+    //     },
+    //     (error, result) =>{error? rejects(error) : resolve(result as UploadApiResponse)}
+    //   )
+    //   streamifier.createReadStream(fileBuffer).pipe(uploadStream)
+    //   })
+    // }
 
-    async uploadMangAnh(buffers: Buffer[], options: UploadApiOptions = {}) {
-    const uploaded: UploadApiResponse[] = [];
-    try {
-      for (let i = 0; i < buffers.length; i++) {
-        const res = await this.uploadMotAnh(buffers[i], options);
-        uploaded.push(res); // lưu để rollback nếu sau đó lỗi
+    async uploadMotAnh(file: Express.Multer.File): Promise<string> {
+        return new Promise((resolve, reject) => {
+          const uploadStream = this.cloudianry.uploader.upload_stream(
+            {
+              folder: process.env.CLOUDINARY_FOLDER || 'imagesQuizzCenter',
+              resource_type: 'image',
+            },
+            (error, result) => {
+              if (error || !result) return reject(error);
+              resolve(result.public_id); // <<=== chỉ publicId
+            },
+          );
+
+          streamifier.createReadStream(file.buffer).pipe(uploadStream);
+        });
       }
-      // thành công tất cả
-      return uploaded.map((r) => ({
-        public_id: r.public_id,
-        url: r.secure_url,
-        width: r.width,
-        height: r.height,
-        format: r.format,
-        resource_type: r.resource_type,
-        bytes: r.bytes,
-      }));
-    } catch (err: any) {
-      // ROLLBACK: xoá tất cả cái đã upload thành công
-      console.log(err)
-      await Promise.allSettled(
-        uploaded.map((r) => this.cloudianry.uploader.destroy(r.public_id, { resource_type: 'image' })),
-      );
-      // ném lỗi ra ngoài cho controller xử lý
-      throw new InternalServerErrorException({
-        message: 'Upload thất bại, đã rollback ảnh đã tải lên.',
-        cause: err?.message || String(err),
-      });
-    }
-  }
+
+
+  //   async uploadMangAnh(buffers: Buffer[], options: UploadApiOptions = {}) {
+  //   const uploaded: UploadApiResponse[] = [];
+  //   try {
+  //     for (let i = 0; i < buffers.length; i++) {
+  //       const res = await this.uploadMotAnh1(buffers[i], options);
+  //       uploaded.push(res); // lưu để rollback nếu sau đó lỗi
+  //     }
+  //     // thành công tất cả
+  //     return uploaded.map((r) => ({
+  //       public_id: r.public_id,
+  //       url: r.secure_url,
+  //       width: r.width,
+  //       height: r.height,
+  //       format: r.format,
+  //       resource_type: r.resource_type,
+  //       bytes: r.bytes,
+  //     }));
+  //   } catch (err: any) {
+  //     // ROLLBACK: xoá tất cả cái đã upload thành công
+  //     console.log(err)
+  //     await Promise.allSettled(
+  //       uploaded.map((r) => this.cloudianry.uploader.destroy(r.public_id, { resource_type: 'image' })),
+  //     );
+  //     // ném lỗi ra ngoài cho controller xử lý
+  //     throw new InternalServerErrorException({
+  //       message: 'Upload thất bại, đã rollback ảnh đã tải lên.',
+  //       cause: err?.message || String(err),
+  //     });
+  //   }
+  // }
 
     async xoaAnhTheoId(publicId: string){
       try{
-        return await this.cloudianry.uploader.destroy(publicId,{resource_type: 'image'})
+        return await this.cloudianry.uploader.destroy(publicId)
       }catch(error){
         throw new InternalServerErrorException('Lỗi xóa ảnh trên cloudianry')
       }
@@ -272,23 +290,4 @@ private mapLoai(input?: string): LoaiCauHoi {
 
 
 
-  create(createGuiFileDto: CreateGuiFileDto) {
-    return 'This action adds a new guiFile';
-  }
-
-  findAll() {
-    return `This action returns all guiFile`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} guiFile`;
-  }
-
-  update(id: number, updateGuiFileDto: UpdateGuiFileDto) {
-    return `This action updates a #${id} guiFile`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} guiFile`;
-  }
 }

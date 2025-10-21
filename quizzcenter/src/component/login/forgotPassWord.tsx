@@ -1,6 +1,5 @@
-import React, { FC, useEffect, useState } from "react";
-import { Box, Card, CardContent, Stack, TextField, Button, Typography, Snackbar, Alert, CircularProgress, InputAdornment, IconButton, Link } from "@mui/material";
-import axios from "axios";
+import  { FC, useEffect, useState } from "react";
+import { Box, Stack, TextField, Button, Typography, CircularProgress, Link } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { Link as RouterLink } from "react-router-dom";
 import { LoginService } from "../../services/login.api";
@@ -11,6 +10,7 @@ const ForgotPassword: FC = () =>{
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  
   const handleSendOTP = async () => {
     setErrorEmail("");
     if (!email){
@@ -22,19 +22,17 @@ const ForgotPassword: FC = () =>{
         setErrorEmail('Email không hợp lệ');
         return;
       }
-      const res = await LoginService.forgotPass(email)
       setLoading(true);
+      const res = await LoginService.forgotPass(email)
       if(!res.ok){
         setErrorEmail('Email không tồn tại')
         setLoading(false);
         return
       }
       navigate(('/otp'), {state: {email: email}})
-
+      
     }
-
-      setLoading(false);
-
+    setLoading(false);
   };
 
   useEffect(() =>{
@@ -43,8 +41,8 @@ const ForgotPassword: FC = () =>{
     }
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler)
-  },[])
-
+  },[handleSendOTP])
+  
   return (
     <Box sx={{ width: '100%' }}>
           <Stack spacing={8} width="100%">
