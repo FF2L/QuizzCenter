@@ -6,11 +6,10 @@ import { CauHoi } from './entities/cau-hoi.entity';
 import { ChuongModule } from 'src/chuong/chuong.module';
 import { DapAnModule } from 'src/dap-an/dap-an.module';
 import { DapAn } from 'src/dap-an/entities/dap-an.entity';
-import { GuiFile } from 'src/gui-file/entities/gui-file.entity';
 import { GuiFileModule } from 'src/gui-file/gui-file.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CauHoi,DapAn,GuiFile]),
+  imports: [TypeOrmModule.forFeature([CauHoi,DapAn]),
     forwardRef(() => ChuongModule),
     forwardRef(()=>DapAnModule),
     GuiFileModule

@@ -33,9 +33,6 @@ export class CauHoi extends BaseEntity{
     })
     doKho: DoKho
 
-    @Column({nullable: true})
-    publicId: string
-
     @ManyToOne(() => Chuong, (chuong) => chuong.cauHoi, {lazy: true})
     @JoinColumn({name: 'idChuong'})
     chuong: Promise<Chuong>

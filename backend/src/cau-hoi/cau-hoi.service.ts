@@ -8,11 +8,7 @@ import { DataSource, In, Repository } from 'typeorm';
 import { ChuongService } from 'src/chuong/chuong.service';
 import { Pagination } from 'src/common/dto/pagination.dto';
 import { DEFAULT_PAGE_LIMIT } from 'src/common/utiils/const.globals';
-import { FilterCauHoiQueryDto } from './dto/filter_cau-hoi_query.dto';
 import { DapAnService } from 'src/dap-an/dap-an.service';
-import { DapAn } from 'src/dap-an/entities/dap-an.entity';
-import { ImgFile } from 'src/common/utiils/types.globals';
-import { GuiFile } from 'src/gui-file/entities/gui-file.entity';
 import { GuiFileService } from 'src/gui-file/gui-file.service';
 
 @Injectable()
@@ -33,18 +29,48 @@ export class CauHoiService {
       tenHienThi: createCauHoiDto.tenHienThi,
       noiDungCauHoi: createCauHoiDto.noiDungCauHoi,
       noiDungCauHoiHTML: createCauHoiDto.noiDungCauHoiHTML,
-      publicId: createCauHoiDto?.idPublic,
       loaiCauHoi: createCauHoiDto.loaiCauHoi,
       doKho: createCauHoiDto.doKho,
       idChuong: createCauHoiDto.idChuong
       })
-      const cauHoiSave = await this.cauHoiRepo.save(cauHoi)
+      try{
+        const cauHoiSave = await this.cauHoiRepo.save(cauHoi)
+        const mangDapAn = await this.dapAnService.taoNhieuDapAn(createCauHoiDto.mangDapAn, cauHoiSave.id, cauHoi.loaiCauHoi)
+        return {cauHoi,mangDapAn}
+      }catch (error) {
+        console.error(error);
+        throw new InternalServerErrorException('Lỗi khi tạo câu hỏi');
+      }
+  }
 
-    
-    const mangDapAn = await this.dapAnService.taoNhieuDapAn(createCauHoiDto.mangDapAn, cauHoiSave.id, cauHoi.loaiCauHoi)
-
-    return {cauHoi,mangDapAn}
-  
+  async taoDanhSachCauHoi(idChuong: number, createCauHoiDto: CreateCauHoiDto[]) {
+    const chuong = await this.chuongService.timMotChuongTheoId(idChuong)
+    const cauHoiEntities: CauHoi[] = [];
+    const allDapAn: any[] = []
+    for (const dto of createCauHoiDto) {
+      const cauHoi = this.cauHoiRepo.create({
+        tenHienThi: dto.tenHienThi,
+        noiDungCauHoi: dto.noiDungCauHoi,
+        noiDungCauHoiHTML: dto.noiDungCauHoiHTML,
+        loaiCauHoi: dto.loaiCauHoi,
+        doKho: dto.doKho,
+        idChuong: idChuong
+      });
+      cauHoiEntities.push(cauHoi);
+    }
+    try {
+      const cauHoiSaveArray = await this.cauHoiRepo.save(cauHoiEntities);
+      for (let i = 0; i < cauHoiSaveArray.length; i++) {
+        const dto = createCauHoiDto[i];
+        const cauHoiSave = cauHoiSaveArray[i];
+        const mangDapAn = await this.dapAnService.taoNhieuDapAn(dto.mangDapAn, cauHoiSave.id, cauHoiSave.loaiCauHoi);
+        allDapAn.push(...mangDapAn);
+      }
+      return { cauHoi: cauHoiSaveArray, mangDapAn: allDapAn };
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('Lỗi khi tạo danh sách câu hỏi');
+    }
   }
 
 
@@ -97,7 +123,6 @@ async timMangCauHoiTheoMangIdCauHoi(ids: number[]){
 }
 
  async capNhatCauHoi(id: number, updateCauHoiDto: UpdateCauHoiDto) {
-  const {tenHienThi, noiDungCauHoi, noiDungCauHoiHTML,idPublic,doKho} = updateCauHoiDto
  
    const cauHoiPreLoad = await this.cauHoiRepo.preload({ id, ...updateCauHoiDto });
    if (!cauHoiPreLoad) throw new NotFoundException('Không tìm thấy câu hỏi cần cập nhật');
@@ -113,8 +138,8 @@ async timMangCauHoiTheoMangIdCauHoi(ids: number[]){
     const cauHoi =  await this.timCauHoiTheoId(id);
   
     try{
-      await this.dapAnService.xoaTatCaDapAnTheoIdCauHoi(id);
-      return await this.cauHoiRepo.delete(id);
+       await this.cauHoiRepo.softDelete(id);
+       return{message: 'oke'}
     }catch(err){
       throw new InternalServerErrorException('Lỗi xóa câu hỏi')
     }

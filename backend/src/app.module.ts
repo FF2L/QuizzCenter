@@ -4,7 +4,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { NguoiDungModule } from './nguoi-dung/nguoi-dung.module';
 import { ThongBaoModule } from './thong-bao/thong-bao.module';
-import { KhoaModule } from './khoa/khoa.module';
 import { MonHocModule } from './mon-hoc/mon-hoc.module';
 import { GiangVienModule } from './giang-vien/giang-vien.module';
 import { SinhVienModule } from './sinh-vien/sinh-vien.module';
@@ -36,7 +35,7 @@ import { OtpModule } from './otp/otp.module';
       useFactory: dbPostgresConfig, // sử dụng khi dbPostgressCOnfig file trả về một hàm trả về instance của PostgresConnectionOptions
      })
     ,
-    NguoiDungModule, ThongBaoModule, KhoaModule, MonHocModule, GiangVienModule, SinhVienModule, ChuongModule, CauHoiModule, DapAnModule, LopHocPhanModule, BaiKiemTraModule, BaiLamSinhVienModule, AuthModule, GuiFileModule, MailModule, RedisModule, OtpModule],
+    NguoiDungModule, ThongBaoModule, MonHocModule, GiangVienModule, SinhVienModule, ChuongModule, CauHoiModule, DapAnModule, LopHocPhanModule, BaiKiemTraModule, BaiLamSinhVienModule, AuthModule, GuiFileModule, MailModule, RedisModule, OtpModule],
   controllers: [AppController],
   providers: [AppService,
     {

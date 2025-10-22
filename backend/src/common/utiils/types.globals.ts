@@ -18,5 +18,3 @@ export type NormalizedItem = {
   doKho: DoKho;
   answers: Array<{ thuTu: number; noiDung: string; dung: boolean }>;
 };
-
-export type ImgFile = { buffer: Buffer; originalname: string; mimetype: string };

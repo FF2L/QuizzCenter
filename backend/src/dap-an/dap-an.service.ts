@@ -37,7 +37,6 @@ export class DapAnService {
     const dapAn = this.dapAnRepo.create({
       noiDung: createMotDapAn.noiDung,
       noiDungHTML: createMotDapAn.noiDungHTML,
-      publicId: createMotDapAn?.publicId,
       dapAnDung: createMotDapAn.dapAnDung,
       idCauHoi: createMotDapAn.idCauHoi
   })
@@ -65,16 +64,15 @@ export class DapAnService {
     }
   }
 
-async capNhatMotDapAn(id: number, dto: UpdateDapAnDto, manager?: EntityManager) {
-  const repo = manager ? manager.getRepository(DapAn) : this.dapAnRepo;
+async capNhatMotDapAn(id: number, dto: UpdateDapAnDto) {
 
   // preload trả về Promise<DapAn | null>
-  const entity = await repo.preload({ id, ...dto });
+  const entity = await this.dapAnRepo.preload({ id, ...dto });
   if (!entity) throw new NotFoundException('Không tìm thấy đáp án');
 
- ;
-   try{
-       return await repo.save(entity)
+  try{
+      await this.dapAnRepo.save(entity)
+      return{messages: "oke"}
      }catch(err){
       throw new InternalServerErrorException('Lỗi sửa một đáp án')
      }
@@ -82,12 +80,15 @@ async capNhatMotDapAn(id: number, dto: UpdateDapAnDto, manager?: EntityManager) 
 
 
   async xoaMotDApAnTheoIdDapAn(id: number) {
-     const cauHoi = await this.cauHoiService.timCauHoiTheoId(id)
-     const dapAn = await this.dapAnRepo.findOne({where: {id}})
+
+     const dapAn = await this.dapAnRepo.findOne({where: {id}});
+     if(!dapAn) throw new NotFoundException('Không tìm thấy đáp án');
+     const cauHoi = await this.cauHoiService.timCauHoiTheoId(dapAn.idCauHoi);
      if(dapAn?.dapAnDung === true && cauHoi.cauHoi.loaiCauHoi === LoaiCauHoi.MotDung)
        throw new BadRequestException('Không thể xóa đáp án đúng của câu hỏi một đúng cần phải thêm câu hỏi đúng thay thế vào')
      try{
-      return await this.dapAnRepo.delete(id);
+       await this.dapAnRepo.delete(id);
+       return{messages: "oke"} 
      }catch(err){
       throw new InternalServerErrorException('Lỗi xóa một đáp án')
      }
