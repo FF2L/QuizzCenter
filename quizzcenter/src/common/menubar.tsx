@@ -50,8 +50,8 @@ export default function MenuBar({ role }: { role: string }) {
       if (path.includes('/lecturer/course') || path.includes('/lecturer/page/')) return 2;
       if (path.includes('/lecturer/class')) return 3;
     } else {
+      if (path.includes('/quizzcenter/my/course')) return 1;
       if (path === '/' || path.includes('/quizzcenter/my')) return 0;
-      if (path.includes('/quizzcenter/course')) return 1;
     }
     
     return null;
