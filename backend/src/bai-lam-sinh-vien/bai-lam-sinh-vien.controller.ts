@@ -30,6 +30,7 @@ export class BaiLamSinhVienController {
   @UseGuards(JwtAuthGuard)
   @Patch('/chi-tiet-bai-lam/:idBaiKiemTra')
   update(@Param('idBaiKiemTra',ParseIntPipe) idBaiKiemTra: number, @Body() danhSachChiTiet: UpdateChiTietCauHoiDto[]) {
+    // console.log(danhSachChiTiet)
     return this.baiLamSinhVienService.luuTamDapAn(idBaiKiemTra, danhSachChiTiet);
   }
   //nộp bài

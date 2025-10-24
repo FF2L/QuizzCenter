@@ -10,52 +10,29 @@ import { ACCEPTED_MIME_EXCEL } from 'src/common/utiils/const.globals';
 export class GuiFileController {
   constructor(private readonly guiFileService: GuiFileService) {}
 
-  @Post('cau-hoi/:idChuong')
-  @UseInterceptors(
-    FileInterceptor('file',{
-      storage: memoryStorage(),
-      limits: {fileSize: 20 * 1024 *1024}, //Tối đã 20 MB
-      fileFilter: (_req,file,cb) =>{
-        if(ACCEPTED_MIME_EXCEL.has(file.mimetype) || file.originalname.endsWith('.xlsx') || file.originalname.endsWith('.csv')){
-          cb(null,true)
-        } else {
-          cb(new BadRequestException('Chỉ chấp nhận file có đuôi .xlsx hoặc .csv'), false)
-        }
-      }
-    })
-  )
-  async taoCauHoiTuFile( @Param('idChuong', ParseIntPipe) idChuong: number,
-    @UploadedFile() file: Express.Multer.File) {
-    if(!file) throw new BadRequestException('thiếu file hoặc file name = "file"')
-      // .xlsx → parseXlsx; .csv → parseCsv
-      const ext = (file.originalname.split('.').pop() || '').toLowerCase()
-      const rows = ext === 'csv' ?
-      await this.guiFileService.parseCsv(file.buffer) :
-      await this.guiFileService.parseXlsx(file.buffer)
+@Post('import/:idChuong')
+@UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } }))
+async import(
+  @UploadedFile() file: Express.Multer.File,
+  @Param('idChuong') idChuong: number,
+) {
+  if (!file) throw new BadRequestException('Thiếu file');
+  return this.guiFileService.parseFileFormat(file.buffer, file.originalname, +idChuong);
+}
 
-      // Chuyển sang cấu trúc chuẩn rồi insert DB
-    const normalized = this.guiFileService.normalizeRows(rows);
-    const result = await this.guiFileService.saveToDatabase(normalized, idChuong);
-    return { ok: true, idChuong, ...result };
+
+  @Post('anh')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadMotAnh(@UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('Chưa chọn file!');
+    const publicId = await this.guiFileService.uploadMotAnh(file);
+    return { publicId };     // <=== trả về đúng yêu cầu
   }
 
-  @Get()
-  findAll() {
-    return this.guiFileService.findAll();
+  @Delete('anh/')
+  async xoaMotAnh(@Body('publicId') publicId: string) {
+    await this.guiFileService.xoaAnhTheoId(publicId);
+    return { ok: true };
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.guiFileService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateGuiFileDto: UpdateGuiFileDto) {
-    return this.guiFileService.update(+id, updateGuiFileDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.guiFileService.remove(+id);
-  }
 }

@@ -18,7 +18,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import "react-quill/dist/quill.snow.css";
 import ReactQuill from "react-quill";
 import { CauHoiPayload } from "../../../common/model";
-import  { Quill } from "react-quill";
+
 interface DapAnInput {
   noiDung: string;
   dapAnDung: boolean;

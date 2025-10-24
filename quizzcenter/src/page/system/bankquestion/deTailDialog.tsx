@@ -3,6 +3,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, 
 import CloseIcon from "@mui/icons-material/Close";
 import { CauHoiPayload } from "../../../common/model";
 
+
 type LoaiKey = "MotDung" | "NhieuDung";
 type doKhoKey = "Kho" | "De";
 const loaiMap: Record<LoaiKey, string> = {

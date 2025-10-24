@@ -16,7 +16,8 @@ export class MonHoc extends BaseEntity{
 
     @ManyToOne(() => Khoa, (khoa) => khoa.MonHoc, {lazy: true})
     @JoinColumn({name: 'idKhoa'})
-    idKhoa: Promise<Khoa>
+    khoa: Promise<Khoa>
+    @Column() idKhoa: number;
 
     @OneToMany(() => Chuong, (chuong) => chuong.monHoc, {lazy: true})
     chuong: Promise<Chuong[]>
@@ -24,7 +25,7 @@ export class MonHoc extends BaseEntity{
     @OneToMany(() => LopHocPhan, (lopHocPhan) => lopHocPhan.idMonHoc, {cascade: true, lazy:true})
     lopHocPhan: Promise<LopHocPhan[]>
 
-    @ManyToMany(() => GiangVien, (giangVien) => giangVien.monHoc, {cascade: true, lazy:true})
-    @JoinTable({name: 'MonHoc_GiangVien'})
-    giangVien: Promise<GiangVien[]>
+    // @ManyToMany(() => GiangVien, (giangVien) => giangVien.monHoc, {cascade: true, lazy:true})
+    // @JoinTable({name: 'MonHoc_GiangVien'})
+    // giangVien: Promise<GiangVien[]>
 }

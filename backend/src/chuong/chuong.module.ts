@@ -6,7 +6,6 @@ import { Chuong } from './entities/chuong.entity';
 import { GiangVienModule } from 'src/giang-vien/giang-vien.module';
 import { MonHocModule } from 'src/mon-hoc/mon-hoc.module';
 import { CauHoiModule } from 'src/cau-hoi/cau-hoi.module';
-import { ChuongV2Controller } from './chuong-v2.controller';
 
 @Module({
   imports:[TypeOrmModule.forFeature([Chuong]),
@@ -14,7 +13,7 @@ import { ChuongV2Controller } from './chuong-v2.controller';
     GiangVienModule,
     forwardRef(() => CauHoiModule)
 ],
-  controllers: [ChuongController,ChuongV2Controller],
+  controllers: [ChuongController],
   providers: [ChuongService],
   exports: [ChuongService]
 })
