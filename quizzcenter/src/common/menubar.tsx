@@ -17,10 +17,11 @@ import {
   Home,
   MenuBook,
   Logout,
+  Class,
+  Person,
 } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
-import { useUser } from "../page/system/auth/userContext";
-import axios from "axios";
+import { useLocation, useNavigate } from "react-router-dom";
+import { LoginService } from "../services/login.api";
 
 type MenuItemType = {
   id: number;
@@ -30,53 +31,68 @@ type MenuItemType = {
   children?: MenuItemType[];
 };
 
-export default function MenuBar() {
+export default function MenuBar({ role }: { role: string }) {
   const navigate = useNavigate();
-  const { role, name, anhDaiDien, setRole, setName } = useUser();
+  const location = useLocation();
   const [openParent, setOpenParent] = useState<number | null>(null);
-  const [selected, setSelected] = useState<number | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItemType[]>([]);
   const [collapsed, setCollapsed] = useState(false);
-
+  
   const handleToggle = (id: number) => setOpenParent(openParent === id ? null : id);
 
-  const handleLogout = async () => {
-    try {
-      const accessToken = localStorage.getItem("accessToken");
-      if (!accessToken) throw new Error("Không tìm thấy accessToken");
-
-      await axios.post(
-        "http://localhost:3000/auth/logout",
-        {},
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-    } catch (err: any) {
-      console.error("Lỗi logout:", err);
-    } finally {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("role");
-      localStorage.removeItem("name");
-      setRole("");
-      setName("");
-      navigate("/login");
+  // Xác định item được chọn dựa vào URL hiện tại
+  const getSelectedItem = () => {
+    const path = location.pathname;
+    
+    if (role === "GiaoVien") {
+      if (path.includes('/lecturer/home')) return 0;
+      if (path.includes('/lecturer/user')) return 1;
+      if (path.includes('/lecturer/course') || path.includes('/lecturer/page/')) return 2;
+      if (path.includes('/lecturer/class')) return 3;
+    } else {
+      if (path === '/' || path.includes('/quizzcenter/my')) return 0;
+      if (path.includes('/quizzcenter/course')) return 1;
     }
+    
+    return null;
+  };
+
+  const handleLogout = async () => {
+    let accessToken = ''
+    if(role === 'GiaoVien'){
+      accessToken = localStorage.getItem("accessTokenGV") || ''
+      localStorage.removeItem("accessTokenGV");
+      localStorage.removeItem("refreshTokenV");
+    }else if(role === 'SinhVien'){
+      accessToken = localStorage.getItem("accessTokenSV") || ''
+      localStorage.removeItem("accessTokenSV");
+      localStorage.removeItem("refreshTokenSV");
+    }else if(role === 'Admin'){
+      accessToken = localStorage.getItem("accessTokenAD") || ''
+      localStorage.removeItem("accessTokenAD");
+      localStorage.removeItem("refreshTokenAD");
+    }
+    const res = await LoginService.logout(accessToken);
+    navigate("/login");
   };
 
   useEffect(() => {
-    if (!role) return;
     if (role === "GiaoVien") {
       setMenuItems([
-        { id: 0, title: "Trang chủ", icon: <Home />, path: "/home" },
-        { id: 1, title: "Môn học", icon: <MenuBook />, path: "/course" },
+        { id: 0, title: "Trang chủ", icon: <Home />, path: "/lecturer/home" },
+        { id: 1, title: "Người dùng", icon: <Person />, path: "/lecturer/user" },
+        { id: 2, title: "Môn học", icon: <MenuBook />, path: "/lecturer/course" },
+        { id: 3, title: "Lớp học", icon: <Class />, path: "/lecturer/class" },
       ]);
     } else {
       setMenuItems([
-        { id: 0, title: "Trang chủ", icon: <Home />, path: "/" },
-        { id: 1, title: "Lớp học phần", icon: <MenuBook />, path: "/" },
+        { id: 0, title: "Trang chủ", icon: <Home />, path: "/quizzcenter/my" },
+        { id: 1, title: "Lớp học phần", icon: <MenuBook />, path: "/quizzcenter/my/course" },
       ]);
     }
   }, [role]);
+
+  const selectedItem = getSelectedItem();
 
   return (
     <Box
@@ -116,7 +132,7 @@ export default function MenuBar() {
           }}
         >
           <img
-            src={anhDaiDien || "/assets/teacherAvatar.png"}
+            src={"/assets/teacherAvatar.png"}
             alt="avatar"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
@@ -125,7 +141,7 @@ export default function MenuBar() {
           <Typography
             sx={{ mt: 2, fontWeight: 600, fontSize: 18, color: "#fff" }}
           >
-            {name || (role === "GiaoVien" ? "Giảng Viên" : "Sinh Viên")}
+            {role === "GiaoVien" ? "Giảng Viên" : "Sinh Viên"}
           </Typography>
         )}
       </Box>
@@ -149,8 +165,11 @@ export default function MenuBar() {
               <Paper elevation={0} sx={{ width: "100%", backgroundColor: "transparent" }}>
                 <ListItem
                   onClick={() => {
-                    setSelected(item.id);
-                    item.children ? handleToggle(item.id) : item.path && navigate(item.path);
+                    if (item.children) {
+                      handleToggle(item.id);
+                    } else if (item.path) {
+                      navigate(item.path);
+                    }
                   }}
                   sx={{
                     height: 50,
@@ -161,9 +180,9 @@ export default function MenuBar() {
                     alignItems: "center",
                     justifyContent: collapsed ? "center" : "flex-start",
                     backgroundColor:
-                      selected === item.id ? "rgba(0,255,200,0.15)" : "transparent",
+                      selectedItem === item.id ? "rgba(0,255,200,0.15)" : "transparent",
                     borderLeft:
-                      selected === item.id ? "4px solid #00ffc8" : "4px solid transparent",
+                      selectedItem === item.id ? "4px solid #00ffc8" : "4px solid transparent",
                     "&:hover": {
                       background:
                         "linear-gradient(90deg, rgba(0,255,200,0.1), rgba(0,255,200,0.05))",
@@ -175,8 +194,8 @@ export default function MenuBar() {
                 >
                   <ListItemIcon
                     sx={{
-                      minWidth: 70, // tăng khoảng cách icon → text
-                      color: selected === item.id ? "#00ffc8" : "#fff",
+                      minWidth: 70,
+                      color: selectedItem === item.id ? "#00ffc8" : "#fff",
                       display: "flex",
                       justifyContent: "center",
                     }}
@@ -188,8 +207,8 @@ export default function MenuBar() {
                       primary={item.title}
                       sx={{ ml: 1 }}
                       primaryTypographyProps={{
-                        fontWeight: selected === item.id ? 600 : 500,
-                        color: selected === item.id ? "#00ffc8" : "#fff",
+                        fontWeight: selectedItem === item.id ? 600 : 500,
+                        color: selectedItem === item.id ? "#00ffc8" : "#fff",
                         fontSize: 16,
                       }}
                     />

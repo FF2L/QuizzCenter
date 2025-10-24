@@ -71,11 +71,11 @@ const { tenChuong } = location.state || {};
 
   
   const handleBack = () => {
-    navigate("/page/" + state?.idMonHoc, { state: {
+    navigate("/lecturer/course/" + state?.idMonHoc, { state: {
       idMonHoc: state?.idMonHoc,
       tenMonHoc: state?.tenMonHoc, 
       tenChuong:state?.tenChuong,
-      idChuong: state?.idChuong  , tab: 2 } });
+      idChuong: state?.idChuong  , tab: 1 } });
   };
   // Image handler (giữ nguyên logic từ dialog)
   const imageHandler = useCallback(() => {

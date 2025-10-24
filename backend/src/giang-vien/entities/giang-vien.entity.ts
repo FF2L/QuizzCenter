@@ -17,15 +17,12 @@ export class GiangVien {
     @Column()
     chucVu: string
 
-    @Column()
-    chucDanhHocThuat: string
-
     @OneToMany(() => Chuong, (chuong) => chuong.giangVien, { cascade: true, lazy:true })
     chuong: Promise<Chuong[]>;
 
     @OneToMany(() => LopHocPhan, (lopHocPhan) => lopHocPhan.idGiangVien, {cascade: true, lazy: true})
     lopHocPhan: Promise<LopHocPhan []>
 
-    @ManyToMany(() => MonHoc, (monHoc) => monHoc.giangVien, {lazy: true})
-    monHoc: Promise<MonHoc[]>
+    // @ManyToMany(() => MonHoc, (monHoc) => monHoc.giangVien, {lazy: true})
+    // monHoc: Promise<MonHoc[]>
 }

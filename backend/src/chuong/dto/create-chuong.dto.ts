@@ -6,14 +6,6 @@ export class CreateChuongDto {
     tenChuong: string
 
     @IsInt()
-    @IsPositive()
-    thuTu: number
-
-    @IsInt()
-    @IsOptional()
-    idGiangVien: number
-
-    @IsInt()
     idMonHoc: number
 
 }

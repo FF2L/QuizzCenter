@@ -24,7 +24,6 @@ export class GiangVienService {
           email: true,
           maNguoiDung:true,
           anhDaiDien:true,
-          gioiTinh:true,
           soDienThoai:true,
           idKhoa:true,
           ngaySinh:true,

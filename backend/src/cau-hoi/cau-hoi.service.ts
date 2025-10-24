@@ -8,13 +8,7 @@ import { DataSource, In, Repository } from 'typeorm';
 import { ChuongService } from 'src/chuong/chuong.service';
 import { Pagination } from 'src/common/dto/pagination.dto';
 import { DEFAULT_PAGE_LIMIT } from 'src/common/utiils/const.globals';
-import { FilterCauHoiQueryDto } from './dto/filter_cau-hoi_query.dto';
 import { DapAnService } from 'src/dap-an/dap-an.service';
-import { DapAn } from 'src/dap-an/entities/dap-an.entity';
-import { ImgFile } from 'src/common/utiils/types.globals';
-import { FileDinhKemService } from 'src/file-dinh-kem/file-dinh-kem.service';
-import { FileDinhKem } from 'src/file-dinh-kem/entities/file-dinh-kem.entity';
-import { GuiFile } from 'src/gui-file/entities/gui-file.entity';
 import { GuiFileService } from 'src/gui-file/gui-file.service';
 
 @Injectable()
@@ -23,12 +17,11 @@ export class CauHoiService {
               @InjectDataSource() private readonly ds: DataSource,
               @Inject(forwardRef(() => ChuongService))private chuongService : ChuongService,
               @Inject(forwardRef(() => DapAnService))private dapAnService : DapAnService,
-              @Inject(forwardRef(() => FileDinhKemService)) private fileDinhKemService: FileDinhKemService,
               private readonly dataSource: DataSource,
               private guiFileService: GuiFileService
 ){}
 
-  async taoMotCauHoi(createCauHoiDto: CreateCauHoiDto, mangFile?: ImgFile[]) {
+  async taoMotCauHoi(createCauHoiDto: CreateCauHoiDto) {
     const chuong = await this.chuongService.timMotChuongTheoId(createCauHoiDto.idChuong)
     
     
@@ -40,40 +33,83 @@ export class CauHoiService {
       doKho: createCauHoiDto.doKho,
       idChuong: createCauHoiDto.idChuong
       })
-      const cauHoiSave = await this.cauHoiRepo.save(cauHoi)
+      try{
+        const cauHoiSave = await this.cauHoiRepo.save(cauHoi)
+        const mangDapAn = await this.dapAnService.taoNhieuDapAn(createCauHoiDto.mangDapAn, cauHoiSave.id, cauHoi.loaiCauHoi)
+        return {cauHoi,mangDapAn}
+      }catch (error) {
+        console.error(error);
+        throw new InternalServerErrorException('Lỗi khi tạo câu hỏi');
+      }
+  }
 
-    
-    const mangDapAn = await this.dapAnService.taoNhieuDapAn(createCauHoiDto.mangDapAn, cauHoiSave.id, cauHoi.loaiCauHoi)
-
-    const mangFileDinhKemSave: FileDinhKem[] = await this.luuMangFileDinhKemVaTraVe(cauHoiSave.id,mangFile)
-
-    return {cauHoi,mangDapAn,mangFileDinhKemSave}
-  
+  async taoDanhSachCauHoi(idChuong: number, createCauHoiDto: CreateCauHoiDto[]) {
+    const chuong = await this.chuongService.timMotChuongTheoId(idChuong)
+    const cauHoiEntities: CauHoi[] = [];
+    const allDapAn: any[] = []
+    for (const dto of createCauHoiDto) {
+      const cauHoi = this.cauHoiRepo.create({
+        tenHienThi: dto.tenHienThi,
+        noiDungCauHoi: dto.noiDungCauHoi,
+        noiDungCauHoiHTML: dto.noiDungCauHoiHTML,
+        loaiCauHoi: dto.loaiCauHoi,
+        doKho: dto.doKho,
+        idChuong: idChuong
+      });
+      cauHoiEntities.push(cauHoi);
+    }
+    try {
+      const cauHoiSaveArray = await this.cauHoiRepo.save(cauHoiEntities);
+      for (let i = 0; i < cauHoiSaveArray.length; i++) {
+        const dto = createCauHoiDto[i];
+        const cauHoiSave = cauHoiSaveArray[i];
+        const mangDapAn = await this.dapAnService.taoNhieuDapAn(dto.mangDapAn, cauHoiSave.id, cauHoiSave.loaiCauHoi);
+        allDapAn.push(...mangDapAn);
+      }
+      return { cauHoi: cauHoiSaveArray, mangDapAn: allDapAn };
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('Lỗi khi tạo danh sách câu hỏi');
+    }
   }
 
 
+async layTatCaCauHoiTheoIdChuong(idChuong:number, query:any){
+  const { skip, limit, doKho, noiDungCauHoi } = query;
+ 
+  const qb = this.cauHoiRepo.createQueryBuilder('qh')
+  .where('qh.idChuong = :idChuong', { idChuong });
 
-  async layTatCaCauHoiTheoIdChuong(idChuong:number, filterCauHoiDto: FilterCauHoiQueryDto){
-   
-    const qb = this.cauHoiRepo.createQueryBuilder('qh')
-    .where('qh.idChuong = :idChuong', { idChuong });
-
-    if (filterCauHoiDto.doKho !== undefined) qb.andWhere('qh.doKho = :doKho', { doKho: filterCauHoiDto.doKho });
-    if (filterCauHoiDto.loaiCauHoi !== undefined) qb.andWhere('qh.loaiCauHoi = :loai', { loai: filterCauHoiDto.loaiCauHoi });
-
-    return qb.orderBy('qh.update_at', 'ASC')
-      .skip(filterCauHoiDto.skip)
-      .take(filterCauHoiDto.limit ?? DEFAULT_PAGE_LIMIT)
-      .getMany();
-
+  if (doKho !== undefined) {
+    qb.andWhere('qh.doKho = :doKho', { doKho });
   }
+
+  if (noiDungCauHoi) {
+    qb.andWhere('unaccent(qh.noiDungCauHoi) ILIKE unaccent(:noiDungCauHoi)', { noiDungCauHoi: `%${noiDungCauHoi}%` });
+  }
+
+
+  qb.addOrderBy('qh.create_at', 'ASC');
+
+  const [data, total] = await qb
+    .skip(skip ?? 0)
+    .take(limit ?? DEFAULT_PAGE_LIMIT)
+    .getManyAndCount();
+    console.log("Fetched questions:", data);
+
+  return {
+    data,
+    total,
+    currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1,
+    totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT))
+  };
+}
 
  async timCauHoiTheoId(id: number) {
     const cauHoi = await this.cauHoiRepo.findOne({ where: { id } });
     if (!cauHoi) throw new NotFoundException('Không tìm thấy câu hỏi');
-    const dapAn = await this.dapAnService.timNhieuDapAnTheoIdCauHoi(id)
-    const mangFileDinhKem = await this.fileDinhKemService.timTatCaFileDinhKemTheoIdCauHoi(id)           
-    return {cauHoi, dapAn, mangFileDinhKem}
+    const dapAn = await this.dapAnService.timNhieuDapAnTheoIdCauHoi(id)       
+    return {cauHoi, dapAn}
   }
 
 async timMangCauHoiTheoMangIdCauHoi(ids: number[]){
@@ -86,58 +122,28 @@ async timMangCauHoiTheoMangIdCauHoi(ids: number[]){
   }
 }
 
-  async capNhatCauHoi(id: number, updateCauHoiDto: UpdateCauHoiDto, mangFile?: ImgFile[]) {
-    const {mangAnhPublicId, ...truongCauHoiCanUpdate} = updateCauHoiDto
-    const cauHoi = await this.cauHoiRepo.preload({id,...truongCauHoiCanUpdate})
+ async capNhatCauHoi(id: number, updateCauHoiDto: UpdateCauHoiDto) {
+ 
+   const cauHoiPreLoad = await this.cauHoiRepo.preload({ id, ...updateCauHoiDto });
+   if (!cauHoiPreLoad) throw new NotFoundException('Không tìm thấy câu hỏi cần cập nhật');
+   try{
+      return await this.cauHoiRepo.save(cauHoiPreLoad);
+   }catch(err){
+    throw new InternalServerErrorException('Lỗi cập nhật câu hỏi')
+   }
+   
+ }
 
-    if(!cauHoi) throw new NotFoundException('Không tìm thấy câu hỏi cần update')
-    if(mangAnhPublicId) {
-      const mangFIleDinhKemCuaCauHoi = await this.fileDinhKemService.timTatCaFileDinhKemTheoIdCauHoi(id)
-      const setMangAnhPublicId = new Set(mangAnhPublicId)
-      const mangFileDinhKemDaMat = mangFIleDinhKemCuaCauHoi.filter(pub => !setMangAnhPublicId.has(pub.publicId))
-      const mangIdsPublicCanXoa = mangFileDinhKemDaMat.map(a => (a.publicId))
-
-      await this.fileDinhKemService.xoaAnhTheoIdPublic(mangIdsPublicCanXoa,id)
-        
-    }
-    
+ async remove(id: number) {
+    const cauHoi =  await this.timCauHoiTheoId(id);
+  
     try{
-      await this.luuMangFileDinhKemVaTraVe(id,mangFile)
-     
-      return await this.cauHoiRepo.save(cauHoi)
+       await this.cauHoiRepo.softDelete(id);
+       return{message: 'oke'}
     }catch(err){
-      throw new InternalServerErrorException('Cập nhật câu hỏi không thảnh công')
+      throw new InternalServerErrorException('Lỗi xóa câu hỏi')
     }
-  }
+ }
 
 
-
-  async remove(id: number) {
-    return await this.dataSource.transaction(async(manager) =>{
-      const dapAnRepo = manager.getRepository(DapAn)
-      const fileDinhKemRepo = manager.getRepository(FileDinhKem)
-      const cauHoiRepoTRans = manager.getRepository(CauHoi);
-    
-
-      
-      const publicId = await fileDinhKemRepo.find({where: {idCauHoi: id}, select: {publicId:true}})
-      for( var a of publicId){
-        await this.guiFileService.xoaAnhTheoId(a.publicId)
-      }
-      await dapAnRepo.delete({idCauHoi: id})
-      await fileDinhKemRepo.delete({idCauHoi: id})
-      await cauHoiRepoTRans.delete(id)
-    })
-  }
-
-    async luuMangFileDinhKemVaTraVe( idCauHoi:number, mangFile?:ImgFile[], ){
-      let buffers:Buffer[] = []
-      let mangTenFile:string[] = []
-      
-      if(mangFile) {
-        mangFile.forEach(f => {buffers.push(f.buffer); mangTenFile.push(f.originalname)})
-        return  await this.fileDinhKemService.taoMangFileImgDinhKem(buffers,mangTenFile,idCauHoi)
-      }
-      return []
-  }
 }

@@ -1,9 +1,10 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateNguoiDungDto } from './dto/create-nguoi-dung.dto';
 import { UpdateNguoiDungDto } from './dto/update-nguoi-dung.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { NguoiDung } from './entities/nguoi-dung.entity';
 import { Repository } from 'typeorm';
+import { UpdateMatKhauDto } from './dto/update-mat-khau.dto';
 
 @Injectable()
 export class NguoiDungService {
@@ -36,8 +37,46 @@ export class NguoiDungService {
     return nguoiDungLoaiBoMatKhau
   }
 
-  update(id: number, updateNguoiDungDto: UpdateNguoiDungDto) {
-    return `This action updates a #${id} nguoiDung`;
+    async layThongTinCuaNguoiDung(idNguoiDung: number) {
+       const nguoiDung = await this.nguoiDungRepo.findOne({
+      where: { id: idNguoiDung}
+    });
+    if(!nguoiDung) 
+      throw new NotFoundException();
+    const {matKhau,hashRefeshToken,vaiTro,ngayVao, ...nguoiDungLoaiBoMatKhau} = nguoiDung
+    return nguoiDungLoaiBoMatKhau
+  }
+
+  async update(id: number, updateNguoiDungDto: UpdateNguoiDungDto) {
+     const nguoiDung = this.nguoiDungRepo.preload({id, ...updateNguoiDungDto})
+    try {
+      if (!nguoiDung) throw new NotFoundException();
+      const data =  await this.nguoiDungRepo.update(id, updateNguoiDungDto)
+      if(data.affected ===0) throw new NotFoundException();
+      return await this.layThongTinCuaNguoiDung(id);
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('Cập nhật thông tin người dùng thất bại');
+    }
+  }
+
+  async updateMatKhau(id: number, updatematKhauDto: UpdateMatKhauDto) {
+    const{matKhauMoi, matKhauCu} = updatematKhauDto
+    const nguoiDung = await this.nguoiDungRepo.findOne({
+      where: { id: id}
+    });
+    if(!nguoiDung) 
+      throw new NotFoundException();
+    if(matKhauCu !== nguoiDung.matKhau) throw new BadRequestException('Mật khẩu cũ không chính xác')
+      try{
+        const data =  await this.nguoiDungRepo.update(id, {matKhau: matKhauMoi})
+        if(data.affected ===0) throw new NotFoundException();
+        return {messages: "ok"};
+      } catch (error) {
+        console.error(error);
+      throw new InternalServerErrorException('Cập nhật mật khẩu thất bại');
+    }
+
   }
 
   remove(id: number) {

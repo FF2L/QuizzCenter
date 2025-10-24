@@ -15,9 +15,9 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { LopHocPhan } from "../../../common/model"; // import model LopHocPhan
+import { LopHocPhan } from "../../common/model"; // import model LopHocPhan
 
-const Class = () => {
+const LectureClass = () => {
   const { idMonHoc } = useParams<{ idMonHoc: string }>();
   const location = useLocation();
   const navigate = useNavigate();
@@ -161,4 +161,4 @@ const Class = () => {
   );
 };
 
-export default Class;
+export default LectureClass;

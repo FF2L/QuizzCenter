@@ -11,9 +11,6 @@ export class Chuong extends BaseEntity{
     @Column()
     tenChuong: string
 
-    @Column()
-    thuTu: number
-
     @Column({
     default: 0
     })

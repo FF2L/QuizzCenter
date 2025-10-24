@@ -14,7 +14,6 @@ export class DapAn  extends BaseEntity{
     @Column({default : false})
     dapAnDung: boolean
 
-
     @ManyToOne(() => CauHoi, (qh) => qh.dapAn, {
     onDelete: 'CASCADE',
     lazy: true,

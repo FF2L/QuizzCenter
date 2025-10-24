@@ -23,272 +23,130 @@ export class GuiFileService {
     @Inject('CLOUDINARY') private cloudianry: typeof Cloudinary
   ) {}
 
-  /**Phần upload ảnh */
-    async uploadMotAnh( fileBuffer: Buffer, options: UploadApiOptions ={}) : Promise<UploadApiResponse>{
-      return new Promise ((resolve,rejects) => {
-        const uploadStream = this.cloudianry.uploader.upload_stream({
-          folder: process.env.CLOUDINARY_FOLDER || 'imagesQuizzCenter',
-          resource_type: 'image',
-          ...options
-        },
-        (error, result) =>{error? rejects(error) : resolve(result as UploadApiResponse)}
-      )
-      streamifier.createReadStream(fileBuffer).pipe(uploadStream)
-      })
-    }
+async uploadMotAnh(file: Express.Multer.File): Promise<{ public_id: string; url: string }> {
+  return new Promise((resolve, reject) => {
+    const uploadStream = this.cloudianry.uploader.upload_stream(
+      {
+        folder: process.env.CLOUDINARY_FOLDER || 'imagesQuizzCenter',
+        resource_type: 'image',
+      },
+      (error, result) => {
+        if (error || !result) return reject(error);
+        resolve({
+          public_id: result.public_id,
+          url: result.secure_url,
+        });
+      },
+    );
 
-    async uploadMangAnh(buffers: Buffer[], options: UploadApiOptions = {}) {
-    const uploaded: UploadApiResponse[] = [];
-    try {
-      for (let i = 0; i < buffers.length; i++) {
-        const res = await this.uploadMotAnh(buffers[i], options);
-        uploaded.push(res); // lưu để rollback nếu sau đó lỗi
-      }
-      // thành công tất cả
-      return uploaded.map((r) => ({
-        public_id: r.public_id,
-        url: r.secure_url,
-        width: r.width,
-        height: r.height,
-        format: r.format,
-        resource_type: r.resource_type,
-        bytes: r.bytes,
-      }));
-    } catch (err: any) {
-      // ROLLBACK: xoá tất cả cái đã upload thành công
-      console.log(err)
-      await Promise.allSettled(
-        uploaded.map((r) => this.cloudianry.uploader.destroy(r.public_id, { resource_type: 'image' })),
-      );
-      // ném lỗi ra ngoài cho controller xử lý
-      throw new InternalServerErrorException({
-        message: 'Upload thất bại, đã rollback ảnh đã tải lên.',
-        cause: err?.message || String(err),
-      });
-    }
-  }
+    streamifier.createReadStream(file.buffer).pipe(uploadStream);
+  });
+}
+
 
     async xoaAnhTheoId(publicId: string){
       try{
-        return await this.cloudianry.uploader.destroy(publicId,{resource_type: 'image'})
+        return await this.cloudianry.uploader.destroy(publicId)
       }catch(error){
         throw new InternalServerErrorException('Lỗi xóa ảnh trên cloudianry')
       }
       
     }
   /**End phần upload ảnh */
+parseFileFormat(buffer: Buffer, fileName: string, idChuong: number) {
+    const ext = (fileName.split('.').pop() || '').toLowerCase();
 
-  // --- 3.1 Parse Excel ---
-  async parseXlsx(buffer: Buffer): Promise<RawRow[]> {
-    try {
-      const wb = XLSX.read(buffer, { type: 'buffer' });
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json<RawRow>(sheet, { defval: '' });
-      return rows;
-    } catch (e) {
-      throw new BadRequestException('Không đọc được file Excel.');
-    }
+    let rows: Array<Record<string, any>>;
+    if (ext === 'csv') rows = this.parseCsv(buffer);
+    else if (ext === 'xlsx') rows = this.parseXlsx(buffer);
+    else throw new BadRequestException('Chỉ hỗ trợ .csv hoặc .xlsx');
+
+    return this.normalize(rows, idChuong);
   }
 
-  // --- 3.2 Parse CSV (nếu người dùng up CSV) ---
-  async parseCsv(buffer: Buffer): Promise<RawRow[]> {
-    try {
-      const text = buffer.toString('utf8');
-      const records = parse(text, {
-        columns: true,
-        skip_empty_lines: true,
-        trim: true,
-      }) as RawRow[];
-      return records;
-    } catch (e) {
-      throw new BadRequestException('Không đọc được file CSV.');
-    }
+  // ================== Parsers ==================
+  private parseCsv(buffer: Buffer) {
+    const text = buffer.toString('utf8');
+    return parse(text, {
+      columns: true,
+      skip_empty_lines: true,
+      trim: true,
+    }) as Array<Record<string, any>>;
   }
 
- // --- Chuẩn hoá về enum + list đáp án ---
- normalizeRows(rows: any[]): Normalized {
-  const letters = ['A','B','C','D','E','F','G','H'];
-
-  const items: NormalizedItem[] = rows.map((raw, idx) => {
-    // map key chuẩn hoá cho từng row (đọc header "lệch" cũng được)
-    const keyMap = this.buildKeyMap(raw);
-
-    const tenHienThi = this.getVal(raw, keyMap, 'Tên hiển thị')?.trim();
-    const noiDungCauHoi = this.getVal(raw, keyMap, 'Nội dung câu hỏi')?.trim() || '';
-    if (!noiDungCauHoi) {
-      throw new BadRequestException(`Hàng ${idx + 2} thiếu "Nội dung câu hỏi".`);
-    }
-
-    const loaiCauHoi: LoaiCauHoi = this.mapLoai(
-      this.getVal(raw, keyMap, 'Loại câu hỏi')?.toString(),
-    );
-
-    const doKho: DoKho = this.mapDoKho(
-      this.getVal(raw, keyMap, 'Độ khó')?.toString(),
-    );
-
-    // Lấy đáp án A..H
-    const answers = letters
-      .map((L, i) => {
-        const v = this.getVal(raw, keyMap, `Đáp án ${L}`)?.toString().trim();
-        return { thuTu: i + 1, noiDung: v, dung: false };
-      })
-      .filter(a => a.noiDung.length > 0);
-
-    // Đánh dấu đáp án đúng: hỗ trợ "A", "a", "1", "A,B", "1;3", hoặc theo nội dung
-    const correctRaw = (this.getVal(raw, keyMap, 'Đáp án đúng') || '').toString().trim();
-    const tokens = correctRaw
-      ? correctRaw.split(/[,\;\|\/]/).map(x => x.trim()).filter(Boolean)
-      : [];
-
-    for (const tk of tokens) {
-      const li = this.letterToIndex(tk);
-      if (li !== null && answers[li]) {
-        answers[li].dung = true;
-        continue;
-      }
-      const n = Number(tk);
-      if (!Number.isNaN(n) && answers[n - 1]) {
-        answers[n - 1].dung = true;
-        continue;
-      }
-      const found = answers.find(a => a.noiDung.trim().toLowerCase() === tk.toLowerCase());
-      if (found) found.dung = true;
-    }
-
-    return {
-      tenHienThi: tenHienThi || undefined,
-      noiDungCauHoi,
-      loaiCauHoi,
-      doKho,
-      answers,
-    };
-  });
-
-  return { items };
-}
-
-
-  // --- Lưu DB (thêm idChuong) ---
-  async saveToDatabase(data: Normalized, idChuong: number) {
-    let createdQ = 0, createdA = 0;
-
-    await this.dataSource.transaction(async (manager) => {
-      const cauHoiRepo = manager.getRepository(CauHoi);
-      const dapAnRepo = manager.getRepository(DapAn);
-      const chuongRepo = manager.getRepository(Chuong);
-
-      const chuong = chuongRepo.findOne({where: {id: idChuong}})
-      if(!chuong) throw new NotFoundException('Không tìm thấy id chương')
-        
-      for (const it of data.items) {
-        // Ràng buộc loại 1 đúng
-        if (it.loaiCauHoi === LoaiCauHoi.MotDung) {
-          const countCorrect = it.answers.filter(a => a.dung).length;
-          if (countCorrect !== 1) {
-            throw new BadRequestException(`Câu hỏi "${it.noiDungCauHoi}" phải có đúng 1 đáp án đúng (hiện ${countCorrect}).`);
-          }
-        }
-
-        const q = cauHoiRepo.create({
-          tenHienThi: it.tenHienThi ?? '',
-          noiDungCauHoi: it.noiDungCauHoi,
-          noiDungCauHoiHTML: it.noiDungCauHoi,
-          loaiCauHoi: it.loaiCauHoi,
-          doKho: it.doKho,
-          idChuong,                            // <— gán chương
-        });
-        const savedQ = await cauHoiRepo.save(q);
-        createdQ++;
-
-        if (it.answers.length) {
-          const ansEntities = it.answers.map(a => dapAnRepo.create({
-            noiDung: a.noiDung,
-            noiDungHTML: a.noiDung,
-            dapAnDung: !!a.dung,
-            idCauHoi: savedQ.id,
-          }));
-          await dapAnRepo.save(ansEntities);
-          createdA += ansEntities.length;
-        }
-      }
-    });
-
-    return { createdQuestions: createdQ, createdAnswers: createdA };
+  private parseXlsx(buffer: Buffer) {
+    const wb = XLSX.read(buffer, { type: 'buffer' });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    return XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: '' });
   }
 
-
-  // Helpers
-// A..H -> 0..7 ; khác trả null
-  private letterToIndex(s: string): number | null {
-    const up = (s || '').trim().toUpperCase();
+  // ============== Normalize to required output ==============
+  private normalize(rows: Array<Record<string, any>>, idChuong: number) {
     const letters = ['A','B','C','D','E','F','G','H'];
-    const idx = letters.indexOf(up);
-    return idx === -1 ? null : idx;
-  }
-// Chuẩn hoá chuỗi VN để so sánh lỏng (bỏ dấu, gộp space, hạ chữ)
-private slugVN(s: string) {
-  return (s || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')   // bỏ dấu kết hợp
-    .replace(/đ/g, 'd')                // <<< quan trọng: đ -> d
-    .replace(/Đ/g, 'd')                // (phòng khi có chữ hoa)
-    .replace(/[\u200B-\u200D\uFEFF]/g, '') // xoá zero-width, BOM
-    .replace(/\u00A0/g, ' ')               // NBSP -> space
-    .replace(/[^a-z0-9]+/g, ' ')           // các ký tự còn lại -> space
-    .replace(/\s+/g, ' ')
-    .trim();
-}
 
-// Build keyMap 1 lần cho mỗi row (đọc header "lệch" cũng được)
-  private buildKeyMap(row: Record<string, any>): Record<string, string> {
-    const map: Record<string, string> = {};
-    for (const k of Object.keys(row)) {
-      map[this.slugVN(k)] = k;
-    }
-    return map;
-  }
-// Lấy giá trị theo "tên cột hiển thị"
-  private getVal(row: Record<string, any>, keyMap: Record<string, string>, displayKey: string): any {
-    const k = keyMap[this.slugVN(displayKey)];
-    return k ? row[k] : undefined;
-  }
-// Map ĐỘ KHÓ về enum – cũng dùng slug
-  private mapDoKho(input?: string): DoKho {
-    const s = this.slugVN(input || '');
-    if (['de','easy','e','1','low'].includes(s)) return DoKho.De;
-    if (['kho','hard','h','2','high'].includes(s)) return DoKho.Kho;
-    return DoKho.De; // default
-  }
-// Map LOẠI về enum – dùng slug để chấp mọi biến thể: "nhiều đúng", "Nhieu  dung", "N", "2",...
-private mapLoai(input?: string): LoaiCauHoi {
-  const s = this.slugVN(input || '');
-  if (s.includes('mot dung') || /^(1|m|single|one)$/.test(s)) return LoaiCauHoi.MotDung;
-  if (s.includes('nhieu dung') || /^(2|n|multi|multiple)$/.test(s)) return LoaiCauHoi.NhieuDung;
-  return LoaiCauHoi.MotDung;
-}
+    return rows.map((r) => {
+      const tenHienThi = (r['Tên hiển thị'] ?? '').toString().trim() || 'abc';
+      const noiDungCauHoi = (r['Nội dung câu hỏi'] ?? '').toString().trim();
 
+      const loaiCauHoi = this.mapLoai((r['Loại câu hỏi'] ?? '').toString());
+      const doKho = this.mapDoKho((r['Độ khó'] ?? '').toString());
 
+      // danh sách đáp án A..H (bỏ trống)
+      const mangDapAn = letters
+        .map(L => (r[`Đáp án ${L}`] ?? '').toString().trim())
+        .filter(s => s.length > 0)
+        .map(s => ({ noiDung: s, noiDungHTML: null as string | null, dapAnDung: false }));
 
+      // đánh dấu đáp án đúng: "A,B" | "1;3" | theo nội dung
+      const rawCorrect = (r['Đáp án đúng'] ?? '').toString().trim();
+      const tokens = rawCorrect ? rawCorrect.split(/[,\;\|\/]/).map(x => x.trim()).filter(Boolean) : [];
 
-  create(createGuiFileDto: CreateGuiFileDto) {
-    return 'This action adds a new guiFile';
+      for (const tk of tokens) {
+        const li = this.letterIndex(tk);
+        if (li !== null && mangDapAn[li]) { mangDapAn[li].dapAnDung = true; continue; }
+
+        const n = Number(tk);
+        if (!Number.isNaN(n) && mangDapAn[n - 1]) { mangDapAn[n - 1].dapAnDung = true; continue; }
+
+        const f = mangDapAn.find(m => m.noiDung.toLowerCase() === tk.toLowerCase());
+        if (f) f.dapAnDung = true;
+      }
+
+      return {
+        tenHienThi,
+        noiDungCauHoi,
+        noiDungCauHoiHTML: null,
+        loaiCauHoi,                 // "MotDung" | "NhieuDung"
+        doKho,                      // "De" | "TrungBinh" | "Kho"
+        idChuong,
+        mangDapAn,                  // [{noiDung, noiDungHTML:null, dapAnDung}]
+      };
+    });
   }
 
-  findAll() {
-    return `This action returns all guiFile`;
+  // ================= Helpers =================
+  private letterIndex(s: string): number | null {
+    const up = (s || '').trim().toUpperCase();
+    const arr = ['A','B','C','D','E','F','G','H'];
+    const i = arr.indexOf(up);
+    return i === -1 ? null : i;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} guiFile`;
+  private mapDoKho(raw: string): DoKho {
+    const s = raw.trim().toLowerCase();
+    if (['dễ','de','easy','1','low'].includes(s)) return DoKho.De;
+    if (['trung bình','trungbinh','tb','2','medium'].includes(s)) return DoKho.TrungBinh;
+    if (['khó','kho','hard','3','high'].includes(s)) return DoKho.Kho;
+    return DoKho.TrungBinh;
   }
 
-  update(id: number, updateGuiFileDto: UpdateGuiFileDto) {
-    return `This action updates a #${id} guiFile`;
+  private mapLoai(raw: string): LoaiCauHoi {
+    const s = raw.trim().toLowerCase();
+    if (s.includes('một đúng') || s.includes('mot dung') || ['1','m','single','one'].includes(s))
+      return LoaiCauHoi.MotDung;
+    if (s.includes('nhiều đúng') || s.includes('nhieu dung') || ['2','n','multi','multiple'].includes(s))
+      return LoaiCauHoi.NhieuDung;
+    return LoaiCauHoi.MotDung;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} guiFile`;
-  }
 }

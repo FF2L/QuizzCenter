@@ -1,10 +1,7 @@
-import React, { FC, memo, useEffect, useRef, useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Snackbar, Alert } from '@mui/material';
+import { FC, memo, useEffect, useState } from 'react';
+import {  useOutletContext } from 'react-router-dom';
 import { Link as RouterLink } from "react-router-dom";
 import {
-  Card,
-  CardContent,
   Stack,
   Typography,
   TextField,
@@ -65,9 +62,10 @@ const Login: FC = () => {
         return
       }
 
+      setLoading(true);
       // Gọi API đăng nhập
       const res = await LoginService.login(email,password);
-         setLoading(true);
+        
       if (!res.ok) {
         setErrorLogin('Mật khẩu hoặc email không đúng');
         setLoading(false);
@@ -80,7 +78,8 @@ const Login: FC = () => {
         localStorage.setItem('accessTokenGV', accessToken);
         localStorage.setItem('refreshTokenV', refeshToken);
          setLoading(false);
-        setNextPath('/home');
+        setNextPath('/lecturer/home');
+    
       }else if (vaiTro === 'SinhVien'){
         localStorage.setItem('accessTokenSV', accessToken);
         localStorage.setItem('refreshTokenSV', refeshToken);
@@ -103,7 +102,7 @@ useEffect(() => {
   };
   window.addEventListener('keydown', handler);
   return () => window.removeEventListener('keydown', handler);
-}, []);
+}, [handleLogin]);
 
   
 

@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Box, Card, CardContent, Stack, TextField, Button, Typography, Snackbar, Alert, CircularProgress } from "@mui/material";
-import axios from "axios";
+import  { useEffect, useState } from "react";
+import { Box, Stack, TextField, Button, Typography, CircularProgress } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { LoginService } from "../../services/login.api";
 
@@ -53,7 +52,7 @@ export default function ResetPasswordPage() {
     }
   window.addEventListener("keydown",handler)
   return(() => window.removeEventListener("keydown",handler))
-  })
+  },[handleResetPassword])
 
   return (
     <Box sx={{ width: '100%' }}>

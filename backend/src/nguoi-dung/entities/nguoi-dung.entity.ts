@@ -31,22 +31,6 @@ export class NguoiDung  extends BaseEntity{
     @Column({nullable: true})
     hashRefeshToken: string
 
-    @Column()
-    gioiTinh: boolean
-
-    //Otp
-
-    // @Column({nullable: true})
-    // otp: string
-
-    // @Column({nullable: true})
-    // thoiGianTaoOtp: Date
-    
-    // @Column({nullable: true})
-    // thoiGIanHetHanOtp: Date
-
-      //Otp
-
 
     @Column()
     anhDaiDien: string

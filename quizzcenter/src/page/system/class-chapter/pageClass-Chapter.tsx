@@ -1,32 +1,30 @@
-import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import {
-  Autocomplete,
   Box,
-  Button,
-  Card,
-  CardContent,
-  Stack,
   Tab,
   Tabs,
-  TextField,
   Typography,
   IconButton,
+  Stack,
+  Breadcrumbs,
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Category from "./component/categoryTab";
-import Class from "../class/class"
-import BankQuestion from "../bankquestion/bankquestion";
+
 import { useLocation } from "react-router-dom";
+import BankQuestion from "../bankquestion/bankquestion";
+
 function PageClassChapterBankQuestion() {
-  const [selectedChuongFromCategory, setSelectedChuongFromCategory] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedTab, setSelectedTab] = useState(0);
+  const { tenMonHoc } = location.state || {};
+  
 
   useEffect(() => {
     if (location.state?.tab !== undefined) {
+      console.log("Setting selectedTab from location.state:", location.state.tab);
       setSelectedTab(location.state.tab);
     }
   }, [location.state]);
@@ -56,19 +54,21 @@ function PageClassChapterBankQuestion() {
           
             sx={{ "& .MuiTabs-indicator": { display: "none" }, }}
           >
-            <Tab
+<Tab
   label={
     <Typography
       sx={{
-        color: selectedTab === 0 ? "white" : "black", // ✔ chọn = trắng
+        color: selectedTab === 0 ? "white" : "black",
+        fontWeight:500,
+        fontSize: "20px",
         textTransform: "none",
       }}
     >
-      Lớp học
+      Danh mục
     </Typography>
   }
   sx={{
-    backgroundColor: selectedTab === 0 ? "#245d51" : "#FFFFFF", // ✔ chọn = xanh
+    backgroundColor: selectedTab === 0 ? "#245d51" : "#FFFFFF",
     minHeight: "40px",
     minWidth: "180px",
     mr: 0.5,
@@ -81,28 +81,6 @@ function PageClassChapterBankQuestion() {
     <Typography
       sx={{
         color: selectedTab === 1 ? "white" : "black",
-        fontWeight:500,
-        fontSize: "20px",
-        textTransform: "none",
-      }}
-    >
-      Danh mục
-    </Typography>
-  }
-  sx={{
-    backgroundColor: selectedTab === 1 ? "#245d51" : "#FFFFFF",
-    minHeight: "40px",
-    minWidth: "180px",
-    mr: 0.5,
-    border: "1px solid #C5C5C5",
-    borderRadius:"5px"
-  }}
-/>
-<Tab
-  label={
-    <Typography
-      sx={{
-        color: selectedTab === 2 ? "white" : "black",
         textTransform: "none",
       }}
     >
@@ -110,7 +88,7 @@ function PageClassChapterBankQuestion() {
     </Typography>
   }
   sx={{
-    backgroundColor: selectedTab === 2 ? "#245D51" : "#FFFFFF",
+    backgroundColor: selectedTab === 1 ? "#245D51" : "#FFFFFF",
     minHeight: "40px",
     minWidth: "180px",
     border: "1px solid #C5C5C5",
@@ -142,10 +120,26 @@ function PageClassChapterBankQuestion() {
         {/* Course List */}
     
       </Stack>
+        <Breadcrumbs
+          aria-label="breadcrumb"
+          separator="›"
+          sx={{
+            color: "#555",
+            "& .MuiTypography-root": { fontSize: 15 },
+          }}
+        >
+          <Typography sx={{ color: "#666" }}>
+            Môn học: 
+            <span style={{ fontWeight: 600, color: "#000" }}> {tenMonHoc}</span>
+          </Typography>
 
-      {selectedTab ===0 && <Class/> }
-      {selectedTab ===1 && <Category/> }
-      {selectedTab ===2 && <BankQuestion/> }
+          <Typography sx={{ color: "#e91e63", fontWeight: 600 }}>
+           {selectedTab === 1 ? "Ngân hàng câu hỏi" : "Danh mục"} 
+          </Typography>
+        </Breadcrumbs>
+
+      {selectedTab ===0 && <Category/> }
+      {selectedTab ===1 && <BankQuestion/> }
     </Box>
   );
 }
