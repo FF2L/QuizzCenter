@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import {
   Box,
   Container,
@@ -12,6 +12,7 @@ import {
   Typography,
   Snackbar,
   Alert,
+  CircularProgress,
   Paper,
   Divider,
   Chip,
@@ -21,13 +22,16 @@ import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import EditIcon from "@mui/icons-material/Edit";
 import "react-quill/dist/quill.snow.css";
 import ReactQuill from "react-quill";
-import { CauHoiPayload } from "../../../common/model";
+import { CauHoiPayload, DapAn } from "../../../common/model";
 import './quill.css';
 
 interface DapAnInput {
+  id?: number;
   noiDung: string;
+  noiDungHTML: string;
   dapAnDung: boolean;
 }
 
@@ -42,9 +46,11 @@ const DO_KHO = [
   { value: "Kho", label: "Khó" },
 ];
 
-export default function CreateQuestionPage() {
+export default function UpdateQuestionPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { cauHoiId } = useParams<{ cauHoiId: string }>();
+  
   const state = location.state as {
     idChuong?: number;
     idMonHoc?: string | number;
@@ -54,25 +60,17 @@ export default function CreateQuestionPage() {
     returnTab?: string;
   };
 
-  const idChuongFromState = state?.idChuong;
-  const idChuongFromQuery = Number(
-    new URLSearchParams(location.search).get("idChuong")
-  );
-  const idChuong = Number(idChuongFromState ?? (isNaN(idChuongFromQuery) ? 0 : idChuongFromQuery));
+  const idChuong = state?.idChuong;
   const idMonHoc = state?.idMonHoc ? Number(state.idMonHoc) : undefined;
-  const { tenMonHoc, tenChuong } = location.state || {};
+  const { tenMonHoc, tenChuong } = state || {};
 
+  const [loading, setLoading] = useState(true);
   const [tenHienThi, setTenHienThi] = useState("");
   const [noiDungCauHoi, setNoiDungCauHoi] = useState("");
   const [loaiCauHoi, setLoaiCauHoi] = useState("MotDung");
   const [doKho, setDoKho] = useState("De");
-  const [dapAns, setDapAns] = useState<DapAnInput[]>([
-    { noiDung: "", dapAnDung: false },
-    { noiDung: "", dapAnDung: false },
-    { noiDung: "", dapAnDung: false },
-    { noiDung: "", dapAnDung: false },
-  ]);
-  const [errorAnswers, setErrorAnswers] = useState<(string | null)[]>([null, null, null, null]);
+  const [dapAns, setDapAns] = useState<DapAnInput[]>([]);
+  const [errorAnswers, setErrorAnswers] = useState<(string | null)[]>([]);
   
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -84,13 +82,50 @@ export default function CreateQuestionPage() {
   const answerRefs = useRef<(ReactQuill | null)[]>([]);
   const quillModulesRefs = useRef<{ [key: number]: any }>({});
 
+  // Fetch chi tiết câu hỏi khi component mount
+  useEffect(() => {
+    const fetchQuestionDetail = async () => {
+      if (!cauHoiId) return;
+      
+      setLoading(true);
+      try {
+        const res = await fetch(`http://localhost:3000/cau-hoi/${cauHoiId}`);
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+        
+        const data: CauHoiPayload = await res.json();
+        
+        setTenHienThi(data.cauHoi.tenHienThi || "");
+        setNoiDungCauHoi(data.cauHoi.noiDungCauHoiHTML || "");
+        setLoaiCauHoi(data.cauHoi.loaiCauHoi || "MotDung");
+        setDoKho(data.cauHoi.doKho || "De");
+        
+        const answers: DapAnInput[] = data.dapAn.map(da => ({
+          id: da.id,
+          noiDung: da.noiDung,
+          noiDungHTML: da.noiDungHTML || da.noiDung,
+          dapAnDung: da.dapAnDung,
+        }));
+        
+        setDapAns(answers);
+        setErrorAnswers(new Array(answers.length).fill(null));
+      } catch (err) {
+        console.error("Lỗi khi fetch chi tiết câu hỏi:", err);
+        showSnackbar("Không thể tải thông tin câu hỏi!", "error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuestionDetail();
+  }, [cauHoiId]);
+
   const handleBack = () => {
-    navigate("/lecturer/course/" + state?.idMonHoc, {
+    navigate("/lecturer/course/" + idMonHoc, {
       state: {
-        idMonHoc: state?.idMonHoc,
-        tenMonHoc: state?.tenMonHoc,
-        tenChuong: state?.tenChuong,
-        idChuong: state?.idChuong,
+        idMonHoc: idMonHoc,
+        tenMonHoc: tenMonHoc,
+        tenChuong: tenChuong,
+        idChuong: idChuong,
         tab: 1,
       },
     });
@@ -126,13 +161,20 @@ export default function CreateQuestionPage() {
   const handleQuillChange = (content: string) => setNoiDungCauHoi(content);
 
   const handleAddAnswer = () => {
-    setDapAns((prev) => [...prev, { noiDung: "", dapAnDung: false }]);
+    setDapAns((prev) => [...prev, { noiDung: "", noiDungHTML: "", dapAnDung: false }]);
     setErrorAnswers((prev) => [...prev, null]);
   };
 
-  const handleChangeAnswer = (index: number, value: string) => {
-    const trimmedValue = value.trim();
-    const isDuplicate = dapAns.some((d, i) => i !== index && d.noiDung.trim() === trimmedValue);
+  const handleChangeAnswer = (index: number, html: string) => {
+    const editor = answerRefs.current[index]?.getEditor();
+    const plain = editor ? stripHtml(editor.root.innerHTML) : "";
+
+    const isDuplicate = dapAns.some((d, i) => {
+      if (i === index) return false;
+      const otherEditor = answerRefs.current[i]?.getEditor();
+      const otherPlain = otherEditor ? stripHtml(otherEditor.root.innerHTML) : "";
+      return otherPlain.trim() === plain.trim() && plain.trim() !== "";
+    });
 
     setErrorAnswers((prev) => {
       const copy = [...prev];
@@ -142,7 +184,8 @@ export default function CreateQuestionPage() {
 
     setDapAns((prev) => {
       const copy = [...prev];
-      copy[index].noiDung = value;
+      copy[index].noiDungHTML = html;
+      copy[index].noiDung = plain;
       return copy;
     });
   };
@@ -162,7 +205,22 @@ export default function CreateQuestionPage() {
     );
   };
 
-  const handleDeleteAnswer = (index: number) => {
+  const handleDeleteAnswer = async (index: number) => {
+    const answer = dapAns[index];
+    
+    if (answer.id) {
+      try {
+        const res = await fetch(`http://localhost:3000/dap-an/${answer.id}`, {
+          method: "DELETE",
+        });
+        if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
+      } catch (err) {
+        console.error("Lỗi khi xóa đáp án:", err);
+        showSnackbar("Xóa đáp án thất bại!", "error");
+        return;
+      }
+    }
+
     setDapAns((prev) => prev.filter((_, i) => i !== index));
     setErrorAnswers((prev) => prev.filter((_, i) => i !== index));
     answerRefs.current = answerRefs.current.filter((_, i) => i !== index);
@@ -219,7 +277,7 @@ export default function CreateQuestionPage() {
     };
   };
 
-  const handleSave = async () => {
+  const handleUpdate = async () => {
     if (!noiDungCauHoi || noiDungCauHoi === "<p><br></p>") {
       showSnackbar("Nội dung câu hỏi không được để trống!", "error");
       return;
@@ -230,13 +288,15 @@ export default function CreateQuestionPage() {
       return;
     }
 
-    const hasEmptyAnswer = dapAns.some((d) => !d.noiDung || d.noiDung.trim() === "" || d.noiDung === "<p><br></p>");
+    const hasEmptyAnswer = dapAns.some((d) => 
+      !d.noiDungHTML || d.noiDungHTML.trim() === "" || d.noiDungHTML === "<p><br></p>"
+    );
     if (hasEmptyAnswer) {
       showSnackbar("Vui lòng điền đầy đủ nội dung cho tất cả các đáp án!", "error");
       return;
     }
 
-    const trimmedAnswers = dapAns.map((d) => stripHtml(d.noiDung).trim());
+    const trimmedAnswers = dapAns.map((d) => stripHtml(d.noiDungHTML).trim());
     const hasDuplicates = trimmedAnswers.some((answer, index) => 
       trimmedAnswers.indexOf(answer) !== index && answer !== ""
     );
@@ -263,37 +323,71 @@ export default function CreateQuestionPage() {
       if (!editorQuestion) throw new Error("Editor câu hỏi chưa khởi tạo");
       const noiDungCauHoiHTML = editorQuestion.root.innerHTML;
 
-      const mangDapAn = dapAns.map((d, i) => ({
-        noiDung: stripHtml(answerRefs.current[i]?.getEditor().root.innerHTML || ""),
-        noiDungHTML: answerRefs.current[i]?.getEditor().root.innerHTML || "",
-        dapAnDung: d.dapAnDung,
-      }));
-
-      const payload = {
+      const updateCauHoiPayload = {
         tenHienThi: tenHienThi.trim(),
         noiDungCauHoi: stripHtml(noiDungCauHoiHTML),
         noiDungCauHoiHTML,
-        loaiCauHoi,
         doKho,
-        idChuong,
-        mangDapAn,
       };
 
-      const res = await fetch("http://localhost:3000/cau-hoi", {
-        method: "POST",
+      const resCauHoi = await fetch(`http://localhost:3000/cau-hoi/${cauHoiId}`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(updateCauHoiPayload),
       });
 
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Tạo câu hỏi thất bại: ${text}`);
+      if (!resCauHoi.ok) {
+        const text = await resCauHoi.text();
+        throw new Error(`Cập nhật câu hỏi thất bại: ${text}`);
       }
 
-      showSnackbar("Thêm câu hỏi thành công!", "success");
+      for (const answer of dapAns) {
+        if (answer.id) {
+          const updateDapAnPayload = {
+            noiDung: stripHtml(answer.noiDungHTML),
+            noiDungHTML: answer.noiDungHTML,
+            dapAnDung: answer.dapAnDung,
+          };
+
+          const resDapAn = await fetch(`http://localhost:3000/dap-an/${answer.id}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify(updateDapAnPayload),
+          });
+
+          if (!resDapAn.ok) {
+            throw new Error(`Cập nhật đáp án ${answer.id} thất bại`);
+          }
+        } else {
+          const createDapAnPayload = {
+            noiDung: stripHtml(answer.noiDungHTML),
+            noiDungHTML: answer.noiDungHTML,
+            dapAnDung: answer.dapAnDung,
+            idCauHoi: Number(cauHoiId),
+          };
+
+          const resNewDapAn = await fetch("http://localhost:3000/dap-an", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify(createDapAnPayload),
+          });
+
+          if (!resNewDapAn.ok) {
+            throw new Error("Tạo đáp án mới thất bại");
+          }
+        }
+      }
+
+      showSnackbar("Cập nhật câu hỏi thành công!", "success");
       
       setTimeout(() => {
         navigate("/lecturer/course/" + idMonHoc, {
@@ -301,21 +395,18 @@ export default function CreateQuestionPage() {
         });
       }, 1000);
 
-      setTenHienThi("");
-      setNoiDungCauHoi("");
-      setLoaiCauHoi("MotDung");
-      setDoKho("De");
-      setDapAns([
-        { noiDung: "", dapAnDung: false },
-        { noiDung: "", dapAnDung: false },
-        { noiDung: "", dapAnDung: false },
-        { noiDung: "", dapAnDung: false },
-      ]);
-      setErrorAnswers([null, null, null, null]);
     } catch (err: any) {
       showSnackbar(err.message, "error");
     }
   };
+
+  if (loading) {
+    return (
+      <Box sx={{ minHeight: "100vh", backgroundColor: '#f5f7fa', display: "flex", justifyContent: "center", alignItems: "center" }}>
+        <CircularProgress size={60} sx={{ color: '#245D51' }} />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ minHeight: "100vh", backgroundColor: '#f5f7fa', py: 4 }}>
@@ -334,7 +425,7 @@ export default function CreateQuestionPage() {
             </IconButton>
             <Box sx={{ flex: 1 }}>
               <Typography variant="h5" fontWeight="bold" color="#1a1a1a">
-                Tạo câu hỏi mới
+                Cập nhật câu hỏi
               </Typography>
               <Stack direction="row" spacing={1} alignItems="center" mt={1}>
                 <Typography variant="body2" color="text.secondary">
@@ -434,10 +525,10 @@ export default function CreateQuestionPage() {
                   select 
                   fullWidth
                   value={loaiCauHoi} 
-                  onChange={(e) => setLoaiCauHoi(e.target.value)}
+                  disabled
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#fafafa',
+                      backgroundColor: '#f0f0f0',
                     }
                   }}
                 >
@@ -445,6 +536,9 @@ export default function CreateQuestionPage() {
                     <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
                   ))}
                 </TextField>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                  Loại câu hỏi không thể thay đổi
+                </Typography>
               </Box>
 
               <Box flex={1}>
@@ -537,8 +631,8 @@ export default function CreateQuestionPage() {
                         >
                           <ReactQuill
                             ref={(el) => { answerRefs.current[index] = el; }}
-                            value={d.noiDung}
-                            onChange={(value) => handleChangeAnswer(index, value)}
+                            value={d.noiDungHTML}
+                            onChange={(html) => handleChangeAnswer(index, html)}
                             modules={getQuillModulesMemo(index)}
                             theme="snow"
                             placeholder={`Nhập nội dung đáp án ${index + 1}...`}
@@ -613,8 +707,8 @@ export default function CreateQuestionPage() {
           <Button 
             variant="contained"
             size="large"
-            startIcon={<SaveIcon />}
-            onClick={handleSave}
+            startIcon={<EditIcon />}
+            onClick={handleUpdate}
             sx={{ 
               px: 4,
               backgroundColor: "#245D51",
@@ -624,7 +718,7 @@ export default function CreateQuestionPage() {
               boxShadow: '0 4px 12px rgba(36, 93, 81, 0.3)',
             }}
           >
-            Tạo câu hỏi
+            Cập nhật câu hỏi
           </Button>
         </Stack>
       </Container>

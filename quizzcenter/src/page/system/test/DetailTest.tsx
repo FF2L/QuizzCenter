@@ -23,7 +23,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import QuestionDetailDialog from "../bankquestion/deTailDialog";
 import DeleteConfirmDialog from "../bankquestion/deleteConfirmDialog";
-import UpdateQuestionDialog from "../bankquestion/updateQuestionDialog";
+import UpdateQuestionDialog from "../bankquestion/updateQuestion";
 
 const BaiKiemTraDetail: React.FC = () => {
   const { idBaiKiemTra } = useParams<{ idBaiKiemTra: string }>();
@@ -411,7 +411,7 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
                 questionName={questionToDelete?.name}
                 />
 
-                <UpdateQuestionDialog
+                {/* <UpdateQuestionDialog
                   open={openUpdateDialog}
                   onClose={() => setOpenUpdateDialog(false)}
                   cauHoiId={updateQuestionId ?? 0}
@@ -427,7 +427,7 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
                       )
                     );
                   }}
-                />
+                /> */}
 
           {/* Phân trang */}
           <Box mt={3}>
