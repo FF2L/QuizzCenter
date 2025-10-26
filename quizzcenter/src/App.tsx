@@ -27,11 +27,12 @@ import LoginPage from './page/system/login-quizz-center';
 import Login from './component/login/login';
 import ForgotPassword from './component/login/forgotPassWord';
 import LecturerQuizzCenter from './page/system/lecturer-quizz-center';
+import CollegeQuizzCenter from './page/system/college-quizz-center';
 import LectureUser from './component/lecture/user';
 import LectureHome from './component/lecture/home';
 import LectureClass from './component/lecture/class';
 import CreateQuestionPage from './page/system/bankquestion/createQuestion';
-
+import UpdateQuestionPage from './page/system/bankquestion/updateQuestion';
 const App: FC = () => {
   return (
     <UserProvider>
@@ -48,7 +49,7 @@ const App: FC = () => {
             </Route>
 
             {/* Các route cho phần sinh viên */}
-            <Route path="quizzcenter" element={<ProtectedRoute><QuizzCenter /></ProtectedRoute>}>
+            <Route path="quizzcenter" element={<ProtectedRoute><CollegeQuizzCenter /></ProtectedRoute>}>
               <Route index element={<Navigate to="my/course" replace />} />
               <Route path="my" element={<CollegeDashBoard />} />
               <Route path="my/course" element={<CollegeMyCourse />} />
@@ -69,6 +70,7 @@ const App: FC = () => {
               <Route path="lop-hoc-phan/bai-kiem-tra/:idLopHocPhan" element={<BaiKiemTraList />} />
               <Route path="bai-kiem-tra/:idBaiKiemTra" element={<BaiKiemTraDetail />} />
               <Route path="create-question" element={<CreateQuestionPage />} />
+              <Route path="update-question/:cauHoiId" element={<UpdateQuestionPage />} />
               <Route path="bai-kiem-tra/:idBaiKiemTra/create-question-test" element={<CreateQuestionForTest />} />
               <Route path="select-from-bank" element={<SelectFromBankPage />} />
             </Route>
