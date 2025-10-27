@@ -28,7 +28,7 @@ import Login from './component/login/login';
 import ForgotPassword from './component/login/forgotPassWord';
 import LecturerQuizzCenter from './page/system/lecturer-quizz-center';
 import CollegeQuizzCenter from './page/system/college-quizz-center';
-import LectureUser from './component/lecture/user';
+import User from './component/user';
 import LectureHome from './component/lecture/home';
 import LectureClass from './component/lecture/class';
 import CreateQuestionPage from './page/system/bankquestion/createQuestion';
@@ -53,6 +53,7 @@ const App: FC = () => {
               <Route index element={<Navigate to="my/course" replace />} />
               <Route path="my" element={<CollegeDashBoard />} />
               <Route path="my/course" element={<CollegeMyCourse />} />
+              <Route path='my/userProfile' element={<User/>} />
               <Route path="course/test/:idLopHocPhan" element={<CollegeTest />} />
               <Route path="bai-kiem-tra-chi-tiet/:idBaiKiemTra" element={<CollegeTestDetail />} />
               <Route path="xem-lai/:idBaiLam" element={<XemLaiBaiLamPage />} />
@@ -64,7 +65,7 @@ const App: FC = () => {
               <Route index element={<Navigate to="course" replace />} />
               <Route path="home" element={<LectureHome />} />
               <Route path="course" element={<Course />} />
-              <Route path="user" element={<LectureUser />} />
+              <Route path="user" element={<User />} />
               <Route path="class" element={<LectureClass />} />
               <Route path="course/:idMonHoc" element={<Page />} />
               <Route path="lop-hoc-phan/bai-kiem-tra/:idLopHocPhan" element={<BaiKiemTraList />} />
