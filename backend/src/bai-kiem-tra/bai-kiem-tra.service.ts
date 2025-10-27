@@ -30,16 +30,10 @@ export class BaiKiemTraService {
   async taoBaiKiemTra(createBaiKiemTraDto: CreateBaiKiemTraDto) {
     await this.lopHocPhanService.timMotLopHocPhanTheoId(createBaiKiemTraDto.idLopHocPhan);
     
-    if (createBaiKiemTraDto.loaiKiemTra === LoaiKiemTra.BaiKiemTra && +createBaiKiemTraDto.soLanLam > 1) {
-      throw new BadRequestException('Nếu loại kiểm tra là bài kiểm tra thì số lần làm phải bằng 1');
-    }
 
     const baiKiemTra = this.baiKiemTraRepo.create({
       tenBaiKiemTra: createBaiKiemTraDto.tenBaiKiemTra,
       loaiKiemTra: createBaiKiemTraDto.loaiKiemTra,
-      soLanLam: createBaiKiemTraDto.soLanLam,
-      xemBaiLam: createBaiKiemTraDto.xemBaiLam,
-      hienThiKetQua: createBaiKiemTraDto.hienThiKetQua,
       thoiGianBatDau: createBaiKiemTraDto.thoiGianBatDau,
       thoiGianKetThuc: createBaiKiemTraDto.thoiGianKetThuc,
       thoiGianLam: createBaiKiemTraDto.thoiGianLam,
@@ -102,12 +96,6 @@ export class BaiKiemTraService {
 
     // Lấy giá trị cuối cùng sẽ lưu
     const loaiCuoi = updateBaiKiemTraDto.loaiKiemTra ?? entity.loaiKiemTra;
-    const soLanCuoi = updateBaiKiemTraDto.soLanLam ?? entity.soLanLam;
-
-    // Ràng buộc nghiệp vụ
-    if (loaiCuoi === LoaiKiemTra.BaiKiemTra && soLanCuoi !== 1) {
-      throw new BadRequestException('Nếu loại kiểm tra là Bài kiểm tra thì số lần làm phải bằng 1');
-    }
 
     try {
       return await this.baiKiemTraRepo.save(entity);

@@ -10,16 +10,6 @@ export class CreateBaiKiemTraDto {
     @IsEnum( LoaiKiemTra, {message: 'loaiCauHoi phải là một trong các giá trị: ' + Object.values(LoaiKiemTra).join(', ')})
     loaiKiemTra?: LoaiKiemTra
 
-    @IsNumber()
-    @IsPositive()
-    soLanLam: number
-    
-    @IsBoolean()
-    xemBaiLam: boolean
-
-    @IsBoolean()
-    hienThiKetQua: boolean
-
     @IsDate()
     thoiGianBatDau: Date
 

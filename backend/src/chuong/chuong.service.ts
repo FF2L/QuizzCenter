@@ -83,7 +83,7 @@ async layTatCaChuongTheoMonHocVaNguoiDung(idMonHoc: number, idNguoiDung: number)
   }
 
   async layTatCauHoiTheoChuong(idChuong: number, query: any){
-    const { skip, limit, doKho, sortdoKho, noiDungCauHoi } = query;
+    const { skip, limit, doKho, noiDungCauHoi } = query;
     const chuong = await this.timMotChuongTheoId(idChuong)
 
     return await this.cauHoiService.layTatCaCauHoiTheoIdChuong(idChuong,{ skip, limit, doKho, noiDungCauHoi })

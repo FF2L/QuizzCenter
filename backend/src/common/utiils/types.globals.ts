@@ -18,3 +18,19 @@ export type NormalizedItem = {
   doKho: DoKho;
   answers: Array<{ thuTu: number; noiDung: string; dung: boolean }>;
 };
+
+// Kiểu dữ liệu trả về
+export type BaiKiemTraItem = {
+  idBaiKiemTra: string;
+  tenBaiKiemTra: string | null;
+  tongDiem: number | null; // null nếu SV chưa làm
+};
+
+export type SinhVienWithBaiKiemTra = {
+  maSinhVien: string;
+  anhDaiDienSinhVien: string | null;
+  hoTenSinhVien: string;
+  emailSinhVien: string;
+  danhSachBaiKiemTra: BaiKiemTraItem[];
+};
+
