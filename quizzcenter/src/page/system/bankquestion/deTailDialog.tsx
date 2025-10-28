@@ -16,7 +16,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { CauHoiPayload } from "../../../common/model";
 
 type LoaiKey = "MotDung" | "NhieuDung";
-type doKhoKey = "Kho" | "De";
+type doKhoKey = "Kho" | "De" | "TrungBinh";
 
 const loaiMap: Record<LoaiKey, string> = {
   MotDung: "Một đáp án",
@@ -24,6 +24,7 @@ const loaiMap: Record<LoaiKey, string> = {
 };
 const doKhoMap: Record<doKhoKey, string> = {
   De: "Dễ",
+  TrungBinh: "Trung bình",
   Kho: "Khó",
 };
 
@@ -31,12 +32,14 @@ interface QuestionDetailDialogProps {
   open: boolean;
   onClose: () => void;
   questionDetail: CauHoiPayload | null;
+  chuongName?: string;
 }
 
 const QuestionDetailDialog: React.FC<QuestionDetailDialogProps> = ({
   open,
   onClose,
   questionDetail,
+  chuongName = "",
 }) => {
   const processedHtml = React.useMemo(() => {
     if (!questionDetail) return "";
@@ -98,10 +101,13 @@ const QuestionDetailDialog: React.FC<QuestionDetailDialogProps> = ({
               />
               <Chip
                 label={`Độ khó: ${doKhoMap[cauHoi.doKho as doKhoKey] || cauHoi.doKho}`}
-                color={cauHoi.doKho === "Kho" ? "error" : "success"}
+                color={cauHoi.doKho === "Kho" ? "error" : cauHoi.doKho === "TrungBinh" ? "warning" : "success"}
                 variant="outlined"
               />
-              <Chip label={`Chương: ${cauHoi.idChuong}`} variant="outlined" />
+              <Chip 
+                label={`Danh mục: ${chuongName || cauHoi.idChuong}`} 
+                variant="outlined" 
+              />
             </Stack>
           </Paper>
 
