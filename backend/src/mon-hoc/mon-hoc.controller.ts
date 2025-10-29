@@ -23,7 +23,7 @@ export class MonHocController {
   @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(@Req() req, @Query('skip') skip: number, @Query('limit') limit: number, @Query('maMon') maMon: string, @Query('tenMon') tenMon: string) {
-    return await this.monHocService.layTatCaMonHocTheoKhoaCuaGiangVien({ skip, limit, maMon, tenMon }, req.user.id);
+    return await this.monHocService.layTatCaMonHocCuaGiangVien({ skip, limit, maMon, tenMon }, req.user.id);
   }
   @Get(':id')
   findOne(@Param('id') id: string) {

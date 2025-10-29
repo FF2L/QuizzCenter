@@ -28,12 +28,12 @@ export class MonHocService {
   }
 
 // ...existing code...
-async layTatCaMonHocTheoKhoaCuaGiangVien(query: any, userId: number) {
+async layTatCaMonHocCuaGiangVien(query: any, userId: number) {
   const { skip, limit, maMon, tenMon } = query;
   
   const qb = this.monHocRepo.createQueryBuilder('mh')
-              .innerJoin('mh.khoa', 'khoa')
-              .innerJoin('khoa.nguoiDung', 'nd')
+              .leftJoin('mh.giangVien', 'gv')
+              .leftJoin('gv.nguoiDung', 'nd')
               .where('nd.id = :userId', { userId })
               .skip(skip ?? 0)
               .take(limit ?? DEFAULT_PAGE_LIMIT)
@@ -41,8 +41,8 @@ async layTatCaMonHocTheoKhoaCuaGiangVien(query: any, userId: number) {
   if (maMon) qb.andWhere('mh.maMonHoc LIKE :maMon', { maMon: `%${maMon}%` });
   if (tenMon) {qb.andWhere(`unaccent(mh.tenMonHoc) ILIKE unaccent(:tenMon)`,{ tenMon: `%${tenMon}%` });
 }
-              
-  const [data, total] = await qb.getManyAndCount();
+
+const [data, total] = await qb.getManyAndCount();
   
   return {
     data,

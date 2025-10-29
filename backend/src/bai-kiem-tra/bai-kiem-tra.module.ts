@@ -8,9 +8,10 @@ import { ChiTietCauHoiBaiKiemTra } from './entities/chi-tiet-cau-hoi-bai-kiem-tr
 import { CauHoiModule } from 'src/cau-hoi/cau-hoi.module';
 import { BaiLamSinhVienModule } from 'src/bai-lam-sinh-vien/bai-lam-sinh-vien.module';
 import { SinhVienModule } from 'src/sinh-vien/sinh-vien.module';
+import { Chuong } from 'src/chuong/entities/chuong.entity';
 
 @Module({
-  imports:[TypeOrmModule.forFeature([BaiKiemTra,ChiTietCauHoiBaiKiemTra]),LopHocPhanModule,CauHoiModule,  forwardRef(() => BaiLamSinhVienModule)],
+  imports:[TypeOrmModule.forFeature([BaiKiemTra,ChiTietCauHoiBaiKiemTra,Chuong]),LopHocPhanModule,CauHoiModule,  forwardRef(() => BaiLamSinhVienModule)],
   controllers: [BaiKiemTraController],
   providers: [BaiKiemTraService],
   exports: [BaiKiemTraService]

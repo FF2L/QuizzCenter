@@ -44,7 +44,7 @@ export class CauHoi extends BaseEntity{
     // @OneToMany(() => FileDinhKem, (fileDinhKem) => fileDinhKem.idCauHoi, {cascade: true, lazy:true})
     // fileDinhKem: Promise<FileDinhKem[]>
 
-    @OneToMany(() => ChiTietCauHoiBaiKiemTra, (chiTietCauHoiBaiKiemTra) => chiTietCauHoiBaiKiemTra.idCauHoi, {cascade: true, lazy:true})
+    @OneToMany(() => ChiTietCauHoiBaiKiemTra, (chiTietCauHoiBaiKiemTra) => chiTietCauHoiBaiKiemTra.cauHoi, {cascade: true, lazy:true})
     chiTietCauHoiBaiKiemTra: Promise<ChiTietCauHoiBaiKiemTra[]>
 
 }

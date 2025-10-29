@@ -18,8 +18,8 @@ export class ChuongController {
   constructor(private readonly chuongService: ChuongService) {}
 
   //tao chương mới 
-  @Roles(Role.GiaoVien)
-  @UseGuards(RolesGuard)
+  // @Roles(Role.GiaoVien)
+  // @UseGuards(RolesGuard)
   @UseGuards(JwtAuthGuard)
   @Post()
   async create(@Body() createChuongDto: CreateChuongDto, @Req() req) {
@@ -29,8 +29,8 @@ export class ChuongController {
 
   // lấy tất cả chương theo môn học và người dùng
 
-  @Roles(Role.GiaoVien)
-  @UseGuards(RolesGuard)
+  // @Roles(Role.GiaoVien)
+  // @UseGuards(RolesGuard)
   @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(@Query('idMonHoc', ParseIntPipe) idMonHoc : number, @Req() req) {

@@ -25,7 +25,6 @@ export class GiangVienService {
           maNguoiDung:true,
           anhDaiDien:true,
           soDienThoai:true,
-          idKhoa:true,
           ngaySinh:true,
           vaiTro:true 
         },
