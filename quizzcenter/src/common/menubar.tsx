@@ -88,6 +88,7 @@ export default function MenuBar({ role }: { role: string }) {
       setMenuItems([
         { id: 0, title: "Trang chủ", icon: <Home />, path: "/quizzcenter/my" },
         { id: 1, title: "Lớp học phần", icon: <MenuBook />, path: "/quizzcenter/my/course" },
+        { id: 2, title: "Người dùng", icon: <Person />, path: "/quizzcenter/my/userProfile" },
       ]);
     }
   }, [role]);

@@ -5,12 +5,18 @@
     margin: 5px 0;      
     border-radius: 4px;  
   }
-  .quill-editor-answer-container .ql-editor img {    max-width: 50%;   /* ảnh đáp án nhỏ hơn câu hỏi */
-    height: 60%;
-    width: 80%;
+  .quill-editor-answer-container .ql-editor img { 
     display: block;
     margin: 5px 0;
     border-radius: 4px;
     object-fit: contain;
   }
-  
+  /* Thêm vào file quill.css */
+.quill-editor-answer-container img {
+  cursor: pointer;
+}
+
+.ql-editor img {
+  max-width: 100%;
+  height: auto;
+}
