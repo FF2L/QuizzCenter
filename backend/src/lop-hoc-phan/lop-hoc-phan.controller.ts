@@ -38,7 +38,11 @@ export class LopHocPhanController {
   async layTatCaLopHocPhanDangDayCuaGiaoVien(@Req() req) {
     return await this.lopHocPhanService.layTatCaLopHocPhanDangDayCuaGiaoVien(req.user.id);
   }
-  
+
+  @Get('danh-sach-bai-kiem-tra/:idLopHocPhan')
+  async layDanhSachBaiKiemTra(@Param('idLopHocPhan') idLopHocPhan: number) {
+    return await this.lopHocPhanService.layDanhSachBaiKiemTra(idLopHocPhan);
+  }
 
   //lấy Bảng điểm chi tiết theo lớp
   @Get(':idLopHocPhan/bang-diem')

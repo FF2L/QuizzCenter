@@ -21,7 +21,7 @@ export type NormalizedItem = {
 
 // Kiểu dữ liệu trả về
 export type BaiKiemTraItem = {
-  idBaiKiemTra: string;
+  idBaiKiemTra: number;
   tenBaiKiemTra: string | null;
   tongDiem: number | null; // null nếu SV chưa làm
 };
