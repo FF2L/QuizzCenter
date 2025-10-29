@@ -22,9 +22,13 @@ import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import "react-quill/dist/quill.snow.css";
-import ReactQuill from "react-quill";
+import ReactQuill, { Quill } from "react-quill";
+import ImageResize from "quill-image-resize-module-react";
 import { CauHoiPayload } from "../../../common/model";
 import './quill.css';
+
+// Đăng ký module resize ảnh
+Quill.register("modules/imageResize", ImageResize);
 
 interface DapAnInput {
   noiDung: string;
@@ -118,6 +122,10 @@ export default function CreateQuestionPage() {
           ],
           handlers: { image: getImageHandler(index) },
         },
+        imageResize: {
+          parchment: Quill.import("parchment"),
+          modules: ["Resize", "DisplaySize", "Toolbar"],
+        },
       };
     }
     return quillModulesRefs.current[index];
@@ -179,42 +187,69 @@ export default function CreateQuestionPage() {
     input.type = "file";
     input.accept = "image/*";
     input.click();
-
+  
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) {
         showSnackbar("Bạn chưa chọn file!", "warning");
         return;
       }
-
+  
+      // Kiểm tra kích thước file (giới hạn 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        showSnackbar("Kích thước ảnh không được vượt quá 5MB!", "error");
+        return;
+      }
+  
+      // Hiển thị thông báo đang tải
+      showSnackbar("Đang tải hình ảnh...", "info");
+  
       try {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const res = await fetch("http://localhost:3000/gui-file/anh", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error("Upload ảnh thất bại: " + text);
-        }
-
-        const data = await res.json();
-        const url = data.publicId.url;
-
+        // Lấy editor và vị trí cursor NGAY LẬP TỨC
         const editor =
           index === -1
             ? quillRef.current?.getEditor()
             : answerRefs.current[index]?.getEditor();
-        if (!editor) return;
+        
+        if (!editor) {
+          showSnackbar("Editor chưa sẵn sàng!", "error");
+          return;
+        }
+  
+        const range = editor.getSelection(true);
+        const cursorPosition = range ? range.index : editor.getLength();
+  
+        // Upload file
+        const formData = new FormData();
+        formData.append("file", file);
+  
+        const res = await fetch("http://localhost:3000/gui-file/anh", {
+          method: "POST",
+          body: formData,
+        });
+  
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error("Upload ảnh thất bại: " + text);
+        }
+  
+        const data = await res.json();
+        const imageUrl = data.publicId.url;
+  
+        // Insert ảnh NGAY LẬP TỨC tại vị trí cursor đã lưu
+        editor.insertEmbed(cursorPosition, "image", imageUrl, "user");
+        
+        // Di chuyển cursor xuống dưới ảnh
+        editor.setSelection(cursorPosition + 1, 0);
+        
+        // Focus vào editor
+        editor.focus();
 
-        const range = editor.getSelection();
-        const insertIndex = range ? range.index : editor.getLength();
-        editor.insertEmbed(insertIndex, "image", url, "user");
+        // Thông báo thành công
+        showSnackbar("Tải hình ảnh thành công!", "success");
+  
       } catch (err: any) {
-        showSnackbar(err.message, "error");
+        showSnackbar(err.message || "Upload ảnh thất bại!", "error");
       }
     };
   };

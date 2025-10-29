@@ -1,17 +1,21 @@
 import AddIcon from "@mui/icons-material/Add";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Chuong, CauHoi, CauHoiPayload } from "../../../common/model";
-import { IconButton, Box, Button, Card, CardContent, Stack, TextField, Typography, MenuItem, Pagination, CircularProgress, InputAdornment } from "@mui/material";
-import { Delete, Edit, Visibility, Search } from "@mui/icons-material";
+import { 
+  IconButton, Box, Button, Card, CardContent, Stack, TextField, 
+  Typography, MenuItem, Pagination, CircularProgress, InputAdornment,
+  Collapse, Chip, Divider
+} from "@mui/material";
+import { 
+  Delete, Edit, Visibility, Search, ExpandMore, ExpandLess, CheckCircle 
+} from "@mui/icons-material";
 
 import DeleteConfirmDialog from "./deleteConfirmDialog";
-import CreateQuestionDialog from "./createQuestionDialog";
 import QuestionDetailDialog from "./deTailDialog";
 import ImportQuestionDialog from "./importQuestionDialog";
 import { LectureService } from "../../../services/lecture.api";
 
-// Đồng bộ enum với BE
 export enum DoKho {
   De = "De",
   TrungBinh = "TrungBinh",
@@ -29,6 +33,11 @@ const BankQuestion = () => {
   const { tenMonHoc } = location.state || {};
   const idMonHocNumber = Number(idMonHoc);
   const [currentQuestionDetail, setCurrentQuestionDetail] = useState<CauHoiPayload | null>(null);
+
+  // State cho expand/collapse
+  const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
+  const [questionDetails, setQuestionDetails] = useState<Map<number, CauHoiPayload>>(new Map());
+  const [loadingDetails, setLoadingDetails] = useState<Set<number>>(new Set());
 
   // Dialogs
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
@@ -120,7 +129,10 @@ const BankQuestion = () => {
       setLoading(false);
     }
   };
-
+  const getChuongName = (idChuong: number): string => {
+    const chuong = chuongList.find((c) => c.id === idChuong);
+    return chuong?.tenChuong || `Chương ${idChuong}`;
+  };
   useEffect(() => {
     fetchQuestions();
   }, [selectedCategory, currentPage, itemsPerPage, difficulty, searchText]);
@@ -128,9 +140,42 @@ const BankQuestion = () => {
   // Khi đổi chương / filter thì về trang 1
   useEffect(() => {
     setCurrentPage(1);
+    setExpandedQuestions(new Set()); // Reset expanded state khi đổi filter
   }, [selectedCategory, difficulty, searchText]);
 
-  // Fetch question detail
+  // Fetch question detail khi expand
+  const fetchQuestionDetailForExpand = async (id: number) => {
+    if (questionDetails.has(id)) return; // Đã load rồi thì không load lại
+    
+    setLoadingDetails(prev => new Set(prev).add(id));
+    try {
+      const res = await LectureService.layChiTIetCauHoi(accessToken, id);
+      const data: CauHoiPayload = await res.data;
+      setQuestionDetails(prev => new Map(prev).set(id, data));
+    } catch (err) {
+      console.error("Lỗi khi fetch chi tiết câu hỏi:", err);
+    } finally {
+      setLoadingDetails(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
+    }
+  };
+
+  // Toggle expand/collapse
+  const handleToggleExpand = (id: number) => {
+    const newExpanded = new Set(expandedQuestions);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+      fetchQuestionDetailForExpand(id);
+    }
+    setExpandedQuestions(newExpanded);
+  };
+
+  // Fetch question detail cho dialog
   const fetchQuestionDetail = async (id: number) => {
     try {
       const res = await LectureService.layChiTIetCauHoi(accessToken, id);
@@ -168,6 +213,24 @@ const BankQuestion = () => {
   const handleImportSuccess = () => {
     setCurrentPage(1);
     fetchQuestions();
+  };
+
+  const getDoKhoLabel = (doKho: string) => {
+    switch (doKho) {
+      case "De": return "Dễ";
+      case "TrungBinh": return "Trung bình";
+      case "Kho": return "Khó";
+      default: return doKho;
+    }
+  };
+
+  const getDoKhoColor = (doKho: string): "success" | "warning" | "error" | "default" => {
+    switch (doKho) {
+      case "De": return "success";
+      case "TrungBinh": return "warning";
+      case "Kho": return "error";
+      default: return "default";
+    }
   };
 
   return (
@@ -290,59 +353,213 @@ const BankQuestion = () => {
             {questions.length === 0 && !loading && (
               <Typography variant="body2">Không có dữ liệu.</Typography>
             )}
-            {questions.map((q, index) => (
-              <Card
-                key={q.cauHoi.id}
-                sx={{
-                  mb: 2,
-                  borderRadius: 2,
-                  boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
-                  "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.15)" },
-                  backgroundColor: "#ffffff",
-                }}
-              >
-                <CardContent sx={{ minHeight: 25, display: "flex",alignItems: "center", justifyContent: "space-between"}}>
-                  <Stack direction="row" spacing={2}>
-                    <Typography sx={{ fontSize: 18, fontWeight: "bold" }}>
-                      Câu {(index + 1) + (currentPage - 1) * itemsPerPage}:
-                    </Typography>
-                    <Typography sx={{ fontSize: 18, fontWeight: 500 }}>{q.cauHoi.tenHienThi}</Typography>
-                    <Typography variant="caption" sx={{ alignSelf: "center", opacity: 0.7 }}>
-                      ({q.cauHoi.doKho})
-                    </Typography>
-                  </Stack>
+            {questions.map((q, index) => {
+              const isExpanded = expandedQuestions.has(q.cauHoi.id);
+              const detail = questionDetails.get(q.cauHoi.id);
+              const isLoadingDetail = loadingDetails.has(q.cauHoi.id);
 
-                  <Stack direction="row">
-                    <IconButton sx={{ color: "#0DC913" }}  onClick={() => {
-    navigate(`/lecturer/update-question/${q.cauHoi.id}`, {
-      state: {
-        idChuong: Number(selectedCategory),
-        idMonHoc: idMonHoc,
-        tenMonHoc: tenMonHoc,
-        tenChuong: selectedChuongName,
-        returnPath: location.pathname,
-        returnTab: "bankQuestion",
-      },
-    });
-  }}>
-                      <Edit />
-                    </IconButton>
-                    <IconButton sx={{ color: "#DB9C14" }} onClick={() => fetchQuestionDetail(q.cauHoi.id)}>
-                      <Visibility />
-                    </IconButton>
-                    <IconButton
-                      sx={{ color: "#d32f2f" }}
-                      onClick={() => {
-                        setQuestionToDelete({ id: q.cauHoi.id, name: q.cauHoi.tenHienThi });
-                        setOpenDeleteDialog(true);
+              return (
+                <Card
+                  key={q.cauHoi.id}
+                  sx={{
+                    mb: 2,
+                    borderRadius: 2,
+                    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+                    "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.15)" },
+                    backgroundColor: "#ffffff",
+                  }}
+                >
+                  <CardContent sx={{ minHeight: 25, display:'flex', flexDirection:"column"}}>
+                    {/* Header với 2 phần: Nội dung câu hỏi (trái) và Action buttons (phải) */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent:'space-between',
+                        gap: 2,
+                        width: "100%", 
                       }}
                     >
-                      <Delete />
-                    </IconButton>
-                  </Stack>
-                </CardContent>
-              </Card>
-            ))}
+                      {/* Phần trái: Nội dung câu hỏi - clickable để expand */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                       
+                          cursor: "pointer",
+                          "&:hover": { backgroundColor: "#f5f5f5" },
+                          p: 1,
+                          borderRadius: 1,
+            
+                  
+                        }}
+                        onClick={() => handleToggleExpand(q.cauHoi.id)}
+                      >
+                        <IconButton size="small" sx={{ flexShrink: 0 }}>
+                          {isExpanded ? <ExpandLess /> : <ExpandMore />}
+                        </IconButton>
+                        <Typography sx={{ fontSize: 18, fontWeight: "bold", flexShrink: 0 }}>
+                          Câu {(index + 1) + (currentPage - 1) * itemsPerPage}:
+                        </Typography>
+                        <Typography 
+                          sx={{ 
+                            fontSize: 18, 
+                            fontWeight: 500,
+                            flex: 1,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {q.cauHoi.tenHienThi}
+                        </Typography>
+                        <Chip 
+                          label={getDoKhoLabel(q.cauHoi.doKho)} 
+                          size="small"
+                          color={getDoKhoColor(q.cauHoi.doKho)}
+                          sx={{ flexShrink: 0 }}
+                        />
+                      </Box>
+
+                      {/* Phần phải: Action buttons - không clickable để expand */}
+                      <Box sx={{ flexShrink: 0, display:'flex',flexDirection:"row"}}>
+                        <IconButton 
+                          sx={{ color: "#0DC913" }}  
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/lecturer/update-question/${q.cauHoi.id}`, {
+                              state: {
+                                idChuong: Number(selectedCategory),
+                                idMonHoc: idMonHoc,
+                                tenMonHoc: tenMonHoc,
+                                tenChuong: selectedChuongName,
+                                returnPath: location.pathname,
+                                returnTab: "bankQuestion",
+                              },
+                            });
+                          }}
+                        >
+                          <Edit />
+                        </IconButton>
+                        <IconButton 
+                          sx={{ color: "#DB9C14" }} 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            fetchQuestionDetail(q.cauHoi.id);
+                          }}
+                        >
+                          <Visibility />
+                        </IconButton>
+                        <IconButton
+                          sx={{ color: "#d32f2f" }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setQuestionToDelete({ id: q.cauHoi.id, name: q.cauHoi.tenHienThi });
+                            setOpenDeleteDialog(true);
+                          }}
+                        >
+                          <Delete />
+                        </IconButton>
+                      </Box>
+                    </Box>
+
+                    {/* Expanded content - Hiển thị ở dưới */}
+                    <Collapse in={isExpanded}>
+                      <Box sx={{ mt: 3, pt: 2, borderTop: "1px solid #e0e0e0" }}>
+                        {isLoadingDetail ? (
+                          <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+                            <CircularProgress size={24} />
+                          </Box>
+                        ) : detail ? (
+                          <Stack spacing={3}>
+                            {/* Nội dung câu hỏi */}
+                            <Box>
+                              <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1.5 }}>
+                                Nội dung câu hỏi:
+                              </Typography>
+                              {detail.cauHoi.noiDungCauHoiHTML ? (
+                                <Box 
+                                  dangerouslySetInnerHTML={{ __html: detail.cauHoi.noiDungCauHoiHTML }}
+                                  sx={{ pl: 2, color: "text.secondary" }}
+                                />
+                              ) : (
+                                <Typography sx={{ pl: 2, color: "text.secondary" }}>{detail.cauHoi.noiDungCauHoi}</Typography>
+                              )}
+                            </Box>
+
+                            {/* Đáp án */}
+                            <Box>
+                              <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1.5 }}>
+                                Đáp án:
+                              </Typography>
+                              {detail.dapAn && detail.dapAn.length > 0 ? (
+                                <Stack spacing={1.5} sx={{ pl: 2 }}>
+                                  {detail.dapAn.map((da, idx) => (
+                                    <Stack key={idx} direction="row" spacing={1.5} alignItems="flex-start">
+                                      {da.dapAnDung && (
+                                        <CheckCircle sx={{ fontSize: 20, color: "green", flexShrink: 0 }} />
+                                      )}
+                                   <Box sx={{display:'flex', flexDirection:'row'}}>
+                                      <Typography
+                                        sx={{
+                                          fontWeight: da.dapAnDung ? "bold" : "normal",
+                                          color: da.dapAnDung ? "green" : "text.primary",
+                                          }}>
+                                        {String.fromCharCode(65 + idx)}.
+                                      </Typography>
+                                      {da.noiDungHTML ? (
+                                        <Box 
+                                          dangerouslySetInnerHTML={{ __html: da.noiDungHTML }}
+                                          sx={{ 
+                                            fontWeight: da.dapAnDung ? "bold" : "normal",
+                                            color: da.dapAnDung ? "green" : "text.primary",
+                                          }}
+                                        />
+                                      ) : (
+                                        <Typography 
+                                          sx={{ 
+                                            fontWeight: da.dapAnDung ? "bold" : "normal",
+                                            color: da.dapAnDung ? "green" : "text.primary",
+                                          }}
+                                        >
+                                          {da.noiDung}
+                                        </Typography>
+                                    
+                                      )}
+                                      </Box>
+                                    </Stack>
+                                  ))}
+                                </Stack>
+                              ) : (
+                                <Typography variant="body2" sx={{ pl: 2, fontStyle: "italic", color: "text.secondary" }}>
+                                  Chưa có đáp án
+                                </Typography>
+                              )}
+                            </Box>
+                           
+                            {/* File đính kèm */}
+                            {detail.mangFileDinhKem && detail.mangFileDinhKem.length > 0 && (
+                              <Box>
+                                <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1.5 }}>
+                                  File đính kèm:
+                                </Typography>
+                                <Stack spacing={1} sx={{ pl: 2 }}>
+                                  {detail.mangFileDinhKem.map((file, idx) => (
+                                    <Typography key={idx} variant="body2" sx={{ color: "text.secondary" }}>
+                                      📎 {file.tenFile || `File ${idx + 1}`}
+                                    </Typography>
+                                  ))}
+                                </Stack>
+                              </Box>
+                            )}
+                          </Stack>
+                        ) : null}
+                      </Box>
+                    </Collapse>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </Box>
         </Box>
 
@@ -360,21 +577,13 @@ const BankQuestion = () => {
       </Stack>
 
       {/* Dialogs */}
-      <CreateQuestionDialog
-        open={openCreateDialog}
-        onClose={() => setOpenCreateDialog(false)}
-        idChuong={Number(selectedCategory)}
-        onCreated={(payload: CauHoiPayload) => {
-          setQuestions((prev) => [payload, ...prev]);
-          setOpenCreateDialog(false);
-          setTotal((t) => t + 1);
-        }}
-      />
       <QuestionDetailDialog 
-        open={openDetailDialog} 
-        onClose={() => setOpenDetailDialog(false)} 
-        questionDetail={currentQuestionDetail} 
-      />
+  open={openDetailDialog} 
+  onClose={() => setOpenDetailDialog(false)} 
+  questionDetail={currentQuestionDetail} 
+  chuongName={currentQuestionDetail ? getChuongName(currentQuestionDetail.cauHoi.idChuong) : ""}
+/>
+
       <DeleteConfirmDialog
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
