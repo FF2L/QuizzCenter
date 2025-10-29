@@ -28,7 +28,6 @@ export class SinhVienService {
           maNguoiDung:true,
           anhDaiDien:true,
           soDienThoai:true,
-          idKhoa:true,
           ngaySinh:true,
           vaiTro:true 
         },
@@ -36,6 +35,12 @@ export class SinhVienService {
     });
     if(!sinhVien) throw new NotFoundException(`Không tìm thấy sinh viên với mã ${id}`)
     return sinhVien;
+  }
+
+  async layTatCaSinhVienTheoLopHocPhan(idLopHocPhan: number) {
+    return this.sinhVienRepo.find({
+      where: { lopHocPhan: { id: idLopHocPhan } },
+    });
   }
 
   update(id: number, updateSinhVienDto: UpdateSinhVienDto) {

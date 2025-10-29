@@ -37,6 +37,6 @@ export class LopHocPhan extends BaseEntity{
     @JoinTable({name: 'chiTietLopHoc'})
     sinhVien: Promise<SinhVien[]>
 
-    @OneToMany(() => BaiKiemTra, (baiKiemTra) => baiKiemTra.idLopHocPhan, {cascade: true, lazy:true})
+    @OneToMany(() => BaiKiemTra, (baiKiemTra) => baiKiemTra.lopHocPhan, {cascade: true, lazy:true})
     baiKiemTra: Promise<BaiKiemTra[]>
 }

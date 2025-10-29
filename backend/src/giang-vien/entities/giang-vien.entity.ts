@@ -20,9 +20,9 @@ export class GiangVien {
     @OneToMany(() => Chuong, (chuong) => chuong.giangVien, { cascade: true, lazy:true })
     chuong: Promise<Chuong[]>;
 
-    @OneToMany(() => LopHocPhan, (lopHocPhan) => lopHocPhan.idGiangVien, {cascade: true, lazy: true})
+    @OneToMany(() => LopHocPhan, (lopHocPhan) => lopHocPhan.giangVien, {cascade: true, lazy: true})
     lopHocPhan: Promise<LopHocPhan []>
 
-    // @ManyToMany(() => MonHoc, (monHoc) => monHoc.giangVien, {lazy: true})
-    // monHoc: Promise<MonHoc[]>
+    @ManyToMany(() => MonHoc, (monHoc) => monHoc.giangVien, {lazy: true})
+    monHoc: Promise<MonHoc[]>
 }

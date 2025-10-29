@@ -22,6 +22,9 @@ export class ChiTietBaiLam {
     baiLamSinhVien: Promise<BaiLamSinhVien>
     @Column() idBaiLamSinhVien: number
 
+    @Column()
+    orderIndex: number
+
     // @ManyToOne(() => DapAn, (dapAn) => dapAn.chiTietBaiLam, {lazy: true, nullable: true, onDelete: 'SET NULL'})
     // @JoinColumn({name: 'idDapAn'})
     // dapAn: Promise<DapAn | null>

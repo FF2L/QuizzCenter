@@ -8,12 +8,12 @@ import { ChiTietBaiLam } from "./chi-tiet-bai-lam.entity";
 @Entity()
 export class BaiLamSinhVien extends BaseEntity{
     
-    @Column({
-        type: 'enum',
-        enum: TrangThaiBaiLam,
-        default: TrangThaiBaiLam.ChuaLam
-    })
-    trangThaiBaiLam: TrangThaiBaiLam
+    // @Column({
+    //     type: 'enum',
+    //     enum: TrangThaiBaiLam,
+    //     default: TrangThaiBaiLam.ChuaLam
+    // })
+    // trangThaiBaiLam: TrangThaiBaiLam
 
     @Column({
         nullable: true,

@@ -9,6 +9,8 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles/roles.guard';
 import { Roles } from 'src/common/decorations/roles.decorator';
 import { Role } from 'src/common/enum/role.enum';
+import { LoaiKiemTra } from 'src/common/enum/loaiKiemTra.enum';
+import { skip } from 'node:test';
 
 // @Roles(Role.GiaoVien)
 // @UseGuards(RolesGuard)
@@ -23,19 +25,21 @@ export class BaiKiemTraController {
   }
 
   @Get(':idLopHocPhan')
-  async findAll(@Param('idLopHocPhan',ParseIntPipe) idlopHocPHan: number , @Query() filter: FilterChiTietBaiKiemTraDto) {
-    return await this.baiKiemTraService.timTatCaBaiKiemTraTheoIdLopHocPhan(idlopHocPHan, filter);
+  async findAll(@Param('idLopHocPhan',ParseIntPipe) idlopHocPHan: number ,
+   @Query('loaiKiemTra') loaiKiemTra?: LoaiKiemTra,
+   @Query('skip') skip?: number,
+   @Query('limit') limit?: number){
+    return await this.baiKiemTraService.timTatCaBaiKiemTraTheoIdLopHocPhan(idlopHocPHan, {loaiKiemTra, skip, limit});
   }
-
   @Get('/findone/:idBaiKiemTra')
   async findOne(@Param('idBaiKiemTra',ParseIntPipe) idBaiKiemTra: number) {
     return await this.baiKiemTraService.timMotBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra);
   }
-    @Get(':idBaiKiemTra/mon-hoc')
+
+  @Get(':idBaiKiemTra/mon-hoc')
   timMonHocTheoIdBaikiemTra(@Param(':idBaiKiemTra') idBaiKiemTra: number) {
     return this.baiKiemTraService.timMonHocTheoIdBaikiemTradOne(idBaiKiemTra);
   }
-
 
   @Patch(':idBaiKiemTra')
   async update(@Param('idBaiKiemTra', ParseIntPipe) idBaiKiemTra: number, @Body() updateBaiKiemTraDto: UpdateBaiKiemTraDto) {
@@ -48,9 +52,11 @@ export class BaiKiemTraController {
   }
 
   /**CRUD câu hỏi trong bài kiểm tra */
-  @Get('/chi-tiet-cau-hoi/:idBaiKiemTra')
-  async layTatCaCauHoiBaiKiemTra(@Param('idBaiKiemTra',ParseIntPipe) idBaiKiemTra: number, pagination: Pagination ){
-      return await this.baiKiemTraService.layTatCaCauHoiCoTrongBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra, pagination)
+  @Get(':idBaiKiemTra/chi-tiet-cau-hoi')
+  async layTatCaCauHoiBaiKiemTra(@Param('idBaiKiemTra',ParseIntPipe) idBaiKiemTra: number,
+      @Query('skip') skip?: number,
+      @Query('limit') limit?: number){
+      return await this.baiKiemTraService.layTatCaCauHoiCoTrongBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra, {skip, limit});
   }
 
   @Post('/chi-tiet-cau-hoi')
@@ -58,14 +64,9 @@ export class BaiKiemTraController {
     return await this.baiKiemTraService.themMangCauHoiVaoTrongBaiKiemTra(createChiTietDto)
   }
 
-  @Put('/chi-tiet-cau-hoi')
-  async updateMangCauHoiCoTrongBaiKiemTra(@Body() createChiTietDto: CreateChiTietBaiKiemTraDto){
-    return await this.baiKiemTraService.capNhatMangCauHoiCoTrongBaiKiemTra(createChiTietDto)
-  }
   @Delete('/chi-tiet-cau-hoi/:idChiTietBaiKiemTra')
     async xoaMotCauHoiTrongChiTietCauHo(@Param('idChiTietBaiKiemTra',ParseIntPipe) idChiTietBaiKiemTra: number){
     return await this.baiKiemTraService.xoaCauHoiCoTrongBaiKiemTra(idChiTietBaiKiemTra)
   }
-
 
 }
