@@ -15,12 +15,14 @@ import { PassportModule } from '@nestjs/passport';
 import { MailModule } from 'src/mail/mail.module';
 import { NguoiDungModule } from 'src/nguoi-dung/nguoi-dung.module';
 import { OtpModule } from 'src/otp/otp.module';
+import { SinhVien } from 'src/sinh-vien/entities/sinh-vien.entity';
+import { GiangVien } from 'src/giang-vien/entities/giang-vien.entity';
 
 
 @Module({
   imports: [
     PassportModule,
-    TypeOrmModule.forFeature([NguoiDung]),
+    TypeOrmModule.forFeature([NguoiDung, SinhVien, GiangVien]),
     JwtModule.registerAsync(jwtConfig.asProvider()),
     ConfigModule.forFeature(jwtConfig), //đăng ký jwt như repository để có thể sử dụng jwt config
     ConfigModule.forFeature(refeshJwtConfig),

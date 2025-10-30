@@ -29,17 +29,14 @@ export class NguoiDung  extends BaseEntity{
     @Column({nullable: true})
     hashRefeshToken: string
 
-
-    @Column()
+    @Column({default: 'https://inkythuatso.com/uploads/thumbnails/800/2023/03/8-anh-dai-dien-trang-inkythuatso-03-15-26-54.jpg'})
     anhDaiDien: string
 
     @Column()
     ngaySinh: Date
 
-    @Column({
-        nullable: true
-    })
-    ngayVao: Date
+    @Column({nullable: true})
+    gioiTinh: string
 
     @Column({type: 'enum',
         enum: Role,

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, UseGuards, Req, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, UseGuards, Req, Res, Put } from '@nestjs/common';
 import { LopHocPhanService } from './lop-hoc-phan.service';
 import { CreateLopHocPhanDto } from './dto/create-lop-hoc-phan.dto';
 import { UpdateLopHocPhanDto } from './dto/update-lop-hoc-phan.dto';
@@ -13,6 +13,52 @@ import { Response } from 'express';
 @Controller('lop-hoc-phan')
 export class LopHocPhanController {
   constructor(private readonly lopHocPhanService: LopHocPhanService) {}
+
+  //CRUD Lớp học phần Admin
+  @Get('all/admin')
+  async layTatCaLopHocPhanAdmin(
+    @Query('skip') skip?: number,
+    @Query('limit') limit?: number,
+    @Query ('ten-lop-hoc') tenLopHoc?: string,
+  ) {
+    return await this.lopHocPhanService.layTatCaLopHocPhanAdmin({
+      skip,
+      limit,
+      tenLopHoc
+    });
+  }
+  @Post('admin')
+  async taoLopHocPhan(@Body() createLopHocPhanDto: CreateLopHocPhanDto) {
+    return await this.lopHocPhanService.taoLopHocPhan(createLopHocPhanDto);
+  }
+  @Put(':id/admin')
+  async capNhatLopHocPhan(@Param('id') id: number, @Body() updateLopHocPhanDto: UpdateLopHocPhanDto) {
+    return await this.lopHocPhanService.capNhatLopHocPhan(id, updateLopHocPhanDto);
+  }
+  @Delete(':id/admin')
+  async xoaLopHocPhan(@Param('id') id: number) {
+    return await this.lopHocPhanService.xoaLopHocPhan(id);
+  }
+  @Get(':id/admin')
+  async layTatCaSinhVienCuaLopHocPhan(@Param('id') id: number,
+  @Query('skip') skip?: number,
+  @Query('limit') limit?: number,
+  @Query ('ten-sinh-vien') tenSinhVien?: string
+
+) {
+    return await this.lopHocPhanService.layTatCaSinhVienCuaLopHocPhan(id, {skip, limit, tenSinhVien});
+  }
+  @Post(':idLopHocPhan/sinh-vien/:maSinhVien/admin')
+  async themSinhVienVaoLopHocPhan(@Param('idLopHocPhan') idLopHocPhan: number, @Param('maSinhVien') maSinhVien: string) {
+    return await this.lopHocPhanService.themSinhVienVaoLopHocPhan(idLopHocPhan, maSinhVien);
+  }
+
+  @Delete(':idLopHocPhan/sinh-vien/:maSinhVien/admin')
+  async xoaSinhVienKhoiLopHocPhan(@Param('idLopHocPhan') idLopHocPhan: number, @Param('maSinhVien') maSinhVien: string) {
+    return await this.lopHocPhanService.xoaSinhVienKhoiLopHocPhan(idLopHocPhan, maSinhVien);
+  }
+
+  //End CRUD Lớp học phần Admin
 
   //Lấy tất cả lớp học phần của giảng viên lọc theo 
   @UseGuards((JwtAuthGuard))

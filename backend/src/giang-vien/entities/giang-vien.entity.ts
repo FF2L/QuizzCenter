@@ -14,9 +14,6 @@ export class GiangVien {
     @JoinColumn({ name: 'idNguoiDung', referencedColumnName: 'id' })
     nguoiDung: Promise<NguoiDung>;
 
-    @Column()
-    chucVu: string
-
     @OneToMany(() => Chuong, (chuong) => chuong.giangVien, { cascade: true, lazy:true })
     chuong: Promise<Chuong[]>;
 

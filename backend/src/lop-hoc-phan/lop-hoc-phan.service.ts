@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Query } from '@nestjs/common';
 import { CreateLopHocPhanDto } from './dto/create-lop-hoc-phan.dto';
 import { UpdateLopHocPhanDto } from './dto/update-lop-hoc-phan.dto';
 import { LopHocPhan } from './entities/lop-hoc-phan.entity';
@@ -28,6 +28,154 @@ export class LopHocPhanService {
               @InjectRepository(SinhVien) private readonly svRepo: Repository<SinhVien>,
               @InjectRepository(NguoiDung) private readonly ndRepo: Repository<NguoiDung>,
 ){}
+
+  //CRUD Lớp học phần Admin
+
+  async layTatCaLopHocPhanAdmin(query: any) {
+    const {tenLopHoc, skip, limit,} = query;
+    const qb = this.lopHocPhanRep
+    .createQueryBuilder('lhp')
+    .leftJoin('lhp.monHoc', 'mh')
+    .skip(skip ?? 0)
+    .take(limit ?? DEFAULT_PAGE_LIMIT);
+
+    if(tenLopHoc){
+      const ten = tenLopHoc.trim();
+      qb.andWhere(
+        `unaccent(lower(mh.tenLopHoc)) ILIKE unaccent(lower(:tenMonHoc))`,
+        { tenLopHoc: `%${ten}%` }
+      );
+    }
+
+    const [data, total] = await qb.getManyAndCount();
+
+    return { data,
+            total,
+            currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1,
+            totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT)) };
+  }
+
+  async taoLopHocPhan(createLopHocPhanDto: CreateLopHocPhanDto) {
+    const {tenLopHoc, hocKy, thoiGianBatDau, thoiGianKetThuc, idMonHoc, idGiangVien } = createLopHocPhanDto;
+    
+
+    const lopHocSave = await this.lopHocPhanRep.save({
+      tenLopHoc,
+      hocKy,
+      thoiGianBatDau,
+      thoiGianKetThuc,
+      idMonHoc,
+      idGiangVien,
+    });
+
+    const maLopHoc = `LHP${lopHocSave.id.toString().padStart(6, '0')}`;
+    
+    lopHocSave.maLopHoc = maLopHoc;
+    return await this.lopHocPhanRep.save(lopHocSave);
+  }
+
+  async capNhatLopHocPhan(id: number, updateLopHocPhanDto: UpdateLopHocPhanDto) {
+    const lopHocPhan = await this.lopHocPhanRep.findOne({where: {id}});
+
+    if (!lopHocPhan) throw new NotFoundException(`Không tìm thấy lớp học phần với id ${id}`); 
+
+    const { tenLopHoc, hocKy, thoiGianBatDau, thoiGianKetThuc, idMonHoc, idGiangVien } = updateLopHocPhanDto;
+
+    lopHocPhan.tenLopHoc = tenLopHoc;
+    lopHocPhan.hocKy = hocKy;
+    lopHocPhan.thoiGianBatDau = thoiGianBatDau;
+    lopHocPhan.thoiGianKetThuc = thoiGianKetThuc;
+    lopHocPhan.idMonHoc = idMonHoc;
+    lopHocPhan.idGiangVien = idGiangVien;
+
+    return await this.lopHocPhanRep.save(lopHocPhan);
+  }
+
+  async xoaLopHocPhan(id: number) {
+    const lopHocPhan = await this.lopHocPhanRep.findOne({ where: { id } });
+    if (!lopHocPhan) throw new NotFoundException(`Không tìm thấy lớp học phần với id ${id}`);
+    await this.lopHocPhanRep.softDelete(id);
+  }
+
+  async layTatCaSinhVienCuaLopHocPhan(id: number, query: any) {
+    const {tenSinhVien, skip, limit,} = query;
+    const qb = this.lopHocPhanRep
+    .createQueryBuilder('lhp')
+    .leftJoin('lhp.sinhVien', 'sv')
+    .leftJoin('sv.nguoiDung', 'nd')
+    .where('lhp.id = :id', { id });
+
+    const total = await qb.getCount();
+    
+    if(tenSinhVien){
+      const ten = tenSinhVien.trim();
+      qb.andWhere(
+        `unaccent(lower(nd.hoTen)) ILIKE unaccent(lower(:tenSinhVien))`,
+        { tenSinhVien: `%${ten}%` }
+      );
+    }
+    const data = await qb.select([
+      'nd.id AS nd_id',
+      'nd.maNguoiDung AS maSinhVien',
+      'nd.hoTen AS hoTenSinhVien',
+      'nd.gioiTinh AS gioiTinhSinhVien',
+      'nd.email AS emailSinhVien',
+      'nd.anhDaiDien AS anhDaiDienSinhVien',
+    ])
+    .offset(skip ?? 0)
+    .limit(limit ?? DEFAULT_PAGE_LIMIT)
+    .getRawMany();
+
+    return {data ,
+       total, currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1, totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT))}
+    
+    
+  }
+
+  async themSinhVienVaoLopHocPhan(idLopHocPhan:number, maSinhVien: string) {
+    try {
+       const sinhVien = await this.lopHocPhanRep.createQueryBuilder('lhp')
+      .leftJoin('lhp.sinhVien', 'sv')
+      .leftJoin('sv.nguoiDung', 'nd')
+      .where('nd.maNguoiDung = :maSinhVien', { maSinhVien })
+      .getOne();
+      if(sinhVien) throw new NotFoundException('Sinh viên đã được thêm vào lớp học phần');
+
+      const nguoiDung = await this.ndRepo.findOne({
+        where: { maNguoiDung: maSinhVien }
+      });
+      if(!nguoiDung) throw new NotFoundException('Không tìm thấy sinh viên với mã sinh viên đã cho');
+
+      await this.lopHocPhanRep.createQueryBuilder()
+      .relation(LopHocPhan, 'sinhVien')
+      .of(idLopHocPhan)
+      .add(nguoiDung.id);
+      return { message: 'Thêm sinh viên vào lớp học phần thành công' };
+      
+    } catch (error) {
+      console.error(error);
+      throw new NotFoundException('Lỗi khi thêm sinh viên vào lớp học phần');
+    }
+  }
+  async xoaSinhVienKhoiLopHocPhan(idLopHocPhan:number, maSinhVien: string) {
+    try {
+        const nguoiDung = await this.ndRepo.findOne({
+        where: { maNguoiDung: maSinhVien }
+        });
+        if(!nguoiDung) throw new NotFoundException('Không tìm thấy sinh viên với mã sinh viên đã cho');
+        await this.lopHocPhanRep.createQueryBuilder()
+        .relation(LopHocPhan, 'sinhVien')
+        .of(idLopHocPhan)
+        .remove(nguoiDung.id);
+        return { message: 'Xóa sinh viên khỏi lớp học phần thành công' };
+      
+    } catch (error) {
+      console.error(error);
+      throw new NotFoundException('Lỗi khi xóa sinh viên khỏi lớp học phần');
+    }
+  }
+
+  //End CRUD Lớp học phần Admin
 
 
 

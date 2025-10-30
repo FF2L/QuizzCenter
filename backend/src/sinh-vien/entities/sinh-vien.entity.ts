@@ -13,9 +13,6 @@ export class SinhVien {
     @JoinColumn({ name: 'idNguoiDung', referencedColumnName: 'id' })
     nguoiDung: Promise<NguoiDung>;
 
-    @Column()
-    khoaHoc: string
-
     @ManyToMany(() => LopHocPhan, (lopHocPhan) => lopHocPhan.sinhVien, {lazy: true})
     lopHocPhan: Promise<LopHocPhan[]>
 
