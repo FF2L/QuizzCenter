@@ -6,7 +6,7 @@ import { Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, On
 
 @Entity()
 export class MonHoc extends BaseEntity{
-    @Column({unique: true})
+    @Column()
     @Index()
     maMonHoc: string
 
@@ -18,7 +18,7 @@ export class MonHoc extends BaseEntity{
 
     @OneToMany(() => LopHocPhan, (lopHocPhan) => lopHocPhan.monHoc, {cascade: true, lazy:true})
     lopHocPhan: Promise<LopHocPhan[]>
-
+ 
     @ManyToMany(() => GiangVien, (giangVien) => giangVien.monHoc, {cascade: true, lazy:true})
     @JoinTable({name: 'MonHoc_GiangVien'})
     giangVien: Promise<GiangVien[]>

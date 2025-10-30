@@ -13,9 +13,6 @@ export class SinhVienService {
   private nguoiDungService: NguoiDungService  
 ){}
 
-  create(createSinhVienDto: CreateSinhVienDto) {
-    return 'This action adds a new sinhVien';
-  }
   async findOne(id: number) {
     const sinhVien = await this.sinhVienRepo.findOne({
       where: { idNguoiDung: id },
@@ -41,13 +38,5 @@ export class SinhVienService {
     return this.sinhVienRepo.find({
       where: { lopHocPhan: { id: idLopHocPhan } },
     });
-  }
-
-  update(id: number, updateSinhVienDto: UpdateSinhVienDto) {
-    return `This action updates a #${id} sinhVien`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} sinhVien`;
   }
 }

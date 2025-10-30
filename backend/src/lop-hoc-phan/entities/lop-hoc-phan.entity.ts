@@ -7,7 +7,7 @@ import { Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, On
 
 @Entity()
 export class LopHocPhan extends BaseEntity{
-    @Column({unique:true})
+    @Column({nullable: true})
     @Index()
     maLopHoc: string
 

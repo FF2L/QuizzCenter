@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Query } from '@nestjs/common';
 import { CreateLopHocPhanDto } from './dto/create-lop-hoc-phan.dto';
 import { UpdateLopHocPhanDto } from './dto/update-lop-hoc-phan.dto';
 import { LopHocPhan } from './entities/lop-hoc-phan.entity';
-import { MoreThanOrEqual, Repository } from 'typeorm';
+import { LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MonHocService } from 'src/mon-hoc/mon-hoc.service';
 import { GiangVienService } from 'src/giang-vien/giang-vien.service';
@@ -28,6 +28,154 @@ export class LopHocPhanService {
               @InjectRepository(SinhVien) private readonly svRepo: Repository<SinhVien>,
               @InjectRepository(NguoiDung) private readonly ndRepo: Repository<NguoiDung>,
 ){}
+
+  //CRUD Lớp học phần Admin
+
+  async layTatCaLopHocPhanAdmin(query: any) {
+    const {tenLopHoc, skip, limit,} = query;
+    const qb = this.lopHocPhanRep
+    .createQueryBuilder('lhp')
+    .leftJoin('lhp.monHoc', 'mh')
+    .skip(skip ?? 0)
+    .take(limit ?? DEFAULT_PAGE_LIMIT);
+
+    if(tenLopHoc){
+      const ten = tenLopHoc.trim();
+      qb.andWhere(
+        `unaccent(lower(mh.tenLopHoc)) ILIKE unaccent(lower(:tenMonHoc))`,
+        { tenLopHoc: `%${ten}%` }
+      );
+    }
+
+    const [data, total] = await qb.getManyAndCount();
+
+    return { data,
+            total,
+            currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1,
+            totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT)) };
+  }
+
+  async taoLopHocPhan(createLopHocPhanDto: CreateLopHocPhanDto) {
+    const {tenLopHoc, hocKy, thoiGianBatDau, thoiGianKetThuc, idMonHoc, idGiangVien } = createLopHocPhanDto;
+    
+
+    const lopHocSave = await this.lopHocPhanRep.save({
+      tenLopHoc,
+      hocKy,
+      thoiGianBatDau,
+      thoiGianKetThuc,
+      idMonHoc,
+      idGiangVien,
+    });
+
+    const maLopHoc = `LHP${lopHocSave.id.toString().padStart(6, '0')}`;
+    
+    lopHocSave.maLopHoc = maLopHoc;
+    return await this.lopHocPhanRep.save(lopHocSave);
+  }
+
+  async capNhatLopHocPhan(id: number, updateLopHocPhanDto: UpdateLopHocPhanDto) {
+    const lopHocPhan = await this.lopHocPhanRep.findOne({where: {id}});
+
+    if (!lopHocPhan) throw new NotFoundException(`Không tìm thấy lớp học phần với id ${id}`); 
+
+    const { tenLopHoc, hocKy, thoiGianBatDau, thoiGianKetThuc, idMonHoc, idGiangVien } = updateLopHocPhanDto;
+
+    lopHocPhan.tenLopHoc = tenLopHoc;
+    lopHocPhan.hocKy = hocKy;
+    lopHocPhan.thoiGianBatDau = thoiGianBatDau;
+    lopHocPhan.thoiGianKetThuc = thoiGianKetThuc;
+    lopHocPhan.idMonHoc = idMonHoc;
+    lopHocPhan.idGiangVien = idGiangVien;
+
+    return await this.lopHocPhanRep.save(lopHocPhan);
+  }
+
+  async xoaLopHocPhan(id: number) {
+    const lopHocPhan = await this.lopHocPhanRep.findOne({ where: { id } });
+    if (!lopHocPhan) throw new NotFoundException(`Không tìm thấy lớp học phần với id ${id}`);
+    await this.lopHocPhanRep.softDelete(id);
+  }
+
+  async layTatCaSinhVienCuaLopHocPhan(id: number, query: any) {
+    const {tenSinhVien, skip, limit,} = query;
+    const qb = this.lopHocPhanRep
+    .createQueryBuilder('lhp')
+    .leftJoin('lhp.sinhVien', 'sv')
+    .leftJoin('sv.nguoiDung', 'nd')
+    .where('lhp.id = :id', { id });
+
+    const total = await qb.getCount();
+    
+    if(tenSinhVien){
+      const ten = tenSinhVien.trim();
+      qb.andWhere(
+        `unaccent(lower(nd.hoTen)) ILIKE unaccent(lower(:tenSinhVien))`,
+        { tenSinhVien: `%${ten}%` }
+      );
+    }
+    const data = await qb.select([
+      'nd.id AS nd_id',
+      'nd.maNguoiDung AS maSinhVien',
+      'nd.hoTen AS hoTenSinhVien',
+      'nd.gioiTinh AS gioiTinhSinhVien',
+      'nd.email AS emailSinhVien',
+      'nd.anhDaiDien AS anhDaiDienSinhVien',
+    ])
+    .offset(skip ?? 0)
+    .limit(limit ?? DEFAULT_PAGE_LIMIT)
+    .getRawMany();
+
+    return {data ,
+       total, currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1, totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT))}
+    
+    
+  }
+
+  async themSinhVienVaoLopHocPhan(idLopHocPhan:number, maSinhVien: string) {
+    try {
+       const sinhVien = await this.lopHocPhanRep.createQueryBuilder('lhp')
+      .leftJoin('lhp.sinhVien', 'sv')
+      .leftJoin('sv.nguoiDung', 'nd')
+      .where('nd.maNguoiDung = :maSinhVien', { maSinhVien })
+      .getOne();
+      if(sinhVien) throw new NotFoundException('Sinh viên đã được thêm vào lớp học phần');
+
+      const nguoiDung = await this.ndRepo.findOne({
+        where: { maNguoiDung: maSinhVien }
+      });
+      if(!nguoiDung) throw new NotFoundException('Không tìm thấy sinh viên với mã sinh viên đã cho');
+
+      await this.lopHocPhanRep.createQueryBuilder()
+      .relation(LopHocPhan, 'sinhVien')
+      .of(idLopHocPhan)
+      .add(nguoiDung.id);
+      return { message: 'Thêm sinh viên vào lớp học phần thành công' };
+      
+    } catch (error) {
+      console.error(error);
+      throw new NotFoundException('Lỗi khi thêm sinh viên vào lớp học phần');
+    }
+  }
+  async xoaSinhVienKhoiLopHocPhan(idLopHocPhan:number, maSinhVien: string) {
+    try {
+        const nguoiDung = await this.ndRepo.findOne({
+        where: { maNguoiDung: maSinhVien }
+        });
+        if(!nguoiDung) throw new NotFoundException('Không tìm thấy sinh viên với mã sinh viên đã cho');
+        await this.lopHocPhanRep.createQueryBuilder()
+        .relation(LopHocPhan, 'sinhVien')
+        .of(idLopHocPhan)
+        .remove(nguoiDung.id);
+        return { message: 'Xóa sinh viên khỏi lớp học phần thành công' };
+      
+    } catch (error) {
+      console.error(error);
+      throw new NotFoundException('Lỗi khi xóa sinh viên khỏi lớp học phần');
+    }
+  }
+
+  //End CRUD Lớp học phần Admin
 
 
 
@@ -146,7 +294,6 @@ async layBangDiemChiTietTheoLop(idLopHocPhan: number, query: any) {
     .limit(limit ?? DEFAULT_PAGE_LIMIT)
     .getRawMany();
 
-  // Gom nhóm theo sinh viên → danh sách bài kiểm tra
   const map = new Map<string, SinhVienWithBaiKiemTra>();
 
   for (const r of rows) {
@@ -161,7 +308,6 @@ async layBangDiemChiTietTheoLop(idLopHocPhan: number, query: any) {
     }
     const sv = map.get(r.nd_id)!;
 
-    // Nếu lớp chưa có bài kiểm tra, bkt_id sẽ null → không push item
     if (r.bkt_id) {
       sv.danhSachBaiKiemTra.push({
         idBaiKiemTra: r.bkt_id,
@@ -170,18 +316,29 @@ async layBangDiemChiTietTheoLop(idLopHocPhan: number, query: any) {
       });
     }
   }
-  // Trường hợp lớp chưa tạo BKT nào: vẫn trả SV với danhSachBaiKiemTra=[]
+
   const data = Array.from(map.values());
- 
 
   return { data, total, currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1, totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT)) };
+}
+
+async layDanhSachBaiKiemTra(idLopHocPhan: number) {
+    const danhSachBaiKiemTra = await this.bktRepo
+    .createQueryBuilder('bkt')
+    .where('bkt.idLopHocPhan = :idLopHocPhan', { idLopHocPhan })
+    .andWhere('bkt.loaiKiemTra = :loaiKiemTra', { loaiKiemTra: LoaiKiemTra.BaiKiemTra })
+    .andWhere('bkt.thoiGianKetThuc <= :now', { now: new Date() })
+    .select([
+      'bkt.id AS bkt_id',
+      'bkt.tenBaiKiemTra AS tenBaiKiemTra',
+    ])
+    .getRawMany();
+    return danhSachBaiKiemTra;
 }
 
 async exportBangDiemExcel(idLopHocPhan: number): Promise<Buffer> {
     const now = new Date();
 
-    // 1) Lấy danh sách SV trong lớp (kèm thông tin người dùng)
-    // Giả định: LopHocPhan.sinhVien: OneToMany => SinhVien; SinhVien.nguoiDung: ManyToOne => NguoiDung
     const svRows = await this.lopHocPhanRep
       .createQueryBuilder('lhp')
       .leftJoin('lhp.sinhVien', 'sv')
@@ -201,11 +358,6 @@ async exportBangDiemExcel(idLopHocPhan: number): Promise<Buffer> {
         email: string;
       }>();
 
-    // 1A: Nếu không có SV → vẫn tạo file trống với header 3 cột cho nhất quán
-    // (tuỳ bạn, ở đây mình vẫn tiếp tục tạo file)
-
-    // 2) Lấy danh sách BKT của LHP: chỉ loại "Bài kiểm tra" và đã đóng
-    // Giả định: BaiKiemTra.lopHocPhanId, BaiKiemTra.loaiKiemTra, BaiKiemTra.thoiGianKetThuc, BaiKiemTra.tenBaiKiemTra
     const bktRows = await this.bktRepo
       .createQueryBuilder('bkt')
       .where('bkt.idLopHocPhan = :id', { id: idLopHocPhan })
@@ -216,7 +368,7 @@ async exportBangDiemExcel(idLopHocPhan: number): Promise<Buffer> {
         'bkt.tenBaiKiemTra AS "tenBaiKiemTra"',
         'bkt.thoiGianKetThuc AS "thoiGianKetThuc"',
       ])
-      .orderBy('bkt.thoiGianKetThuc', 'ASC') // sắp xếp cột theo thời gian đóng
+      .orderBy('bkt.thoiGianKetThuc', 'ASC') 
       .getRawMany<{
         bktId: number;
         tenBaiKiemTra: string;
@@ -225,8 +377,6 @@ async exportBangDiemExcel(idLopHocPhan: number): Promise<Buffer> {
 
     const bktIds = bktRows.map(r => r.bktId);
 
-    // 3) Lấy điểm bài làm cho (SV, BKT) — mỗi BKT chỉ được làm 1 lần (theo yêu cầu)
-    // Giả định: BaiLamSinhVien.sinhVienId, .baiKiemTraId, .tongDiem
     let diemMap = new Map<string, number | null>();
     if (bktIds.length > 0 && svRows.length > 0) {
       const blRows = await this.blsvRepo
@@ -245,16 +395,14 @@ async exportBangDiemExcel(idLopHocPhan: number): Promise<Buffer> {
       );
     }
 
-    // 4) Tạo Excel
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Bang diem');
 
-    // Header: 3 cột cố định + các cột BKT
       ws.columns = [
       { header: 'Mã người dùng', key: 'maNguoiDung', width: 18 },
       { header: 'Họ tên', key: 'hoTen', width: 28 },
       { header: 'Email', key: 'email', width: 28 },
-      // các cột bài kiểm tra
+
       ...bktRows.map((bkt, idx) => ({
         header: bkt.tenBaiKiemTra || `BKT ${idx + 1}`,
         key: `bkt_${bkt.bktId}`,
@@ -262,10 +410,10 @@ async exportBangDiemExcel(idLopHocPhan: number): Promise<Buffer> {
       })),
     ];
 
-    // Freeze row 1 (header)
+
     ws.views = [{ state: 'frozen', xSplit: 0, ySplit: 1 }];
 
-    // 5) Ghi dữ liệu từng sinh viên
+
     for (const sv of svRows) {
       const rowData: Record<string, any> = {
         maNguoiDung: sv.maNguoiDung,
@@ -273,7 +421,6 @@ async exportBangDiemExcel(idLopHocPhan: number): Promise<Buffer> {
         email: sv.email,
       };
 
-      // Nếu có BKT: điền điểm; nếu không có BKT ⇒ chỉ 3 cột đầu (đáp ứng 1A)
       for (const bkt of bktRows) {
         const key = `bkt_${bkt.bktId}`;
         const mapKey = `${sv.svId}_${bkt.bktId}`;
@@ -283,14 +430,12 @@ async exportBangDiemExcel(idLopHocPhan: number): Promise<Buffer> {
       ws.addRow(rowData);
     }
 
-    // 6) Định dạng nhẹ: header đậm, căn giữa header của cột điểm
     ws.getRow(1).font = { bold: true };
     if (bktRows.length > 0) {
       const startCol = 3 + 1; // sau 3 cột cố định
       for (let c = startCol; c <= 3 + bktRows.length; c++) {
         ws.getColumn(c).alignment = { horizontal: 'center' };
-        // định dạng số (nếu là điểm thập phân)
-        ws.getColumn(c).numFmt = '0.0#'; // tuỳ thang điểm, bạn đổi '0'/'0.00'
+        ws.getColumn(c).numFmt = '0.0#'; 
       }
     }
 
