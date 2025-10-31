@@ -8,14 +8,14 @@ import * as bcrypt from "bcrypt"
 @Entity()
 export class NguoiDung  extends BaseEntity{
     
-    @Column({unique: true})
+    @Column()
     @Index()
     maNguoiDung: string;
 
     @Column()
     hoTen: string
 
-    @Column({unique: true})
+    @Column()
     @Index()
     email: string
 

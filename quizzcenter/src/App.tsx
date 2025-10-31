@@ -33,6 +33,11 @@ import LectureHome from './component/lecture/home';
 import LectureClass from './component/lecture/class';
 import CreateQuestionPage from './page/system/bankquestion/createQuestion';
 import UpdateQuestionPage from './page/system/bankquestion/updateQuestion';
+import AdminQuizzCenter from './page/system/admin-quizz-center';
+import QuanLyNguoiDung from './page/system/quan-ly-nguoi-dung/qlnd';
+import PhanCongMonHoc from './page/system/phan-cong-mon-hoc/pcmh';
+import QuanLyLopHoc from './page/system/quan-ly-lop-hoc/qllh';
+import QuanLyMonHoc from './page/system/quan-ly-mon-hoc/plmh';
 const App: FC = () => {
   return (
     <UserProvider>
@@ -74,6 +79,15 @@ const App: FC = () => {
               <Route path="update-question/:cauHoiId" element={<UpdateQuestionPage />} />
               <Route path="bai-kiem-tra/:idBaiKiemTra/create-question-test" element={<CreateQuestionForTest />} />
               <Route path="select-from-bank" element={<SelectFromBankPage />} />
+            </Route>
+
+            {/* Các route cho quản trị viên */}
+            <Route path="admin"element={<ProtectedRoute><AdminQuizzCenter /></ProtectedRoute>}>
+              <Route index element={<Navigate to="qlnd" replace />} />
+              <Route path="qlnd" element={<QuanLyNguoiDung />} />
+              <Route path="pcmh" element={<PhanCongMonHoc />} />
+              <Route path="pllh" element={<QuanLyLopHoc />} />
+              <Route path="plmh" element={<QuanLyMonHoc />} />
             </Route>
 
             {/* Catch all route */}

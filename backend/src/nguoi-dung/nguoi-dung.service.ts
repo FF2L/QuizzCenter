@@ -116,7 +116,7 @@ export class NguoiDungService {
 
     if(!nguoiDung) throw new NotFoundException();
     nguoiDung.hoTen = hoTen;
-    nguoiDung.matKhau = matKhau;
+    if(matKhau) nguoiDung.matKhau = matKhau;
     nguoiDung.soDienThoai = soDienThoai;
     nguoiDung.gioiTinh = gioiTinh;
     nguoiDung.email = email;

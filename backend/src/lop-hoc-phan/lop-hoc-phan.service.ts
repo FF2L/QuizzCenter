@@ -36,18 +36,34 @@ export class LopHocPhanService {
     const qb = this.lopHocPhanRep
     .createQueryBuilder('lhp')
     .leftJoin('lhp.monHoc', 'mh')
-    .skip(skip ?? 0)
-    .take(limit ?? DEFAULT_PAGE_LIMIT);
+    .leftJoin('lhp.giangVien', 'gv')
+    .leftJoin('gv.nguoiDung', 'nd')
+
+    const total = await qb.getCount();
 
     if(tenLopHoc){
-      const ten = tenLopHoc.trim();
       qb.andWhere(
-        `unaccent(lower(mh.tenLopHoc)) ILIKE unaccent(lower(:tenMonHoc))`,
-        { tenLopHoc: `%${ten}%` }
+        `unaccent(unaccent(lhp.tenLopHoc)) ILIKE unaccent(:tenLopHoc)`,
+        { tenLopHoc: `%${tenLopHoc}%` }
       );
     }
 
-    const [data, total] = await qb.getManyAndCount();
+    const data = await qb.select([
+      'lhp.id AS lhp_id',
+      'lhp.maLopHoc AS maLHP',
+      'lhp.tenLopHoc AS tenLHP',
+      'lhp.hocKy AS hocKy',
+      'lhp.thoiGianBatDau AS thoiGianBatDau',
+      'lhp.thoiGianKetThuc AS thoiGianKetThuc',
+      'mh.tenMonHoc AS tenMonHoc',
+      'mh.id AS mh_id',
+      'nd.hoTen AS tenGiangVien',
+      'nd.id AS nd_id',
+    ])
+    .skip(skip ?? 0)
+    .take(limit ?? DEFAULT_PAGE_LIMIT)
+    .orderBy('lhp.maLopHoc', 'DESC')
+    .getRawMany();
 
     return { data,
             total,
@@ -217,6 +233,7 @@ async layTatCaLopHocPhanTheoIdGiaoVien( idGiangVien: number, query: any) {
       'lhp.hocKy AS hocKy',
       'lhp.thoiGianBatDau AS thoiGianBatDau',
       'lhp.thoiGianKetThuc AS thoiGianKetThuc',
+      'mh.id AS mh_id',
       'mh.maMonHoc AS maMonHoc',
       'mh.tenMonHoc AS tenMonHoc',
       'COUNT(sv.idNguoiDung) AS siSo'
@@ -486,7 +503,9 @@ async exportBangDiemExcel(idLopHocPhan: number): Promise<Buffer> {
     .offset(skip ?? 0)
     .limit(limit ?? DEFAULT_PAGE_LIMIT)
     .getRawMany();
-    return {data , total, currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1, totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT))};
+    console.log({ data, total, currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1, totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT)) });
+    return { data, total, currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1, totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT)) };
+
   }
 
 

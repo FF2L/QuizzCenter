@@ -19,6 +19,11 @@ import {
   Logout,
   Class,
   Person,
+  Book,
+  GroupAdd,
+  Group,
+  MeetingRoom
+  
 } from "@mui/icons-material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { LoginService } from "../services/login.api";
@@ -49,9 +54,14 @@ export default function MenuBar({ role }: { role: string }) {
       if (path.includes('/lecturer/user')) return 1;
       if (path.includes('/lecturer/course') || path.includes('/lecturer/page/')) return 2;
       if (path.includes('/lecturer/class')) return 3;
-    } else {
+    } else if (role === "SinhVien") {
       if (path.includes('/quizzcenter/my/course')) return 1;
       if (path === '/' || path.includes('/quizzcenter/my')) return 0;
+    } else if (role === "Admin") {
+      if (path.includes('/admin/qlnd')) return 2;
+      if (path.includes('/admin/pllh')) return 3;
+      if (path.includes('/admin/plmh')) return 4;
+      if (path.includes('/admin/pcmh')) return 5;
     }
     
     return null;
@@ -84,11 +94,20 @@ export default function MenuBar({ role }: { role: string }) {
         { id: 2, title: "Môn học", icon: <MenuBook />, path: "/lecturer/course" },
         { id: 3, title: "Lớp học", icon: <Class />, path: "/lecturer/class" },
       ]);
-    } else {
+    } else if( role === "SinhVien") {
       setMenuItems([
         { id: 0, title: "Trang chủ", icon: <Home />, path: "/quizzcenter/my" },
         { id: 1, title: "Lớp học phần", icon: <MenuBook />, path: "/quizzcenter/my/course" },
         { id: 2, title: "Người dùng", icon: <Person />, path: "/quizzcenter/my/userProfile" },
+      ]);
+    } else if( role === "Admin") {
+      setMenuItems([
+        // { id: 0, title: "Trang chủ", icon: <Home />, path: "/admin/home" },
+        // { id: 1, title: "Người dùng", icon: <Person />, path: "/admin/user" },
+        { id: 2, title: "Quản lý người dùng", icon: <Group />, path: "/admin/qlnd" },
+        { id: 3, title: "Quản lý lớp học", icon: <MeetingRoom />, path: "/admin/pllh" },
+        { id: 4, title: "Quản lý môn học", icon: <Book />, path: "/admin/plmh" },
+        { id: 5, title: "Phân công môn học", icon: <GroupAdd />, path: "/admin/pcmh" },
       ]);
     }
   }, [role]);
@@ -142,7 +161,7 @@ export default function MenuBar({ role }: { role: string }) {
           <Typography
             sx={{ mt: 2, fontWeight: 600, fontSize: 18, color: "#fff" }}
           >
-            {role === "GiaoVien" ? "Giảng Viên" : "Sinh Viên"}
+            {role === "GiaoVien" ? "Giảng viên" : role === "SinhVien" ? "Sinh viên" : "Quản trị viên" }
           </Typography>
         )}
       </Box>

@@ -1,0 +1,1 @@
+export type VaiTro = "Admin" | "GiaoVien" | "SinhVien";

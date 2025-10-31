@@ -1,4 +1,4 @@
-import { IsDate, IsEmail, IsString } from "class-validator";
+import { IsDate, IsEmail, IsOptional, IsString } from "class-validator";
 
 export class UpdateNguoiDungAdminDto {
 
@@ -21,5 +21,6 @@ export class UpdateNguoiDungAdminDto {
         ngaySinh: Date;
     
         @IsString()
+        @IsOptional()
         matKhau: string;
 }

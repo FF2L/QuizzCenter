@@ -31,4 +31,9 @@ export class GiangVienController {
     return this.giangVienService.layTatCaGiangVienTheoMonHoc(+idMonHoc);
   }
 
+  @Get('all')
+  layTatCaGianVienKhongPhanTrang(){
+    return this.giangVienService.layTatCaGiangVienKhongPhanTrang();
+  }
+
 }
