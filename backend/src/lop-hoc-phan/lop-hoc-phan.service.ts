@@ -36,18 +36,34 @@ export class LopHocPhanService {
     const qb = this.lopHocPhanRep
     .createQueryBuilder('lhp')
     .leftJoin('lhp.monHoc', 'mh')
-    .skip(skip ?? 0)
-    .take(limit ?? DEFAULT_PAGE_LIMIT);
+    .leftJoin('lhp.giangVien', 'gv')
+    .leftJoin('gv.nguoiDung', 'nd')
+
+    const total = await qb.getCount();
 
     if(tenLopHoc){
-      const ten = tenLopHoc.trim();
       qb.andWhere(
-        `unaccent(lower(mh.tenLopHoc)) ILIKE unaccent(lower(:tenMonHoc))`,
-        { tenLopHoc: `%${ten}%` }
+        `unaccent(unaccent(lhp.tenLopHoc)) ILIKE unaccent(:tenLopHoc)`,
+        { tenLopHoc: `%${tenLopHoc}%` }
       );
     }
 
-    const [data, total] = await qb.getManyAndCount();
+    const data = await qb.select([
+      'lhp.id AS lhp_id',
+      'lhp.maLopHoc AS maLHP',
+      'lhp.tenLopHoc AS tenLHP',
+      'lhp.hocKy AS hocKy',
+      'lhp.thoiGianBatDau AS thoiGianBatDau',
+      'lhp.thoiGianKetThuc AS thoiGianKetThuc',
+      'mh.tenMonHoc AS tenMonHoc',
+      'mh.id AS mh_id',
+      'nd.hoTen AS tenGiangVien',
+      'nd.id AS nd_id',
+    ])
+    .skip(skip ?? 0)
+    .take(limit ?? DEFAULT_PAGE_LIMIT)
+    .orderBy('lhp.maLopHoc', 'DESC')
+    .getRawMany();
 
     return { data,
             total,
@@ -101,17 +117,21 @@ export class LopHocPhanService {
     const {tenSinhVien, skip, limit,} = query;
     const qb = this.lopHocPhanRep
     .createQueryBuilder('lhp')
-    .leftJoin('lhp.sinhVien', 'sv')
-    .leftJoin('sv.nguoiDung', 'nd')
+    .innerJoin('lhp.sinhVien', 'sv')
+    .innerJoin('sv.nguoiDung', 'nd')
     .where('lhp.id = :id', { id });
 
-    const total = await qb.getCount();
+    const totalQb = this.ndRepo.createQueryBuilder('nd')
+    .innerJoin('nd.sinhVien', 'sv')
+    .innerJoin('sv.lopHocPhan', 'lhp')
+    .where('lhp.id = :id', { id });
+
+    const total = await totalQb.getCount();
     
     if(tenSinhVien){
-      const ten = tenSinhVien.trim();
       qb.andWhere(
-        `unaccent(lower(nd.hoTen)) ILIKE unaccent(lower(:tenSinhVien))`,
-        { tenSinhVien: `%${ten}%` }
+        `unaccent(nd.hoTen) ILIKE unaccent(:tenSinhVien)`,
+        { tenSinhVien: `%${tenSinhVien}%` }
       );
     }
     const data = await qb.select([
@@ -125,6 +145,7 @@ export class LopHocPhanService {
     .offset(skip ?? 0)
     .limit(limit ?? DEFAULT_PAGE_LIMIT)
     .getRawMany();
+    console.log(data)
 
     return {data ,
        total, currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1, totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT))}
@@ -133,13 +154,20 @@ export class LopHocPhanService {
   }
 
   async themSinhVienVaoLopHocPhan(idLopHocPhan:number, maSinhVien: string) {
-    try {
-       const sinhVien = await this.lopHocPhanRep.createQueryBuilder('lhp')
-      .leftJoin('lhp.sinhVien', 'sv')
+      const svex = await this.svRepo.createQueryBuilder('sv')
       .leftJoin('sv.nguoiDung', 'nd')
       .where('nd.maNguoiDung = :maSinhVien', { maSinhVien })
       .getOne();
-      if(sinhVien) throw new NotFoundException('Sinh viên đã được thêm vào lớp học phần');
+      if(!svex) throw new NotFoundException('Không tìm thấy sinh viên với mã sinh viên đã cho');
+      
+      const sinhVien = await this.lopHocPhanRep.createQueryBuilder('lhp')
+        .leftJoin('lhp.sinhVien', 'sv')
+        .leftJoin('sv.nguoiDung', 'nd')
+        .where('nd.maNguoiDung = :maSinhVien', { maSinhVien })
+        .andWhere('lhp.id = :idLopHocPhan', { idLopHocPhan })
+         .getOne();
+            if(sinhVien) throw new NotFoundException('Sinh viên đã được thêm vào lớp học phần');
+    try {
 
       const nguoiDung = await this.ndRepo.findOne({
         where: { maNguoiDung: maSinhVien }
@@ -487,7 +515,9 @@ async exportBangDiemExcel(idLopHocPhan: number): Promise<Buffer> {
     .offset(skip ?? 0)
     .limit(limit ?? DEFAULT_PAGE_LIMIT)
     .getRawMany();
-    return {data , total, currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1, totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT))};
+    console.log({ data, total, currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1, totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT)) });
+    return { data, total, currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1, totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT)) };
+
   }
 
 

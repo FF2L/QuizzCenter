@@ -16,7 +16,7 @@ export interface MonHoc{
     delete_at: string,
     tenchuong: string,
     thuTu: number,
-    soLuongCauHoi: number,
+    soluongcauhoi: number,
     idGiangVien: number,
     idMonHoc: number
 

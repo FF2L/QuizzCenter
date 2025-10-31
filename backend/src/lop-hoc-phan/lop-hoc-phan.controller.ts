@@ -46,6 +46,7 @@ export class LopHocPhanController {
   @Query ('ten-sinh-vien') tenSinhVien?: string
 
 ) {
+  console.log(id, skip, limit, tenSinhVien);
     return await this.lopHocPhanService.layTatCaSinhVienCuaLopHocPhan(id, {skip, limit, tenSinhVien});
   }
   @Post(':idLopHocPhan/sinh-vien/:maSinhVien/admin')

@@ -28,10 +28,11 @@ export class MonHocController {
   findOne(@Param('id') id: string) {
     return this.monHocService.findOne(+id);
   }
-  @Put('phan-cong/admin')
-  phanCongChoGiangVien(@Body() dto: UpdatePhanCongMonHocDto) {
-    return this.monHocService.phanCongChoGiangVien(dto);
-  }
+  // @Put('phan-cong/admin')
+  // phanCongChoGiangVien(@Body() dto: UpdatePhanCongMonHocDto) {
+  //   return this.monHocService.phanCongChoGiangVien(dto);
+  // }
+
   @Put(':id/admin')
   update(@Param('id') id: string, @Body() updateMonHocDto: UpdateMonHocDto) {
     return this.monHocService.update(+id, updateMonHocDto);
@@ -45,12 +46,35 @@ export class MonHocController {
   async layDanhSachMonHocDaPhanCong(@Param('idGiangVien') idGiangVien: string){
     return this.monHocService.layTatCaMonHocGiangVienDaDcPhanCong(+idGiangVien)
   }
+
+  @Get('danh-sach-phan-cong/giang-vien/admin')
+  async layDanhSachMonHocDaPhanCongChoGiangVien(
+    @Query('skip') skip?: number,
+    @Query('limit') limit?: number,
+    @Query('tenGiangVien') tenGiangVien?: string){
+    return this.monHocService.layTatCaMonHocDaPhanCong({skip, limit, tenGiangVien});
+  }
+  //Phân công
+  @Post('phan-cong/giang-vien/:idGiangVien/admin')
+  phanCongMonHocChoGiangVien(@Body('idMonHoc') idMonHoc: number, @Param('idGiangVien') idGiangVien: number) {
+    return this.monHocService.phanCongChoGiangVien({ idMonHoc, idGiangVien });
+  }
+
+  @Get('admin/no-query')
+  async layTatCaMonHocKhongQuery(){
+    return this.monHocService.layTatCaMonHocKhongQuery();
+  }
+  @Delete('xoa-phan-cong/giang-vien/:idGiangVien/mon-hoc/:idMonHoc/admin')
+  xoaPhanCongMonHoc(@Param('idGiangVien') idGiangVien: number, @Param('idMonHoc') idMonHoc: number) {
+    return this.monHocService.xoaPhanCongMonHoc(idGiangVien, idMonHoc);
+  }
 //End CRUD môn học Admin
 
   @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(@Req() req, @Query('skip') skip: number, @Query('limit') limit: number, @Query('maMon') maMon: string, @Query('tenMon') tenMon: string) {
-    return await this.monHocService.layTatCaMonHocCuaGiangVien({ skip, limit, maMon, tenMon }, req.user.id);
+    console.log("User making request:", req.user);
+     return await this.monHocService.layTatCaMonHocCuaGiangVien({ skip, limit, maMon, tenMon }, req.user.id);
   }
 
 }

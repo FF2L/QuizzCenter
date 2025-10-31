@@ -50,4 +50,16 @@ export class GiangVienService {
     return  await danhSachGiangVien.getRawMany();
   
   }
+
+  async layTatCaGiangVienKhongPhanTrang(){
+    return await this.giangVienRepo.find({
+      relations: ['nguoiDung'],
+      select: {
+        nguoiDung: {
+          id: true,
+          hoTen: true,
+        },
+      },
+    });
+  }
 }

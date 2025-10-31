@@ -90,6 +90,7 @@ const Login: FC = () => {
         localStorage.setItem('accessTokenAD', accessToken);
         localStorage.setItem('refreshTokenAD', refeshToken);
         setLoading(false);
+        setNextPath('/admin/qlnd');
       }
       setSnackbarMessage(`Đăng nhập thành công! Vai trò: ${vaiTro}`);
       setSnackbarOpen(true);
