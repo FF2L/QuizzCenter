@@ -30,7 +30,7 @@ export default function UpdateDialog({
     useEffect(() => {
       setErr("");
         if (open && currentChuong) {
-          setTenChuong(currentChuong.tenChuong);
+          setTenChuong(currentChuong.tenchuong);
         } else {
           setTenChuong("");
         }

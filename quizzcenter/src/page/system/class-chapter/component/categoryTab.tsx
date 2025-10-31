@@ -97,7 +97,7 @@ const CategoryTab = () => {
       return;
     }
   
-    const confirmDelete = window.confirm(`Bạn có chắc muốn xóa chương "${chuong.tenChuong}" không?`);
+    const confirmDelete = window.confirm(`Bạn có chắc muốn xóa chương "${chuong.tenchuong}" không?`);
     if (!confirmDelete) return;
   
     try {
@@ -178,7 +178,7 @@ const CategoryTab = () => {
               navigate(`/lecturer/course/${idMonHoc}`, {
                 state: {
                   idChuong: chuong.id,
-                  tenChuong: chuong.tenChuong,
+                  tenChuong: chuong.tenchuong,
                   tenMonHoc: tenMonHoc,
                   tab: 1, // chuyển sang tab Ngân hàng câu hỏi
                 },
@@ -194,7 +194,7 @@ const CategoryTab = () => {
             spacing={2}>
                     <Stack spacing={2} >
                       <Typography sx={{  fontSize: "20px", fontWeight: "medium", color: "black"}}>
-                        {chuong.tenChuong}
+                        {chuong.tenchuong}
                       </Typography>
 
                       {/* Info nằm cùng hàng */}

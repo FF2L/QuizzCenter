@@ -40,10 +40,12 @@ const BaiKiemTraDetail: React.FC = () => {
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
   const [monHoc, setMonHoc] = useState<  any | null>(null);  
   const location = useLocation();
-  const { tenMonHoc,tenLopHoc,tenBaiKiemTra } = location.state || {};
+  const { tenMonHoc,tenLopHoc,tenBaiKiemTra,idMonHoc } = location.state || {};
   const limit = 5;
   // menu state
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const accessToken = localStorage.getItem('accessTokenGV') || '';
+
   const open = Boolean(anchorEl);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -124,30 +126,44 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
 };
 
   // fetch câu hỏi
-  useEffect(() => {
-    const fetchCauHoi = async () => {
-      if (!idBaiKiemTra || !bai) return;
-      const skip = (page - 1) * limit;
-      try {
-        const res = await fetch(
-          `http://localhost:3000/bai-kiem-tra/chi-tiet-cau-hoi/${idBaiKiemTra}?loaiKiemTra=${bai.loaiKiemTra}&xemBaiLam=${bai.xemBaiLam}&hienThiKetQua=${bai.hienThiKetQua}&skip=${skip}&limit=${limit}`
-        );
-        if (!res.ok) throw new Error("Không tìm thấy câu hỏi");
-        const data = await res.json();
+  // fetch câu hỏi
+useEffect(() => {
+  const fetchCauHoi = async () => {
+    if (!idBaiKiemTra || !bai) return;
+    const skip = (page - 1) * limit;
 
-        if (data.items && data.total) {
-          setCauHoiList(data.items);
-          setTotalPage(Math.ceil(data.total / limit));
-        } else {
-          setCauHoiList(data);
-          setTotalPage(1);
+    try {
+      const res = await fetch(
+        `http://localhost:3000/bai-kiem-tra/${idBaiKiemTra}/chi-tiet-cau-hoi?skip=${skip}&limit=${limit}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${accessToken}`, // thêm token
+            "Content-Type": "application/json",
+          },
         }
-      } catch (err) {
-        console.error("Lỗi fetch câu hỏi:", err);
+      );
+
+      if (!res.ok) throw new Error("Không tìm thấy câu hỏi");
+
+      const result = await res.json();
+
+      if (Array.isArray(result.data) && typeof result.total === "number") {
+        setCauHoiList(result.data);
+        setTotalPage(result.totalPages || 1);
+      } else {
+        setCauHoiList([]);
+        setTotalPage(1);
       }
-    };
-    fetchCauHoi();
-  }, [idBaiKiemTra, page, bai]);
+    } catch (err) {
+      console.error("Lỗi fetch câu hỏi:", err);
+      setCauHoiList([]);
+      setTotalPage(1);
+    }
+  };
+
+  fetchCauHoi();
+}, [idBaiKiemTra, page, bai, accessToken]);
+
 
   return (
     <Box sx={{ p: 3, backgroundColor:"#F8F9FA", width: "100%", minHeight: "100vh"}}>
@@ -232,7 +248,7 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
                     });
                   }}
                 >
-                  Tạo bằng tay
+                  Tạo thủ công
                 </MenuItem>
                <MenuItem
   onClick={async () => {
@@ -245,10 +261,10 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
       return;
     }
 
-    navigate(`/select-from-bank`, {
+    navigate(`/lecturer/select-from-bank`, {
       state: {
         idBaiKiemTra: Number(idBaiKiemTra),
-        idMonHoc: mh.id,                    // dùng giá trị vừa fetch
+        idMonHoc,                   
         tenMonHoc: mh.tenMonHoc,
         tenBaiKiemTra: bai?.tenBaiKiemTra,
       },

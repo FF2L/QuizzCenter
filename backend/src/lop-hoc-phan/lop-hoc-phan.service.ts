@@ -217,6 +217,7 @@ async layTatCaLopHocPhanTheoIdGiaoVien( idGiangVien: number, query: any) {
       'lhp.hocKy AS hocKy',
       'lhp.thoiGianBatDau AS thoiGianBatDau',
       'lhp.thoiGianKetThuc AS thoiGianKetThuc',
+      'mh.id AS mh_id',
       'mh.maMonHoc AS maMonHoc',
       'mh.tenMonHoc AS tenMonHoc',
       'COUNT(sv.idNguoiDung) AS siSo'
