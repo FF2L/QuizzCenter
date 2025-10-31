@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Box, Typography, Button, Paper, Radio, Checkbox, RadioGroup,
@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { BaiLamSinhVienApi, UpdateDapAnDto, BaiLamResponse } from "../../services/bai-lam-sinh-vien.api";
+import { BaiLamSinhVienApi, BaiLamResponse } from "../../services/bai-lam-sinh-vien.api";
 
 type DapAnDaChon = Record<number, number[]>;
 
@@ -38,35 +38,39 @@ const DoTestPage: React.FC = () => {
   const [showNopBaiDialog, setShowNopBaiDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [savingQuestionId, setSavingQuestionId] = useState<number | null>(null);
+  const [isLocked, setIsLocked] = useState(false);
 
   const autosubmitted = useRef(false);
   const deadlineRef = useRef<number>(0);
+  const baiLamDataRef = useRef<BaiLamResponse | null>(null);
+  useEffect(() => { baiLamDataRef.current = baiLamData; }, [baiLamData]);
 
-  // Quay lại trang chi tiết
+  const isLuyenTap = baiKiemTraInfo?.loaiKiemTra === "LuyenTap";
+
   const DETAIL_PATH = `/quizzcenter/bai-kiem-tra-chi-tiet/${idBaiKiemTra}`;
 
-  // Khởi tạo
+  // ------------------- INIT BÀI LÀM -------------------
   useEffect(() => {
     const init = async () => {
       if (!idBaiKiemTra) return;
       try {
         setLoading(true);
-
-        // Nếu đã truyền từ trang trước thì dùng luôn
         let response: BaiLamResponse;
+
         if (baiLamResponseInit) {
           response = baiLamResponseInit;
         } else {
-          // fallback: nếu refresh page
           const all = await BaiLamSinhVienApi.layBaiLamSinhVien(Number(idBaiKiemTra));
           const dangLam = (Array.isArray(all) ? all : []).find((x: any) => x.trangThaiBaiLam === "DangLam");
-          if (dangLam) response = await BaiLamSinhVienApi.tiepTucLamBai(dangLam.id);
-          else response = await BaiLamSinhVienApi.taoBaiLam(Number(idBaiKiemTra));
+          if (dangLam) {
+            response = await BaiLamSinhVienApi.tiepTucLamBai(dangLam.id);
+          } else {
+            response = await BaiLamSinhVienApi.taoBaiLam(Number(idBaiKiemTra));
+          }
         }
 
         setBaiLamData(response);
 
-        // Khôi phục đáp án
         const saved: DapAnDaChon = {};
         response.cauHoi.forEach((item) => {
           if (item.luaChon?.mangIdDapAn?.length) {
@@ -75,33 +79,15 @@ const DoTestPage: React.FC = () => {
         });
         setDapAnDaChon(saved);
 
-        // Tính deadline và bắt đầu tick
-        const startMs = new Date(response.baiLam.thoiGianBatDau).getTime();
-        const byDuration = startMs + ((baiKiemTraInfo?.thoiGianLam ?? 3600) * 1000);
-        const byWindow = baiKiemTraInfo?.thoiGianKetThuc
-          ? new Date(baiKiemTraInfo.thoiGianKetThuc).getTime()
-          : Number.POSITIVE_INFINITY;
-
-        deadlineRef.current = Math.min(byDuration, byWindow);
-
-        const tick = () => {
-          const remain = Math.max(0, Math.floor((deadlineRef.current - Date.now()) / 1000));
-          setTimeLeft(remain);
-          if (remain <= 0 && !autosubmitted.current) {
-            autosubmitted.current = true;
-            void handleAutoSubmit();
-          }
-        };
-
-        tick(); // render ngay
-        const id = setInterval(tick, 1000);
-        const onVis = () => tick();
-        document.addEventListener("visibilitychange", onVis);
-
-        return () => {
-          clearInterval(id);
-          document.removeEventListener("visibilitychange", onVis);
-        };
+        // deadline cho bài kiểm tra
+        if (!isLuyenTap) {
+          const startMs = new Date(response.baiLam.thoiGianBatDau).getTime();
+          const byDuration = startMs + ((baiKiemTraInfo?.thoiGianLam ?? 3600) * 1000);
+          const byWindow = baiKiemTraInfo?.thoiGianKetThuc
+            ? new Date(baiKiemTraInfo.thoiGianKetThuc).getTime()
+            : Number.POSITIVE_INFINITY;
+          deadlineRef.current = Math.min(byDuration, byWindow);
+        }
       } catch (e: any) {
         console.error("init error:", e);
         alert(e?.response?.data?.message || "Có lỗi xảy ra khi tải bài kiểm tra!");
@@ -115,6 +101,47 @@ const DoTestPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idBaiKiemTra]);
 
+  // ------------------- AUTO SUBMIT -------------------
+  const handleAutoSubmit = useCallback(async () => {
+    if (autosubmitted.current) return;
+    const data = baiLamDataRef.current;
+    if (!data) return;
+
+    autosubmitted.current = true;
+    setIsLocked(true);
+
+    try {
+      console.log("⏰ Hết giờ! Auto submit...");
+      await BaiLamSinhVienApi.nopBai(data.baiLam.id);
+      console.log("✅ Auto submit thành công");
+      navigate(DETAIL_PATH, { state: baiKiemTraInfo });
+    } catch (e) {
+      console.error("❌ Auto submit failed:", e);
+      navigate(DETAIL_PATH, { state: baiKiemTraInfo });
+    }
+  }, [navigate, DETAIL_PATH, baiKiemTraInfo]);
+
+  // ------------------- TIMER -------------------
+  useEffect(() => {
+    if (!baiLamData || isLuyenTap) return;
+
+    const tick = () => {
+      const remain = Math.max(0, Math.floor((deadlineRef.current - Date.now()) / 1000));
+      setTimeLeft(remain);
+      if (remain <= 0) handleAutoSubmit();
+    };
+
+    tick(); // render ngay
+    const id = setInterval(tick, 1000);
+    document.addEventListener("visibilitychange", tick);
+
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, [baiLamData, isLuyenTap, handleAutoSubmit]);
+
+  // ------------------- FORMAT TIME -------------------
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -122,13 +149,12 @@ const DoTestPage: React.FC = () => {
     return `${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")}`;
   };
 
-  // Lưu ngay 1 câu sau khi chọn/thay đổi
+  // ------------------- SAVE 1 CÂU -------------------
   const saveOneQuestion = async (idCauHoiBaiKiemTra: number, mangIdDapAn: number[]) => {
     if (!baiLamData) return;
-    const payload: UpdateDapAnDto[] = [{ idCauHoiBaiKiemTra, mangIdDapAn }];
     try {
       setSavingQuestionId(idCauHoiBaiKiemTra);
-      await BaiLamSinhVienApi.luuTamDapAn(baiLamData.baiLam.id, payload);
+      await BaiLamSinhVienApi.luuTamDapAn(baiLamData.baiLam.id, [{ idCauHoiBaiKiemTra, mangIdDapAn }]);
     } catch (e) {
       console.error("Lưu đáp án thất bại:", e);
     } finally {
@@ -137,21 +163,21 @@ const DoTestPage: React.FC = () => {
   };
 
   const handleChonDapAn = (idCauHoiBaiKiemTra: number, idDapAn: number, loaiCauHoi: string) => {
+    if (isLocked) return;
     setDapAnDaChon((prev) => {
       let newArr: number[];
       if (loaiCauHoi === "MotDung") {
         newArr = [idDapAn];
       } else {
         const current = prev[idCauHoiBaiKiemTra] || [];
-        newArr = current.includes(idDapAn)
-          ? current.filter((x) => x !== idDapAn)
-          : [...current, idDapAn];
+        newArr = current.includes(idDapAn) ? current.filter((x) => x !== idDapAn) : [...current, idDapAn];
       }
       void saveOneQuestion(idCauHoiBaiKiemTra, newArr);
       return { ...prev, [idCauHoiBaiKiemTra]: newArr };
     });
   };
 
+  // ------------------- NỘP BÀI -------------------
   const handleNopBai = async () => {
     if (!baiLamData) return;
     try {
@@ -168,18 +194,7 @@ const DoTestPage: React.FC = () => {
     }
   };
 
-  const handleAutoSubmit = async () => {
-    if (!baiLamData) return;
-    try {
-      await BaiLamSinhVienApi.nopBai(baiLamData.baiLam.id);
-      alert("Hết giờ làm bài! Bài làm đã được tự động nộp.");
-      navigate(DETAIL_PATH, { state: baiKiemTraInfo });
-    } catch (e) {
-      console.error("Auto submit failed:", e);
-      navigate(DETAIL_PATH, { state: baiKiemTraInfo });
-    }
-  };
-
+  // ------------------- UTILS -------------------
   const isCauHoiDaTraLoi = (idCauHoiBaiKiemTra: number) =>
     (dapAnDaChon[idCauHoiBaiKiemTra]?.length ?? 0) > 0;
 
@@ -188,6 +203,7 @@ const DoTestPage: React.FC = () => {
     [dapAnDaChon]
   );
 
+  // ------------------- RENDER -------------------
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
@@ -226,7 +242,7 @@ const DoTestPage: React.FC = () => {
                 )}
                 {savingQuestionId === item.idCauHoiBaiKiemTra && (
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                    {/* (đang lưu…) */}
+                    Đang lưu...
                   </Typography>
                 )}
               </Box>
@@ -248,7 +264,7 @@ const DoTestPage: React.FC = () => {
                     <FormControlLabel
                       key={dapAn.id}
                       value={dapAn.id}
-                      control={<Radio />}
+                      control={<Radio disabled={isLocked} />}
                       label={<span dangerouslySetInnerHTML={{ __html: dapAn.noiDung }} />}
                       sx={{
                         border: "1px solid #e0e0e0",
@@ -256,7 +272,8 @@ const DoTestPage: React.FC = () => {
                         px: 2,
                         py: 0.5,
                         mb: 1,
-                        "&:hover": { backgroundColor: "#f5f5f5" },
+                        "&:hover": { backgroundColor: isLocked ? "transparent" : "#f5f5f5" },
+                        opacity: isLocked ? 0.6 : 1,
                       }}
                     />
                   ))}
@@ -272,6 +289,7 @@ const DoTestPage: React.FC = () => {
                           onChange={() =>
                             handleChonDapAn(item.idCauHoiBaiKiemTra, dapAn.id, "NhieuDung")
                           }
+                          disabled={isLocked}
                         />
                       }
                       label={<span dangerouslySetInnerHTML={{ __html: dapAn.noiDung }} />}
@@ -281,7 +299,8 @@ const DoTestPage: React.FC = () => {
                         px: 2,
                         py: 0.5,
                         mb: 1,
-                        "&:hover": { backgroundColor: "#f5f5f5" },
+                        "&:hover": { backgroundColor: isLocked ? "transparent" : "#f5f5f5" },
+                        opacity: isLocked ? 0.6 : 1,
                       }}
                     />
                   ))}
@@ -294,13 +313,15 @@ const DoTestPage: React.FC = () => {
         {/* Phải: timer + danh sách câu + hành động */}
         <Box sx={{ flex: "1 1 30%", minWidth: 250, position: "sticky", top: 20, height: "fit-content" }}>
           <Paper sx={{ p: 3 }}>
-            <Box sx={{ textAlign: "center", mb: 3, p: 2, backgroundColor: timeLeft < 300 ? "#ffebee" : "#e3f2fd", borderRadius: 2 }}>
-              <AccessTimeIcon sx={{ fontSize: 40, color: timeLeft < 300 ? "#f44336" : "#2196f3", mb: 1 }} />
-              <Typography variant="h4" sx={{ fontWeight: 700, color: timeLeft < 300 ? "#f44336" : "#2196f3" }}>
-                {formatTime(timeLeft)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">Thời gian còn lại</Typography>
-            </Box>
+            {!isLuyenTap && (
+              <Box sx={{ textAlign: "center", mb: 3, p: 2, backgroundColor: timeLeft < 300 ? "#ffebee" : "#e3f2fd", borderRadius: 2 }}>
+                <AccessTimeIcon sx={{ fontSize: 40, color: timeLeft < 300 ? "#f44336" : "#2196f3", mb: 1 }} />
+                <Typography variant="h4" sx={{ fontWeight: 700, color: timeLeft < 300 ? "#f44336" : "#2196f3" }}>
+                  {formatTime(timeLeft)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">Thời gian còn lại</Typography>
+              </Box>
+            )}
 
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Danh sách câu hỏi</Typography>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
@@ -324,6 +345,7 @@ const DoTestPage: React.FC = () => {
               size="large"
               sx={{ mt: 3, py: 1.5, fontWeight: 600, fontSize: "1.1rem" }}
               onClick={() => setShowNopBaiDialog(true)}
+              disabled={isLocked}
             >
               NỘP BÀI
             </Button>
@@ -345,6 +367,7 @@ const DoTestPage: React.FC = () => {
         </DialogActions>
       </Dialog>
     </Box>
+    
   );
 };
 

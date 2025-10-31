@@ -23,7 +23,7 @@ import { Upload, CheckCircle, Delete, Edit, ExpandMore, ExpandLess, Save, Cancel
 import { Checkbox } from "@mui/material";
 interface Chuong {
   id: number;
-  tenChuong: string;
+  tenchuong: string;
 }
 
 interface DapAn {
@@ -346,7 +346,7 @@ const ImportQuestionDialog = ({
           >
             {chuongList.map((chuong) => (
               <MenuItem key={chuong.id} value={chuong.id.toString()}>
-                {chuong.tenChuong}
+                {chuong.tenchuong}
               </MenuItem>
             ))}
           </TextField>
