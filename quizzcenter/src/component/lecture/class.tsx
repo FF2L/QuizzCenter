@@ -119,7 +119,7 @@ const LectureClass = () => {
       const skip = (currentPage - 1) * limit;
       
       const params = new URLSearchParams({
-        tenMonHoc: searchValue.trim(),
+        "ten-mon-hoc": searchValue.trim(),
         "giang-day": trangThai.toString(),
         skip: skip.toString(),
         limit: limit.toString(),

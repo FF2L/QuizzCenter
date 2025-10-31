@@ -119,6 +119,7 @@ export class NguoiDungService {
     if(matKhau) nguoiDung.matKhau = matKhau;
     nguoiDung.soDienThoai = soDienThoai;
     nguoiDung.gioiTinh = gioiTinh;
+    nguoiDung.maNguoiDung = maNguoiDung;
     nguoiDung.email = email;
     nguoiDung.ngaySinh = ngaySinh;
     try {

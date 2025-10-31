@@ -97,8 +97,8 @@ export default function MenuBar({ role }: { role: string }) {
     } else if( role === "SinhVien") {
       setMenuItems([
         { id: 0, title: "Trang chủ", icon: <Home />, path: "/quizzcenter/my" },
-        { id: 1, title: "Lớp học phần", icon: <MenuBook />, path: "/quizzcenter/my/course" },
         { id: 2, title: "Người dùng", icon: <Person />, path: "/quizzcenter/my/userProfile" },
+        { id: 1, title: "Lớp học", icon: <MenuBook />, path: "/quizzcenter/my/course" },
       ]);
     } else if( role === "Admin") {
       setMenuItems([

@@ -148,7 +148,7 @@ export class AdminApi {
     }
     static layTatCaMonHocKhongQuery = async () => {
         try{
-            const res = await axios.get(`${API_URL}/mon-hoc`);
+            const res = await axios.get(`${API_URL}/mon-hoc/admin/no-query`);
             return {ok: true, data: res.data}
         }catch(err){
             console.error("Error fetching all subjects:", err);
@@ -228,5 +228,47 @@ export class AdminApi {
             return {ok: false, error: err}
         }
     }
+
+    // Thêm sinh viên vào lớp học phần
+    static themSinhVienVaoLopHocPhan = async (idLopHocPhan: number, maSinhVien: string) => {
+        try{
+            const res = await axios.post(`${API_URL}/lop-hoc-phan/${idLopHocPhan}/sinh-vien/${maSinhVien}/admin`);
+            return {ok: true, data: res.data}
+        }catch(err){
+            console.error("Error adding student to class:", err);
+            return {ok: false, error: err}
+        }
+    }
+
+    // Xóa sinh viên khỏi lớp học phần
+    static xoaSinhVienKhoiLopHocPhan = async (idLopHocPhan: number, maSinhVien: string) => {
+        try{
+            const res = await axios.delete(`${API_URL}/lop-hoc-phan/${idLopHocPhan}/sinh-vien/${maSinhVien}/admin`);
+            return {ok: true, data: res.data}
+        }catch(err){
+            console.error("Error removing student from class:", err);
+            return {ok: false, error: err}
+        }
+    }
+
+    // Lấy tất cả sinh viên của lớp học phần
+    // Lấy tất cả sinh viên của lớp học phần
+    static layTatCaSinhVienCuaLopHocPhan = async (idLopHocPhan: number, page = 1, limit = 10, tenSinhVien?: string) => {
+    try {
+        const res = await axios.get(`${API_URL}/lop-hoc-phan/${idLopHocPhan}/admin`, {
+        params: {
+            skip: (page - 1) * limit,
+            limit,
+            // ⚠️ trùng với @Query('ten-sinh-vien')
+            'ten-sinh-vien': tenSinhVien
+        }
+        });
+        return { ok: true, data: res.data };
+    } catch (err) {
+        console.error("Error fetching students of class:", err);
+        return { ok: false, error: err };
+    }
+    };
+
 
 }

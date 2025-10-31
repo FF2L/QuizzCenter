@@ -38,6 +38,7 @@ import QuanLyNguoiDung from './page/system/quan-ly-nguoi-dung/qlnd';
 import PhanCongMonHoc from './page/system/phan-cong-mon-hoc/pcmh';
 import QuanLyLopHoc from './page/system/quan-ly-lop-hoc/qllh';
 import QuanLyMonHoc from './page/system/quan-ly-mon-hoc/plmh';
+import ThemSinhVienVaoLopHocPhan from './page/system/quan-ly-lop-hoc/tsvlh';
 const App: FC = () => {
   return (
     <UserProvider>
@@ -88,6 +89,7 @@ const App: FC = () => {
               <Route path="pcmh" element={<PhanCongMonHoc />} />
               <Route path="pllh" element={<QuanLyLopHoc />} />
               <Route path="plmh" element={<QuanLyMonHoc />} />
+              <Route path="tsvlh/:idLopHocPhan" element={<ThemSinhVienVaoLopHocPhan />} />
             </Route>
 
             {/* Catch all route */}

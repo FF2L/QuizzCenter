@@ -16,6 +16,7 @@ export class LectureService {
                     Authorization: `Bearer ${accessToken}` 
                 }
             });
+            console.log("Courses fetched:", res.data);
             return {ok: true, data: res.data}
         } catch (error) {
             console.error("Error fetching courses:", error);

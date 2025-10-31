@@ -17,6 +17,7 @@ import { AdminApi } from "../../../services/admin.api";
 import { toDateDisplay } from "../../../common/gobal/gobal.const";
 import { toast } from "react-toastify";
 import ConfirmDialog from "../../../common/dialog";
+import { useNavigate } from "react-router-dom";
 
 const QuanLyLopHoc = () => {
   const [search, setSearch] = useState("");
@@ -32,6 +33,8 @@ const QuanLyLopHoc = () => {
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedLop, setSelectedLop] = useState<any>(null);
+
+  const navigate = useNavigate();
 
   // ----- FORM TẠO -----
   const [form, setForm] = useState({
@@ -534,7 +537,25 @@ const QuanLyLopHoc = () => {
                 ) : (
                   <>
                     <TableCell>{lopHoc.malhp}</TableCell>
-                    <TableCell>{lopHoc.tenlhp ?? lopHoc.tenLopHoc}</TableCell>
+                    <TableCell
+                      onClick={() => navigate(
+                        `/admin/tsvlh/${lopHoc.lhp_id}`,
+                        {
+                          state: {
+                            tenLopHoc: lopHoc.tenlhp ?? lopHoc.tenLopHoc,
+                            tenMonHoc: lopHoc.tenmonhoc ?? lopHoc.tenMonHoc
+                          }
+                        }
+                      )}
+                      sx={{
+                        color: "#1976d2",
+                        cursor: "pointer",
+                        fontWeight: 500,
+                        "&:hover": { color: "#0044cc", textDecoration: "underline" }
+                      }}
+                    >
+                      {lopHoc.tenlhp ?? lopHoc.tenLopHoc}
+                    </TableCell>
                     <TableCell>{lopHoc.hocky ?? lopHoc.hocKy}</TableCell>
                     <TableCell>
                       {toDateDisplay(lopHoc.thoigianbatdau ?? lopHoc.thoiGianBatDau) || "-"}

@@ -60,7 +60,7 @@ export class MonHocController {
     return this.monHocService.phanCongChoGiangVien({ idMonHoc, idGiangVien });
   }
 
-  @Get('')
+  @Get('admin/no-query')
   async layTatCaMonHocKhongQuery(){
     return this.monHocService.layTatCaMonHocKhongQuery();
   }
@@ -73,7 +73,8 @@ export class MonHocController {
   @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(@Req() req, @Query('skip') skip: number, @Query('limit') limit: number, @Query('maMon') maMon: string, @Query('tenMon') tenMon: string) {
-    return await this.monHocService.layTatCaMonHocCuaGiangVien({ skip, limit, maMon, tenMon }, req.user.id);
+    console.log("User making request:", req.user);
+     return await this.monHocService.layTatCaMonHocCuaGiangVien({ skip, limit, maMon, tenMon }, req.user.id);
   }
 
 }
