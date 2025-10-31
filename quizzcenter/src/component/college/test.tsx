@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -12,11 +12,12 @@ import {
   Stack,
   Skeleton,
   Button,
+  TextField,
+  Pagination,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AssignmentIcon from "@mui/icons-material/Assignment";
-import { BaiKiemTraApi } from "../../services/bai-kiem-tra.api";
-import { useNavigate } from "react-router-dom";
+
 interface BaiKiemTra {
   id: number;
   tenBaiKiemTra: string;
@@ -24,9 +25,17 @@ interface BaiKiemTra {
   thoiGianBatDau: string;
   thoiGianKetThuc: string;
   thoiGianLam: number; // seconds
-  soLanLam:number;
+  soLanLam: number;
   xemBaiLam?: boolean;
   hienThiKetQua?: boolean;
+  update_at: string;
+}
+
+interface ApiResponse {
+  data: BaiKiemTra[];
+  total: number;
+  currentPage: number;
+  totalPages: number;
 }
 
 interface GroupedData {
@@ -39,54 +48,118 @@ const CollegeTest: React.FC = () => {
   const location = useLocation();
   const { tenMonHoc, maMonHoc } = location.state || { tenMonHoc: "", maMonHoc: "" };
   const navigate = useNavigate();
+
   const [tabValue, setTabValue] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [baiKiemTraList, setBaiKiemTraList] = useState<BaiKiemTra[]>([]);
-  const [groupedData, setGroupedData] = useState<GroupedData>({
-    baiKiemTra: [],
-    luyenTap: [],
-  });
-  
+  const [searchValue, setSearchValue] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
+
   // State để kiểm soát accordion
   const [expandedBaiKiemTra, setExpandedBaiKiemTra] = useState(true);
   const [expandedLuyenTap, setExpandedLuyenTap] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!idLopHocPhan) return;
-      
-      try {
-        setLoading(true);
-        const data = await BaiKiemTraApi.layTatCaBaiKiemTraCuaLopHocPhan(idLopHocPhan);
-        setBaiKiemTraList(data);
+  // Lấy accessToken của sinh viên
+  const accessToken = localStorage.getItem("accessTokenSV") || "";
 
-        // Nhóm dữ liệu theo loại
-        const grouped: GroupedData = {
-          baiKiemTra: [],
-          luyenTap: [],
-        };
+  // Mapping tab index sang loaiKiemTra
+  const getLoaiKiemTra = () => {
+    return tabValue === 0 ? "BaiKiemTra" : "LuyenTap";
+  };
 
-        data.forEach((item: BaiKiemTra) => {
-          if (item.loaiKiemTra === "BaiKiemTra") {
-            grouped.baiKiemTra.push(item);
-          } else if (item.loaiKiemTra === "LuyenTap") {
-            grouped.luyenTap.push(item);
-          }
-        });
+  // Format datetime để hiển thị ngày giờ
+  const formatDateTime = (isoString: string) => {
+    const date = new Date(isoString);
+    return date.toLocaleString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
-        setGroupedData(grouped);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
+  // Fetch bài kiểm tra với query params - GIỐNG HỆT PAGE GV
+  const fetchBaiKiemTra = async () => {
+    try {
+      setLoading(true);
+      setBaiKiemTraList([]); // Clear data cũ
+
+      const skip = (currentPage - 1) * limit;
+
+      const params = new URLSearchParams({
+        loaiKiemTra: getLoaiKiemTra(),
+        skip: skip.toString(),
+        limit: limit.toString(),
+      });
+
+      // Thêm search nếu có
+      if (searchValue.trim()) {
+        params.append("tenBaiKiemTra", searchValue.trim());
       }
-    };
 
-    fetchData();
-  }, [idLopHocPhan]);
+      const url = `http://localhost:3000/bai-kiem-tra/${idLopHocPhan}?${params.toString()}`;
+
+      const res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error("Lỗi khi tải dữ liệu");
+      }
+
+      const response: ApiResponse = await res.json();
+
+      // Sort theo update_at
+      const sortedData = response.data.sort(
+        (a, b) =>
+          new Date(b.update_at).getTime() - new Date(a.update_at).getTime()
+      );
+
+      setBaiKiemTraList(sortedData);
+      setTotalPages(response.totalPages);
+    } catch (error) {
+      console.error("Lỗi fetch bài kiểm tra:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch data khi component mount hoặc dependencies thay đổi
+  useEffect(() => {
+    if (accessToken && tabValue < 2) {
+      fetchBaiKiemTra();
+    }
+  }, [idLopHocPhan, tabValue, currentPage]);
+
+  // Debounce cho search
+  useEffect(() => {
+    if (!accessToken || tabValue >= 2) return;
+
+    const timeoutId = setTimeout(() => {
+      setCurrentPage(1); // Reset về trang 1 khi search
+      fetchBaiKiemTra();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchValue]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+    setCurrentPage(1); // Reset về trang 1 khi đổi tab
+    setSearchValue(""); // Clear search khi đổi tab
+  };
+
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchValue(event.target.value);
+  };
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, page: number) => {
+    setCurrentPage(page);
   };
 
   // Kiểm tra xem tất cả có đang mở hay không
@@ -99,9 +172,19 @@ const CollegeTest: React.FC = () => {
     setExpandedLuyenTap(newState);
   };
 
+  // Nhóm dữ liệu theo loại
+  const groupedData: GroupedData = {
+    baiKiemTra: baiKiemTraList.filter((item) => item.loaiKiemTra === "BaiKiemTra"),
+    luyenTap: baiKiemTraList.filter((item) => item.loaiKiemTra === "LuyenTap"),
+  };
+
   const BaiKiemTraItem = ({ item }: { item: BaiKiemTra }) => (
     <Paper
-    onClick={() => navigate(`/quizzcenter/bai-kiem-tra-chi-tiet/${item.id}`, { state: item })}
+      onClick={() =>
+        navigate(`/quizzcenter/bai-kiem-tra-chi-tiet/${item.id}`, {
+          state: item,
+        })
+      }
       sx={{
         p: 2,
         mb: 1.5,
@@ -141,6 +224,14 @@ const CollegeTest: React.FC = () => {
           </Typography>
           <Typography variant="body1" sx={{ fontWeight: 500, mb: 0.5 }}>
             {item.tenBaiKiemTra}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#666", fontSize: 13 }}>
+            Bắt đầu: {formatDateTime(item.thoiGianBatDau)} | Kết thúc:{" "}
+            {formatDateTime(item.thoiGianKetThuc)}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#666", fontSize: 13 }}>
+            Thời gian làm: {item.thoiGianLam / 60} phút | Số lần làm:{" "}
+            {item.soLanLam || 1}
           </Typography>
         </Box>
       </Stack>
@@ -199,107 +290,120 @@ const CollegeTest: React.FC = () => {
             },
           }}
         >
-          <Tab label="Khóa học" />
+          <Tab label="Bài kiểm tra" />
+          <Tab label="Bài luyện tập" />
           <Tab label="Điểm số" />
         </Tabs>
       </Box>
 
-      {/* Nội dung tab */}
+      {/* Nội dung tab - Bài kiểm tra */}
       {tabValue === 0 && (
         <Box>
-          {/* Nút Mở rộng/Thu gọn tất cả */}
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-            <Button
-              onClick={handleToggleAll}
+          {/* Search */}
+          <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+            <TextField
+              placeholder="Tìm kiếm bài kiểm tra..."
+              value={searchValue}
+              onChange={handleSearch}
               sx={{
-                textTransform: "none",
-                color: "#ff6a00",
-                fontWeight: 500,
-                "&:hover": {
-                  backgroundColor: "transparent",
-                  textDecoration: "underline",
+                width: "300px",
+                "& .MuiOutlinedInput-root": {
+                  backgroundColor: "white",
+                  height: "50px",
+                },
+                "& .MuiInputBase-input": {
+                  color: "black",
+                  fontSize: "16px",
+                  fontWeight: "medium",
                 },
               }}
-            >
-              {isAllExpanded ? "Thu gọn tất cả" : "Mở rộng tất cả"}
-            </Button>
+            />
           </Box>
 
           {loading ? (
             <LoadingSkeleton />
+          ) : baiKiemTraList.length === 0 ? (
+            <Typography color="text.secondary">
+              Chưa có bài kiểm tra nào
+            </Typography>
           ) : (
             <>
-              {/* Section Bài Kiểm Tra */}
-              <Accordion 
-                expanded={expandedBaiKiemTra}
-                onChange={() => setExpandedBaiKiemTra(!expandedBaiKiemTra)}
-              >
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  sx={{
-                    backgroundColor: "#f5f5f5",
-                    "& .MuiAccordionSummary-content": {
-                      alignItems: "center",
-                    },
-                  }}
-                >
-                  <Typography
-                    variant="h6"
-                    sx={{ color: "#ff6a00", fontWeight: 600 }}
-                  >
-                    Bài kiểm tra
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  {groupedData.baiKiemTra.length > 0 ? (
-                    groupedData.baiKiemTra.map((item) => (
-                      <BaiKiemTraItem key={item.id} item={item} />
-                    ))
-                  ) : (
-                    <Typography color="text.secondary">
-                      Chưa có bài kiểm tra nào
-                    </Typography>
-                  )}
-                </AccordionDetails>
-              </Accordion>
+              {baiKiemTraList.map((item) => (
+                <BaiKiemTraItem key={item.id} item={item} />
+              ))}
 
-              {/* Section Luyện Tập */}
-              <Accordion 
-                sx={{ mt: 2 }}
-                expanded={expandedLuyenTap}
-                onChange={() => setExpandedLuyenTap(!expandedLuyenTap)}
-              >
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  sx={{
-                    backgroundColor: "#f5f5f5",
-                  }}
-                >
-                  <Typography
-                    variant="h6"
-                    sx={{ color: "#ff6a00", fontWeight: 600 }}
-                  >
-                    Luyện tập
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  {groupedData.luyenTap.length > 0 ? (
-                    groupedData.luyenTap.map((item) => (
-                      <BaiKiemTraItem key={item.id} item={item} />
-                    ))
-                  ) : (
-                    <Typography color="text.secondary">
-                      Chưa có bài luyện tập nào
-                    </Typography>
-                  )}
-                </AccordionDetails>
-              </Accordion>
+              {/* Phân trang */}
+              {totalPages > 1 && (
+                <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+                  <Pagination
+                    count={totalPages}
+                    page={currentPage}
+                    onChange={handlePageChange}
+                    color="primary"
+                    size="large"
+                  />
+                </Box>
+              )}
             </>
           )}
         </Box>
       )}
 
+      {/* Nội dung tab - Bài luyện tập */}
       {tabValue === 1 && (
+        <Box>
+          {/* Search */}
+          <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+            <TextField
+              placeholder="Tìm kiếm bài luyện tập..."
+              value={searchValue}
+              onChange={handleSearch}
+              sx={{
+                width: "300px",
+                "& .MuiOutlinedInput-root": {
+                  backgroundColor: "white",
+                  height: "50px",
+                },
+                "& .MuiInputBase-input": {
+                  color: "black",
+                  fontSize: "16px",
+                  fontWeight: "medium",
+                },
+              }}
+            />
+          </Box>
+
+          {loading ? (
+            <LoadingSkeleton />
+          ) : baiKiemTraList.length === 0 ? (
+            <Typography color="text.secondary">
+              Chưa có bài luyện tập nào
+            </Typography>
+          ) : (
+            <>
+              {baiKiemTraList.map((item) => (
+                <BaiKiemTraItem key={item.id} item={item} />
+              ))}
+
+              {/* Phân trang */}
+              {totalPages > 1 && (
+                <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+                  <Pagination
+                    count={totalPages}
+                    page={currentPage}
+                    onChange={handlePageChange}
+                    color="primary"
+                    size="large"
+                  />
+                </Box>
+              )}
+            </>
+          )}
+        </Box>
+      )}
+
+      {/* Tab điểm số */}
+      {tabValue === 2 && (
         <Box sx={{ p: 3, textAlign: "center" }}>
           <Typography variant="h6" color="text.secondary">
             Chức năng Điểm số đang được phát triển

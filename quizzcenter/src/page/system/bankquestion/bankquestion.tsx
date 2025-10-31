@@ -87,7 +87,7 @@ const BankQuestion = () => {
           : data[0];
         if (defaultChuong) {
           setSelectedCategory(String(defaultChuong.id));
-          setSelectedChuongName(defaultChuong.tenChuong);
+          setSelectedChuongName(defaultChuong.tenchuong);
         }
       } catch (err) {
         console.error("Lỗi khi fetch chương:", err);
@@ -131,7 +131,7 @@ const BankQuestion = () => {
   };
   const getChuongName = (idChuong: number): string => {
     const chuong = chuongList.find((c) => c.id === idChuong);
-    return chuong?.tenChuong || `Chương ${idChuong}`;
+    return chuong?.tenchuong || `Chương ${idChuong}`;
   };
   useEffect(() => {
     fetchQuestions();
@@ -254,7 +254,7 @@ const BankQuestion = () => {
                 const selectedId = e.target.value;
                 setSelectedCategory(selectedId);
                 const chuong = chuongList.find((c) => c.id.toString() === selectedId);
-                setSelectedChuongName(chuong?.tenChuong || "");
+                setSelectedChuongName(chuong?.tenchuong || "");
               }}
               sx={{ minWidth: "auto", maxWidth: "auto", backgroundColor: "white", borderRadius: 2 }}
               size="small"
@@ -262,7 +262,7 @@ const BankQuestion = () => {
               {chuongList.map((chuong) => (
                 <MenuItem key={chuong.id} value={chuong.id.toString()}>
                   <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'space-between' }}>
-                    <span>{chuong.tenChuong}</span>
+                    <span>{chuong.tenchuong}</span>
                     {typeof (chuong as any).soLuongCauHoi !== 'undefined' && (
                       <Typography variant="caption" sx={{ opacity: 0.7 }}> ({(chuong as any).soLuongCauHoi})</Typography>
                     )}

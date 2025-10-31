@@ -1,48 +1,34 @@
-// src/api/bai-lam-sinh-vien.api.ts
-import axios from "axios";
+import axios, { AxiosInstance } from 'axios';
 
-const API_BASE_URL = "http://localhost:3000";
-
-// Helper lấy token
-const getAuthHeader = () => {
-  const token = localStorage.getItem("accessToken");
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
-
-export interface CauHoi {
-  id: number;
-  tenHienThi: string;
-  noiDung: string; // HTML
-  loai: string;    // "MotDung" | "NhieuDung" | ...
-}
-
-export interface DapAn {
-  id: number;
-  noiDung: string; // HTML
-}
-
-export interface CauHoiItem {
-  idChiTietBaiLam: number;
-  idCauHoiBaiKiemTra: number;
-  cauHoi: CauHoi;
-  dapAn: DapAn[];
-  luaChon: {
-    mangIdDapAn: number[];
-  };
-}
-
-export interface BaiLam {
-  id: number;
-  idSinhVien: number;
-  idBaiKiemTra: number;
-  trangThaiBaiLam: "DangLam" | "DaNop";
-  thoiGianBatDau: string | number; // ISO string | epoch
-  update_at?: string;
-}
+const API_BASE_URL = 'http://localhost:3000';
 
 export interface BaiLamResponse {
-  baiLam: BaiLam;
-  cauHoi: CauHoiItem[];
+  baiLam: {
+    id: number;
+    idSinhVien: number;
+    idBaiKiemTra: number;
+    thoiGianBatDau: string;
+    thoiGianketThuc?: string;
+    trangThaiBaiLam?: string;
+  };
+  cauHoi: Array<{
+    idChiTietBaiLam: number;
+    idCauHoiBaiKiemTra: number;
+    orderIndex: number;
+    cauHoi: {
+      id: number;
+      noiDung: string;
+      loai: string;
+      tenHienThi: string;
+    };
+    dapAn: Array<{
+      id: number;
+      noiDung: string;
+    }>;
+    luaChon: {
+      mangIdDapAn: number[];
+    };
+  }>;
 }
 
 export interface UpdateDapAnDto {
@@ -50,61 +36,80 @@ export interface UpdateDapAnDto {
   mangIdDapAn: number[];
 }
 
-export const BaiLamSinhVienApi = {
-  // Lấy tất cả bài làm của SV theo idBaiKiemTra (controller của bạn có thể lấy idSV từ JWT)
-  async layBaiLamSinhVien(idBaiKiemTra: number) {
-    const res = await axios.get(
-      `${API_BASE_URL}/bai-lam-sinh-vien/${idBaiKiemTra}`,
-      { headers: getAuthHeader() }
-    );
-    return res.data;
-  },
+export interface NopBaiResponse {
+  message: string;
+  tongDiem: number;
+  tongDapAnDung: number;
+  tongDapAnToanBo: number;
+}
+
+export class BaiLamSinhVienApi {
+  private static axiosInstance: AxiosInstance = axios.create({
+    baseURL: API_BASE_URL,
+  });
+
+  // Thêm interceptor để tự động thêm token
+  private static getAuthHeader() {
+    const accessToken = localStorage.getItem('accessTokenSV'); // hoặc lấy từ state
+    return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+  }
 
   // Tạo bài làm mới
-  async taoBaiLam(idBaiKiemTra: number): Promise<BaiLamResponse> {
-    const res = await axios.post(
-      `${API_BASE_URL}/bai-lam-sinh-vien`,
+  static async taoBaiLam(idBaiKiemTra: number): Promise<BaiLamResponse> {
+    const response = await this.axiosInstance.post<BaiLamResponse>(
+      '/bai-lam-sinh-vien',
       { idBaiKiemTra },
-      { headers: getAuthHeader() }
+      { headers: this.getAuthHeader() }
     );
-    return res.data;
-  },
+    return response.data;
+  }
 
-  // Lưu tạm đáp án — ✅ dùng idBaiLamSinhVien theo service
-  async luuTamDapAn(idBaiLamSinhVien: number, danhSachDapAn: UpdateDapAnDto[]) {
-    const res = await axios.patch(
-      `${API_BASE_URL}/bai-lam-sinh-vien/chi-tiet-bai-lam/${idBaiLamSinhVien}`,
-      danhSachDapAn,
-      { headers: getAuthHeader() }
-    );
-    return res.data;
-  },
-
-  // Nộp bài
-  async nopBai(idBaiLamSinhVien: number) {
-    const res = await axios.post(
-      `${API_BASE_URL}/bai-lam-sinh-vien/nop-bai/${idBaiLamSinhVien}`,
-      {},
-      { headers: getAuthHeader() }
-    );
-    return res.data;
-  },
+  // Lấy danh sách bài làm của sinh viên cho 1 bài kiểm tra
+static async layBaiLamSinhVien(idBaiKiemTra: number): Promise<any[]> {
+  const response = await this.axiosInstance.get(
+    `/bai-lam-sinh-vien/${idBaiKiemTra}`,  // Sửa từ /bai-kiem-tra/${idBaiKiemTra}
+  );
+  return response.data;
+}
 
   // Tiếp tục làm bài
-  async tiepTucLamBai(idBaiLamSinhVien: number): Promise<BaiLamResponse> {
-    const res = await axios.get(
-      `${API_BASE_URL}/bai-lam-sinh-vien/tiep-tuc-lam-bai/${idBaiLamSinhVien}`,
-      { headers: getAuthHeader() }
+  static async tiepTucLamBai(idBaiLamSinhVien: number): Promise<BaiLamResponse> {
+    const response = await this.axiosInstance.get<BaiLamResponse>(
+      `/bai-lam-sinh-vien/tiep-tuc-lam-bai/${idBaiLamSinhVien}`,
+      { headers: this.getAuthHeader() }
     );
-    return res.data;
-  },
+    return response.data;
+  }
+
+  // Lưu tạm đáp án
+  static async luuTamDapAn(
+    idBaiLam: number,
+    danhSachDapAn: UpdateDapAnDto[]
+  ): Promise<{ message: string }> {
+    const response = await this.axiosInstance.put(
+      '/bai-lam-sinh-vien/chi-tiet-bai-lam',
+      danhSachDapAn[0], // gửi từng câu, nếu API hỗ trợ batch thì có thể gửi danhSachDapAn
+      { headers: this.getAuthHeader() }
+    );
+    return response.data;
+  }
+
+  // Nộp bài
+  static async nopBai(idBaiLam: number): Promise<NopBaiResponse> {
+    const response = await this.axiosInstance.post<NopBaiResponse>(
+      `/bai-lam-sinh-vien/nop-bai/${idBaiLam}`,
+      {},
+      { headers: this.getAuthHeader() }
+    );
+    return response.data;
+  }
 
   // Xem lại bài làm
-  async xemLaiBaiLam(idBaiLamSinhVien: number) {
-    const res = await axios.get(
-      `${API_BASE_URL}/bai-lam-sinh-vien/xem-lai/${idBaiLamSinhVien}`,
-      { headers: getAuthHeader() }
+  static async xemLaiBaiLam(idBaiLam: number): Promise<any> {
+    const response = await this.axiosInstance.get(
+      `/bai-lam-sinh-vien/xem-lai/${idBaiLam}`,
+      { headers: this.getAuthHeader() }
     );
-    return res.data;
-  },
-};
+    return response.data;
+  }
+}
