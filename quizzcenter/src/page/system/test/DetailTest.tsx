@@ -223,13 +223,16 @@ useEffect(() => {
             <Typography variant="h3" sx={{ fontWeight: "medium", fontSize: "30px", color: "black"}}>{bai.tenBaiKiemTra}</Typography>
             </Box>
             <div>
-              <Button
+              {(new Date(bai.thoiGianKetThuc) > new Date()) && (
+                <Button
                 variant="contained"
                 color="primary"
                 onClick={handleClick}
               >
                 Thêm câu hỏi
               </Button>
+              )}
+              
               <Menu
                 anchorEl={anchorEl}
                 open={open}
@@ -304,21 +307,12 @@ useEffect(() => {
   </Box>
 
   {/* Số lần làm */}
-  <Box sx={{ display: "flex", alignItems: "center" }}>
+  {/* <Box sx={{ display: "flex", alignItems: "center" }}>
     <AssignmentIcon sx={{ color: "#00796b", mr: 1 }} />
     <Typography variant="body1">
       <strong>Số lần làm:</strong>&nbsp;{bai.soLanLam}
     </Typography>
-  </Box>
-
-  {/* Thời gian */}
-  <Box sx={{ display: "flex", alignItems: "center" }}>
-    <AccessTimeIcon sx={{ color: "#00acc1", mr: 1 }} />
-    <Typography variant="body1">
-      <strong>Thời gian:</strong>&nbsp;
-      {new Date(bai.thoiGianBatDau).toLocaleString()} - {new Date(bai.thoiGianKetThuc).toLocaleString()}
-    </Typography>
-  </Box>
+  </Box> */}
 
   {/* Thời gian làm */}
   <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -327,6 +321,24 @@ useEffect(() => {
       <strong>Thời gian làm:</strong>&nbsp;{bai.thoiGianLam / 60} phút
     </Typography>
   </Box>
+
+  {/* Thời gian mở đề*/}
+  <Box sx={{ display: "flex", alignItems: "center" }}>
+    <AccessTimeIcon sx={{ color: "#00acc1", mr: 1 }} />
+    <Typography variant="body1">
+      <strong>Thời gian mở đề:</strong>&nbsp;
+      {new Date(bai.thoiGianBatDau).toLocaleString()}
+    </Typography>
+  </Box>
+  {/* Thời gian đóng đề */}
+    <Box sx={{ display: "flex", alignItems: "center" }}>
+    <AccessTimeIcon sx={{ color: "#00acc1", mr: 1 }} />
+    <Typography variant="body1">
+      <strong>Thời gian đóng đề:</strong>&nbsp;
+      {new Date(bai.thoiGianKetThuc).toLocaleString()}
+    </Typography>
+  </Box>
+
 </Box>
 
 
@@ -373,7 +385,8 @@ useEffect(() => {
                   <Stack direction="row" spacing={1}  sx={{ flexShrink: 0 }}>
                     
                     {/* Cập nhật */}
-                    <IconButton
+                    {(new Date(bai.thoiGianKetThuc) > new Date()) && (
+                      <IconButton
                         sx={{ color: "#0DC913" }}
                     
                         onClick={() => {
@@ -383,6 +396,8 @@ useEffect(() => {
                     >
                       <Edit />
                     </IconButton>
+                    )}
+                    
                   <IconButton
                     sx={{
                       color:"#DB9C14"
@@ -396,7 +411,8 @@ useEffect(() => {
                     <Visibility />
                   </IconButton>
                   {/* Xóa */}
-                  <IconButton
+                  {(new Date(bai.thoiGianKetThuc) > new Date()) && (
+                    <IconButton
                       sx={{
                         color: "#d32f2f" 
                       }}
@@ -407,6 +423,7 @@ useEffect(() => {
                     >
                       <Delete />
                     </IconButton>
+                  )}
                   </Stack>
                   </Stack>
                 </CardContent>

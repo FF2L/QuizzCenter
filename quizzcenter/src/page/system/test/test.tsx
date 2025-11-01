@@ -13,6 +13,7 @@ import {
   TextField,
   Tabs,
   Tab,
+  Chip,
 } from "@mui/material";
 import { BaiKiemTra } from "../../../common/model";
 import CreateBaiKiemTraDialog from "../test/createTestDialog";
@@ -54,6 +55,8 @@ const BaiKiemTraList = () => {
 
   // Lấy accessToken
   const accessToken = localStorage.getItem("accessTokenGV") || "";
+
+  
 
   // Mapping tab index sang loaiKiemTra
   const getLoaiKiemTra = () => {
@@ -367,46 +370,59 @@ const BaiKiemTraList = () => {
                 backgroundColor: "white",
               }}
             >
-              <CardContent>
-                <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="flex-start"
-                >
-                  {/* Info */}
-                  <Stack spacing={1} flex={1}>
+            <CardContent>
+              <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                {/* Info */}
+                <Stack spacing={1} flex={1}>
+                  <Stack direction="row" alignItems="center" spacing={1}>
                     <Typography sx={{ fontWeight: "bold", fontSize: "18px" }}>
                       {bai.tenBaiKiemTra}
                     </Typography>
-                    <Typography sx={{ fontSize: 14, color: "#555" }}>
-                      Loại: {bai.loaiKiemTra === "BaiKiemTra" ? "Bài kiểm tra" : "Bài luyện tập"}
-                      {" | "}Số lần làm: {bai.soLanLam || 1}
-                    </Typography>
-                    <Typography sx={{ fontSize: 14, color: "#555" }}>
-                      Bắt đầu: {formatDateTime(bai.thoiGianBatDau)}
-                    </Typography>
-                    <Typography sx={{ fontSize: 14, color: "#555" }}>
-                      Kết thúc: {formatDateTime(bai.thoiGianKetThuc)}
-                    </Typography>
-                    <Typography sx={{ fontSize: 14, color: "#555" }}>
-                      Thời gian làm: {bai.thoiGianLam / 60} phút
-                    </Typography>
+
+                    {(new Date(bai.thoiGianKetThuc) <= new Date()) && (
+                      <Chip
+                        label="Bài đã đóng"
+                        size="small"
+                        variant="outlined"
+                        sx={{
+                          color: "#d32f2f",
+                          borderColor: "#d32f2f",
+                          fontWeight: 600,
+                          textTransform: "uppercase",
+                        }}
+                      />
+                    )}
                   </Stack>
 
-                  {/* Actions */}
-                  <Stack direction="row" spacing={1}>
-                    <IconButton
-                      sx={{
-                        color: "#DB9C14",
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleViewDetail(bai);
-                      }}
-                      title="Xem chi tiết"
-                    >
-                      <VisibilityIcon />
-                    </IconButton>
+                  <Typography sx={{ fontSize: 14, color: "#555" }}>
+                    Loại: {bai.loaiKiemTra === "BaiKiemTra" ? "Bài kiểm tra" : "Bài luyện tập"}
+                  </Typography>
+                  <Typography sx={{ fontSize: 14, color: "#555" }}>
+                    Bắt đầu: {formatDateTime(bai.thoiGianBatDau)}
+                  </Typography>
+                  <Typography sx={{ fontSize: 14, color: "#555" }}>
+                    Kết thúc: {formatDateTime(bai.thoiGianKetThuc)}
+                  </Typography>
+                  <Typography sx={{ fontSize: 14, color: "#555" }}>
+                    Thời gian làm: {bai.thoiGianLam / 60} phút
+                  </Typography>
+                </Stack>
+
+                {/* Actions */}
+                <Stack direction="row" spacing={1}>
+                  <IconButton
+                    sx={{ color: "#DB9C14" }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewDetail(bai);
+                    }}
+                    title="Xem chi tiết"
+                  >
+                    <VisibilityIcon />
+                  </IconButton>
+
+                  {/* Ẩn nút Chỉnh sửa khi bài đã đóng */}
+                  {(new Date(bai.thoiGianKetThuc) > new Date()) && (
                     <IconButton
                       sx={{ color: "#0DC913" }}
                       onClick={(e) => {
@@ -417,21 +433,22 @@ const BaiKiemTraList = () => {
                     >
                       <EditIcon />
                     </IconButton>
-                    <IconButton
-                      sx={{
-                        color: "#d32f2f",
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(bai.id);
-                      }}
-                      title="Xóa"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Stack>
+                  )}
+
+                  <IconButton
+                    sx={{ color: "#d32f2f" }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(bai.id);
+                    }}
+                    title="Xóa"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
                 </Stack>
-              </CardContent>
+              </Stack>
+            </CardContent>
+
             </Card>
           ))}
       </Stack>
