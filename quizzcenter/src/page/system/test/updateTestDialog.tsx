@@ -29,7 +29,6 @@ const UpdateBaiKiemTraDialog: React.FC<UpdateBaiKiemTraDialogProps> = ({
   const [loaiKiemTra, setLoaiKiemTra] = useState<"LuyenTap" | "BaiKiemTra">(
     "BaiKiemTra"
   );
-  const [soLanLam, setSoLanLam] = useState(1);
   const [thoiGianBatDau, setThoiGianBatDau] = useState("");
   const [thoiGianKetThuc, setThoiGianKetThuc] = useState("");
   const [thoiGianLam, setThoiGianLam] = useState(0);
@@ -56,7 +55,6 @@ const UpdateBaiKiemTraDialog: React.FC<UpdateBaiKiemTraDialogProps> = ({
     if (baiKiemTra) {
       setTenBaiKiemTra(baiKiemTra.tenBaiKiemTra);
       setLoaiKiemTra(baiKiemTra.loaiKiemTra as "LuyenTap" | "BaiKiemTra");
-      setSoLanLam(baiKiemTra.soLanLam);
       setThoiGianBatDau(toLocalDatetime(baiKiemTra.thoiGianBatDau));
       setThoiGianKetThuc(toLocalDatetime(baiKiemTra.thoiGianKetThuc));
       setThoiGianLam(baiKiemTra.thoiGianLam);
@@ -114,7 +112,6 @@ const UpdateBaiKiemTraDialog: React.FC<UpdateBaiKiemTraDialogProps> = ({
     const payload = {
       tenBaiKiemTra: tenBaiKiemTra.trim(),
       loaiKiemTra,
-      soLanLam: loaiKiemTra === "BaiKiemTra" ? 1 : soLanLam,
       thoiGianBatDau: thoiGianBatDauISO,
       thoiGianKetThuc: thoiGianKetThucISO,
       thoiGianLam: loaiKiemTra === "LuyenTap" ? 60 * 60 : thoiGianLam,
@@ -164,17 +161,7 @@ const UpdateBaiKiemTraDialog: React.FC<UpdateBaiKiemTraDialogProps> = ({
           <MenuItem value="LuyenTap">Bài luyện tập</MenuItem>
         </TextField>
 
-        {loaiKiemTra === "LuyenTap" && (
-          <TextField
-            type="number"
-            label="Số lần làm"
-            value={soLanLam}
-            onChange={(e) => setSoLanLam(Math.max(1, Number(e.target.value)))}
-            fullWidth
-            inputProps={{ min: 1 }}
-            helperText="Sinh viên có thể làm bài luyện tập nhiều lần"
-          />
-        )}
+
 
         {loaiKiemTra === "BaiKiemTra" && (
           <Box sx={{ p: 2, backgroundColor: "#f5f5f5", borderRadius: 1, fontSize: 14, color: "#666" }}>
