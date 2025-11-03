@@ -1,6 +1,5 @@
 import { BaiKiemTra } from "src/bai-kiem-tra/entities/bai-kiem-tra.entity";
 import { BaseEntity } from "src/common/enitty/base.entity";
-import { TrangThaiBaiLam } from "src/common/enum/trangThaiBaiLam.enum";
 import { SinhVien } from "src/sinh-vien/entities/sinh-vien.entity";
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, Unique } from "typeorm";
 import { ChiTietBaiLam } from "./chi-tiet-bai-lam.entity";
@@ -8,12 +7,12 @@ import { ChiTietBaiLam } from "./chi-tiet-bai-lam.entity";
 @Entity()
 export class BaiLamSinhVien extends BaseEntity{
     
-    @Column({
-        type: 'enum',
-        enum: TrangThaiBaiLam,
-        default: TrangThaiBaiLam.ChuaLam
-    })
-    trangThaiBaiLam: TrangThaiBaiLam
+    // @Column({
+    //     type: 'enum',
+    //     enum: TrangThaiBaiLam,
+    //     default: TrangThaiBaiLam.ChuaLam
+    // })
+    // trangThaiBaiLam: TrangThaiBaiLam
 
     @Column({
         nullable: true,

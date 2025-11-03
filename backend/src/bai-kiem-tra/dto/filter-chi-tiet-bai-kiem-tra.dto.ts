@@ -6,15 +6,7 @@ import { LoaiKiemTra } from "src/common/enum/loaiKiemTra.enum";
 class ChiTietBaiKiemTraFilterDto{
         @IsOptional()
         @IsEnum( LoaiKiemTra, {message: 'loaiCauHoi phải là một trong các giá trị: ' + Object.values(LoaiKiemTra).join(', ')})
-        loaiKiemTra?: LoaiKiemTra
-
-        @IsOptional()
-        @IsBoolean()
-        xemBaiLam: boolean
-
-        @IsOptional()
-        @IsBoolean()
-        hienThiKetQua: boolean
+        loaiKiemTra?: LoaiKiemTra;
 }
 
 export class FilterChiTietBaiKiemTraDto extends IntersectionType(

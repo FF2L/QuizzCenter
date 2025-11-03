@@ -92,12 +92,12 @@ const CategoryTab = () => {
 
   const handleDeleteChuong = async (chuong: Chuong) => {
     // Kiểm tra xem chương có câu hỏi không
-    if (chuong.soLuongCauHoi && chuong.soLuongCauHoi > 0) {
+    if (chuong.soluongcauhoi && chuong.soluongcauhoi > 0) {
       alert("Không thể xóa chương này vì chương đã có câu hỏi!");
       return;
     }
   
-    const confirmDelete = window.confirm(`Bạn có chắc muốn xóa chương "${chuong.tenChuong}" không?`);
+    const confirmDelete = window.confirm(`Bạn có chắc muốn xóa chương "${chuong.tenchuong}" không?`);
     if (!confirmDelete) return;
   
     try {
@@ -178,7 +178,7 @@ const CategoryTab = () => {
               navigate(`/lecturer/course/${idMonHoc}`, {
                 state: {
                   idChuong: chuong.id,
-                  tenChuong: chuong.tenChuong,
+                  tenChuong: chuong.tenchuong,
                   tenMonHoc: tenMonHoc,
                   tab: 1, // chuyển sang tab Ngân hàng câu hỏi
                 },
@@ -190,19 +190,16 @@ const CategoryTab = () => {
               <CardContent sx={{height:"50px"}}>
                 
                   {/* Left info */}
-                  <Stack direction="row"
-            spacing={2}>
-                    <Stack spacing={2} >
+                  <Stack direction="row" spacing={2}>
+                    <Stack spacing={2} direction="row">
                       <Typography sx={{  fontSize: "20px", fontWeight: "medium", color: "black"}}>
-                        {chuong.tenChuong}
+                        {chuong.tenchuong}
+                        <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#a5a5a5", textAlign: "center" }}>
+                          Số câu hỏi: {chuong.soluongcauhoi}
+                        </Typography>
                       </Typography>
 
                       {/* Info nằm cùng hàng */}
-                      <Stack>
-                        <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#a5a5a5", textAlign: "center" }}>
-                          Số câu hỏi: {chuong.soLuongCauHoi}
-                        </Typography>
-                      </Stack>
                     </Stack>
                   </Stack>
 
@@ -218,7 +215,7 @@ const CategoryTab = () => {
         >
           <Edit />
         </IconButton>
-        {chuong.soLuongCauHoi === 0 &&
+        {chuong.soluongcauhoi === 0 &&
       <IconButton
           sx={{ color: "#d32f2f" }}
           onClick={(event) =>{ 

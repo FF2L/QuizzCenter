@@ -22,10 +22,11 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloseIcon from "@mui/icons-material/Close";
+import { LectureService } from "../../../services/lecture.api";
 
 interface Chuong {
   id: number;
-  tenChuong: string;
+  tenchuong: string;
 }
 
 interface CauHoi {
@@ -53,7 +54,7 @@ interface CauHoiDetail {
 }
 
 interface CauHoiDetailWithChuong extends CauHoiDetail {
-  tenChuong?: string;
+  tenchuong?: string;
 }
 
 export default function SelectFromBankPage() {
@@ -61,7 +62,7 @@ export default function SelectFromBankPage() {
   const navigate = useNavigate();
   const state = location.state as {
     idBaiKiemTra?: number;
-    idMonHoc?: number;
+    idMonHoc:number;
     tenMonHoc?: string;
     tenBaiKiemTra?: string;
   };
@@ -70,6 +71,8 @@ export default function SelectFromBankPage() {
   const idMonHoc = state?.idMonHoc;
   const tenMonHoc = state?.tenMonHoc || "";
   const tenBaiKiemTra = state?.tenBaiKiemTra || "";
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedChuongName, setSelectedChuongName] = useState("");
 
   const [chuongList, setChuongList] = useState<Chuong[]>([]);
   const [selectedChuong, setSelectedChuong] = useState<number | "">("");
@@ -99,27 +102,34 @@ const [openConfirmBack, setOpenConfirmBack] = useState(false);
 // Dialog thông báo lỗi/thành công
 const [openMessage, setOpenMessage] = useState(false);
 const [message, setMessage] = useState("");
+const accessToken = localStorage.getItem("accessTokenGV") || "";
 
 
   // ========== Fetch danh sách chương ==========
   useEffect(() => {
     const fetchChuong = async () => {
       if (!idMonHoc) return;
+      setLoading(true);
       try {
-        const res = await fetch(`http://localhost:3000/chuong?idMonHoc=${idMonHoc}`);
-        if (!res.ok) throw new Error("Không thể tải danh sách chương");
-        const data: Chuong[] = await res.json();
+        const res = await LectureService.layTatCaChuongTheoMonHoc(idMonHoc, accessToken);
+        const data: Chuong[] = res.data;
         setChuongList(data);
-        if (data.length > 0) {
-          setSelectedChuong(data[0].id);
+
+        const defaultChuong = location.state?.idChuong
+          ? data.find((c) => c.id === Number(location.state.idChuong))
+          : data[0];
+        if (defaultChuong) {
+          setSelectedCategory(String(defaultChuong.id));
+          setSelectedChuongName(defaultChuong.tenchuong);
         }
-      } catch (error) {
-        console.error("Lỗi khi tải chương:", error);
-        alert("Không thể tải danh sách chương!");
+      } catch (err) {
+        console.error("Lỗi khi fetch chương:", err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchChuong();
-  }, [idMonHoc]);
+  }, [idMonHoc, location.state]);
 
   // ========== Fetch câu hỏi đã có trong đề (snapshot gốc + map chi tiết) ==========
   useEffect(() => {
@@ -166,19 +176,26 @@ const [message, setMessage] = useState("");
       if (!selectedChuong) return;
       try {
         setLoading(true);
-        const skip = (page - 1) * limit;
-        const res = await fetch(
-          `http://localhost:3000/chuong/${selectedChuong}/cau-hoi?skip=${skip}&limit=${limit}`
+  
+        const res = await LectureService.layTatCauHoiTheoChuong(
+          accessToken,
+          selectedChuong,
+          page,
+          limit
         );
-        if (!res.ok) throw new Error("Không thể tải câu hỏi");
-        const data = await res.json();
-
-        if (data.items && typeof data.total === "number") {
-          setCauHoiList(data.items);
-          setTotalPages(Math.ceil(data.total / limit));
+  
+        if (res.ok) {
+          const data = res.data;
+          if (Array.isArray(data.data) && typeof data.total === "number") {
+            setCauHoiList(data.data);
+            setTotalPages(Math.ceil(data.total / limit));
+          } else {
+            setCauHoiList([]);
+            setTotalPages(1);
+          }
         } else {
-          setCauHoiList(Array.isArray(data) ? data : []);
-          setTotalPages(1);
+          console.error("Lỗi khi tải câu hỏi:", res.error);
+          alert("Không thể tải danh sách câu hỏi!");
         }
       } catch (error) {
         console.error("Lỗi khi tải câu hỏi:", error);
@@ -187,9 +204,10 @@ const [message, setMessage] = useState("");
         setLoading(false);
       }
     };
-
-    if (selectedChuong) fetchCauHoi();
-  }, [selectedChuong, page]);
+  
+    fetchCauHoi();
+  }, [selectedChuong, page, accessToken]);
+  
 
   // ========== Helpers ==========
 const hasUnsavedChanges = () => {
@@ -208,7 +226,7 @@ const hasUnsavedChanges = () => {
   if (hasUnsavedChanges()) {
     setOpenConfirmBack(true);
   } else {
-    navigate(`/bai-kiem-tra/${idBaiKiemTra}`, {
+    navigate(`/lecturer/bai-kiem-tra/${idBaiKiemTra}`, {
       state: { idBaiKiemTra, idMonHoc, tenMonHoc, tenBaiKiemTra },
     });
   }
@@ -230,9 +248,9 @@ const confirmBack = () => {
       const data: CauHoiDetail = await res.json();
 
       const chuong = chuongList.find((c) => c.id === data.cauHoi.idChuong);
-      const tenChuong = chuong ? chuong.tenChuong : `Chương ${data.cauHoi.idChuong}`;
+      const tenchuong = chuong ? chuong.tenchuong : `Chương ${data.cauHoi.idChuong}`;
 
-      setSelectedCauHoi({ ...data, tenChuong });
+      setSelectedCauHoi({ ...data, tenchuong });
       setOpenDetail(true);
     } catch (error) {
       console.error("Lỗi khi tải chi tiết:", error);
@@ -411,13 +429,13 @@ const handleComplete = async () => {
         <FormControl fullWidth sx={{ mb: 3 }}>
           <InputLabel>Chọn chương</InputLabel>
           <Select
-            value={selectedChuong}
-            onChange={(e) => setSelectedChuong(e.target.value as number)}
-            label="Chọn chương"
-          >
+  value={selectedChuong}
+  onChange={(e) => setSelectedChuong(Number(e.target.value))}
+  label="Chọn chương"
+>
             {chuongList.map((chuong) => (
               <MenuItem key={chuong.id} value={chuong.id}>
-                {chuong.tenChuong}
+                {chuong.tenchuong}
               </MenuItem>
             ))}
           </Select>
@@ -552,7 +570,7 @@ const handleComplete = async () => {
                 </Typography>
                 <Typography variant="body2">
                   <strong>Chương:</strong>{" "}
-                  {selectedCauHoi.tenChuong || selectedCauHoi.cauHoi.idChuong}
+                  {selectedCauHoi.tenchuong || selectedCauHoi.cauHoi.idChuong}
                 </Typography>
               </Stack>
 

@@ -27,11 +27,18 @@ import LoginPage from './page/system/login-quizz-center';
 import Login from './component/login/login';
 import ForgotPassword from './component/login/forgotPassWord';
 import LecturerQuizzCenter from './page/system/lecturer-quizz-center';
-import LectureUser from './component/lecture/user';
+import CollegeQuizzCenter from './page/system/college-quizz-center';
+import User from './component/user';
 import LectureHome from './component/lecture/home';
 import LectureClass from './component/lecture/class';
 import CreateQuestionPage from './page/system/bankquestion/createQuestion';
-
+import UpdateQuestionPage from './page/system/bankquestion/updateQuestion';
+import AdminQuizzCenter from './page/system/admin-quizz-center';
+import QuanLyNguoiDung from './page/system/quan-ly-nguoi-dung/qlnd';
+import PhanCongMonHoc from './page/system/phan-cong-mon-hoc/pcmh';
+import QuanLyLopHoc from './page/system/quan-ly-lop-hoc/qllh';
+import QuanLyMonHoc from './page/system/quan-ly-mon-hoc/plmh';
+import ThemSinhVienVaoLopHocPhan from './page/system/quan-ly-lop-hoc/tsvlh';
 const App: FC = () => {
   return (
     <UserProvider>
@@ -48,10 +55,11 @@ const App: FC = () => {
             </Route>
 
             {/* Các route cho phần sinh viên */}
-            <Route path="quizzcenter" element={<ProtectedRoute><QuizzCenter /></ProtectedRoute>}>
+            <Route path="quizzcenter" element={<ProtectedRoute><CollegeQuizzCenter /></ProtectedRoute>}>
               <Route index element={<Navigate to="my/course" replace />} />
               <Route path="my" element={<CollegeDashBoard />} />
               <Route path="my/course" element={<CollegeMyCourse />} />
+              <Route path='my/userProfile' element={<User/>} />
               <Route path="course/test/:idLopHocPhan" element={<CollegeTest />} />
               <Route path="bai-kiem-tra-chi-tiet/:idBaiKiemTra" element={<CollegeTestDetail />} />
               <Route path="xem-lai/:idBaiLam" element={<XemLaiBaiLamPage />} />
@@ -63,14 +71,25 @@ const App: FC = () => {
               <Route index element={<Navigate to="course" replace />} />
               <Route path="home" element={<LectureHome />} />
               <Route path="course" element={<Course />} />
-              <Route path="user" element={<LectureUser />} />
+              <Route path="user" element={<User />} />
               <Route path="class" element={<LectureClass />} />
               <Route path="course/:idMonHoc" element={<Page />} />
               <Route path="lop-hoc-phan/bai-kiem-tra/:idLopHocPhan" element={<BaiKiemTraList />} />
               <Route path="bai-kiem-tra/:idBaiKiemTra" element={<BaiKiemTraDetail />} />
               <Route path="create-question" element={<CreateQuestionPage />} />
+              <Route path="update-question/:cauHoiId" element={<UpdateQuestionPage />} />
               <Route path="bai-kiem-tra/:idBaiKiemTra/create-question-test" element={<CreateQuestionForTest />} />
               <Route path="select-from-bank" element={<SelectFromBankPage />} />
+            </Route>
+
+            {/* Các route cho quản trị viên */}
+            <Route path="admin"element={<ProtectedRoute><AdminQuizzCenter /></ProtectedRoute>}>
+              <Route index element={<Navigate to="qlnd" replace />} />
+              <Route path="qlnd" element={<QuanLyNguoiDung />} />
+              <Route path="pcmh" element={<PhanCongMonHoc />} />
+              <Route path="pllh" element={<QuanLyLopHoc />} />
+              <Route path="plmh" element={<QuanLyMonHoc />} />
+              <Route path="tsvlh/:idLopHocPhan" element={<ThemSinhVienVaoLopHocPhan />} />
             </Route>
 
             {/* Catch all route */}

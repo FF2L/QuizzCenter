@@ -5,6 +5,7 @@ import { NguoiDungService } from 'src/nguoi-dung/nguoi-dung.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GiangVien } from './entities/giang-vien.entity';
 import { Repository } from 'typeorm';
+import { Role } from 'src/common/enum/role.enum';
 
 @Injectable()
 export class GiangVienService {
@@ -25,7 +26,6 @@ export class GiangVienService {
           maNguoiDung:true,
           anhDaiDien:true,
           soDienThoai:true,
-          idKhoa:true,
           ngaySinh:true,
           vaiTro:true 
         },
@@ -34,17 +34,32 @@ export class GiangVienService {
     if (!giangVien) throw new NotFoundException('Không tìm thấy giảng viên')
     return giangVien
   }
-
-  create(createGiangVienDto: CreateGiangVienDto) {
-    return 'This action adds a new giangVien';
+  async layTatCaGiangVien(){
+    return await this.nguoiDungService.layTatCaNguoiDungTheoVaiTro(Role.GiaoVien)
   }
 
-
-  update(id: number, updateGiangVienDto: UpdateGiangVienDto) {
-    return `This action updates a #${id} giangVien`;
+  async layTatCaGiangVienTheoMonHoc(idMonHoc: number){
+    const qb =  this.giangVienRepo.createQueryBuilder('gv')
+    .leftJoin('gv.monHoc', 'mh')
+    .leftJoin('gv.nguoiDung', 'nd')
+    .where('mh.id = :idMonHoc', { idMonHoc })
+    const danhSachGiangVien =  qb.select([
+      'nd.id AS idNguoiDung',
+      'nd.hoTen AS hoTen',
+    ])
+    return  await danhSachGiangVien.getRawMany();
+  
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} giangVien`;
+  async layTatCaGiangVienKhongPhanTrang(){
+    return await this.giangVienRepo.find({
+      relations: ['nguoiDung'],
+      select: {
+        nguoiDung: {
+          id: true,
+          hoTen: true,
+        },
+      },
+    });
   }
 }

@@ -26,7 +26,7 @@ export class Chuong extends BaseEntity{
     monHoc: Promise<MonHoc>
     @Column() idMonHoc: number;
 
-    @OneToMany(() => CauHoi, (cauHoi) => cauHoi.idChuong, {cascade: true, lazy:true, nullable:true})
+    @OneToMany(() => CauHoi, (cauHoi) => cauHoi.chuong, {cascade: true, lazy:true, nullable:true})
     cauHoi: Promise<CauHoi[]>
 
 

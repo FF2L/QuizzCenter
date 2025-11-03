@@ -12,10 +12,6 @@ import { Role } from 'src/common/enum/role.enum';
 export class SinhVienController {
   constructor(private readonly sinhVienService: SinhVienService) {}
 
-  @Post()
-  create(@Body() createSinhVienDto: CreateSinhVienDto) {
-    return this.sinhVienService.create(createSinhVienDto);
-  }
 
   @Roles(Role.SinhVien)
   @UseGuards(RolesGuard)
@@ -25,13 +21,4 @@ export class SinhVienController {
     return await this.sinhVienService.findOne(req.user.id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSinhVienDto: UpdateSinhVienDto) {
-    return this.sinhVienService.update(+id, updateSinhVienDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.sinhVienService.remove(+id);
-  }
 }

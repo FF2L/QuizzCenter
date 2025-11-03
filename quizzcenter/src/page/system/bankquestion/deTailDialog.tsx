@@ -1,17 +1,30 @@
 import React from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Stack, Box } from "@mui/material";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+  Stack,
+  Box,
+  Chip,
+  Divider,
+  Paper,
+} from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { CauHoiPayload } from "../../../common/model";
 
-
 type LoaiKey = "MotDung" | "NhieuDung";
-type doKhoKey = "Kho" | "De";
+type doKhoKey = "Kho" | "De" | "TrungBinh";
+
 const loaiMap: Record<LoaiKey, string> = {
   MotDung: "Một đáp án",
   NhieuDung: "Nhiều đáp án",
 };
 const doKhoMap: Record<doKhoKey, string> = {
   De: "Dễ",
+  TrungBinh: "Trung bình",
   Kho: "Khó",
 };
 
@@ -19,16 +32,21 @@ interface QuestionDetailDialogProps {
   open: boolean;
   onClose: () => void;
   questionDetail: CauHoiPayload | null;
+  chuongName?: string;
 }
 
-const QuestionDetailDialog: React.FC<QuestionDetailDialogProps> = ({ open, onClose, questionDetail }) => {
+const QuestionDetailDialog: React.FC<QuestionDetailDialogProps> = ({
+  open,
+  onClose,
+  questionDetail,
+  chuongName = "",
+}) => {
   const processedHtml = React.useMemo(() => {
     if (!questionDetail) return "";
 
     let html = questionDetail.cauHoi.noiDungCauHoiHTML || "";
     const files = questionDetail.mangFileDinhKem || [];
 
-    // thay tất cả img có data-file-index
     html = html.replace(/<img[^>]*data-file-index="(\d+)"[^>]*>/g, (match, idx) => {
       const file = files[parseInt(idx)];
       if (file) return match.replace(/src="[^"]*"/, `src="${file.duongDan}"`);
@@ -43,64 +61,115 @@ const QuestionDetailDialog: React.FC<QuestionDetailDialogProps> = ({ open, onClo
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <Box sx={{backgroundColor:"#245D51"}}>
-      <DialogTitle sx={{color:"white"}}>
-        Chi tiết câu hỏi
-        <Button onClick={onClose} sx={{ position: "absolute", right: 8, top: 8, minWidth: "auto", color:"white"}}><CloseIcon /></Button>
-      </DialogTitle>
+      {/* Header */}
+      <Box sx={{ backgroundColor: "#245D51" }}>
+        <DialogTitle sx={{ color: "white", fontWeight: 600 }}>
+          Chi tiết câu hỏi
+          <Button
+            onClick={onClose}
+            sx={{
+              position: "absolute",
+              right: 8,
+              top: 8,
+              minWidth: "auto",
+              color: "white",
+            }}
+          >
+            <CloseIcon />
+          </Button>
+        </DialogTitle>
       </Box>
+
+      {/* Content */}
       <DialogContent dividers>
-        <Stack spacing={2}>
-          <Typography variant="h6">{cauHoi.tenHienThi}</Typography>
+        <Stack spacing={3}>
+          {/* Tiêu đề câu hỏi */}
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            {cauHoi.tenHienThi}
+          </Typography>
 
-          <Typography variant="subtitle2" color="text.secondary">Thông tin:</Typography>
-          <Stack direction="row" spacing={2} flexWrap="wrap">
-          <Typography variant="body2">
-  <strong>Loại:</strong>{" "}
-  {loaiMap[cauHoi.loaiCauHoi as LoaiKey] || cauHoi.loaiCauHoi}
-</Typography>
-<Typography variant="body2">
-  <strong>Độ khó:</strong> {doKhoMap[cauHoi.doKho as doKhoKey] || cauHoi.doKho}
-</Typography>
-<Typography variant="body2">
-  <strong>Chương:</strong> {cauHoi.idChuong}
-</Typography>
+          {/* Thông tin chi tiết */}
+          <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: "#f9f9f9" }}>
+            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+              Thông tin chi tiết
+            </Typography>
+            <Stack direction="row" spacing={2} flexWrap="wrap">
+              <Chip
+                label={`Loại: ${loaiMap[cauHoi.loaiCauHoi as LoaiKey] || cauHoi.loaiCauHoi}`}
+                color="primary"
+                variant="outlined"
+              />
+              <Chip
+                label={`Độ khó: ${doKhoMap[cauHoi.doKho as doKhoKey] || cauHoi.doKho}`}
+                color={cauHoi.doKho === "Kho" ? "error" : cauHoi.doKho === "TrungBinh" ? "warning" : "success"}
+                variant="outlined"
+              />
+              <Chip 
+                label={`Danh mục: ${chuongName || cauHoi.idChuong}`} 
+                variant="outlined" 
+              />
+            </Stack>
+          </Paper>
 
-
-          </Stack>
-
+          {/* Nội dung câu hỏi */}
           <Box>
-            <Typography variant="subtitle1" sx={{ mt: 1, mb: 1 }}>Nội dung câu hỏi:</Typography>
-            <Box
+            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+              Nội dung câu hỏi
+            </Typography>
+            <Paper
+              variant="outlined"
               sx={{
-                border: "1px solid #e0e0e0", borderRadius: 1, padding: 2, backgroundColor: "#fafafa",
-                "& p.ql-align-center": { textAlign: "center" }, "& p.ql-align-right": { textAlign: "right" },
-                "& p.ql-align-left": { textAlign: "left" }, "& strong": { fontWeight: "bold" },
-                "& em": { fontStyle: "italic" }, "& u": { textDecoration: "underline" },
-                "& img": { maxWidth: "100%", height: "auto", borderRadius: 1 }, whiteSpace: "pre-wrap",
+                p: 2,
+                borderRadius: 2,
+                bgcolor: "#fafafa",
+                "& p.ql-align-center": { textAlign: "center" },
+                "& p.ql-align-right": { textAlign: "right" },
+                "& p.ql-align-left": { textAlign: "left" },
+                "& strong": { fontWeight: "bold" },
+                "& em": { fontStyle: "italic" },
+                "& u": { textDecoration: "underline" },
+                "& img": { maxWidth: "100%", borderRadius: 2 },
+                whiteSpace: "pre-wrap",
               }}
               dangerouslySetInnerHTML={{ __html: processedHtml }}
             />
           </Box>
 
+          {/* Đáp án */}
           <Box>
-            <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>Các đáp án:</Typography>
-            <Stack spacing={1}>
-              {dapAn?.map(ans => {
+            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+              Các đáp án
+            </Typography>
+            <Stack spacing={1.5}>
+              {dapAn?.map((ans) => {
                 const ansHtml = ans.noiDungHTML || ans.noiDung || "";
                 return (
-                  <Box
+                  <Paper
                     key={ans.id}
+                    variant="outlined"
                     sx={{
-                      display: "flex", flexDirection: "column", padding: 1, borderRadius: 1,
-                      border: "1px solid #ddd", backgroundColor: ans.dapAnDung ? "#e6f4ea" : "#fff",
-                      "& strong": { fontWeight: "bold" }, "& em": { fontStyle: "italic" },
-                      "& u": { textDecoration: "underline" }, "& p.ql-align-center": { textAlign: "center" },
-                      "& p.ql-align-right": { textAlign: "right" }, "& p.ql-align-left": { textAlign: "left" },
-                      "& img": { maxWidth: "100%", height: "auto", borderRadius: 1 },
+                      p: 1.5,
+                      borderRadius: 2,
+                      border: ans.dapAnDung ? "1px solid #4caf50" : "1px solid #e0e0e0",
+                      backgroundColor: ans.dapAnDung ? "#e8f5e9" : "#fff",
+                      transition: "0.2s",
+                      "&:hover": {
+                        boxShadow: "0 0 8px rgba(0,0,0,0.1)",
+                      },
+                      "& p.ql-align-center": { textAlign: "center" },
+                      "& img": { maxWidth: "100%", borderRadius: 2 },
                     }}
-                    dangerouslySetInnerHTML={{ __html: ansHtml }}
-                  />
+                  >
+                    <Box dangerouslySetInnerHTML={{ __html: ansHtml }} />
+                    {ans.dapAnDung && (
+                      <Typography
+                        variant="caption"
+                        sx={{ color: "#388e3c", fontWeight: 500 }}
+                      >
+                        ✓ Đáp án đúng
+                      </Typography>
+                    )}
+                  </Paper>
                 );
               })}
             </Stack>
@@ -109,7 +178,16 @@ const QuestionDetailDialog: React.FC<QuestionDetailDialogProps> = ({ open, onClo
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose} variant="contained" sx={{backgroundColor:"#245D51"}}>Đóng</Button>
+        <Button
+          onClick={onClose}
+          variant="contained"
+          sx={{
+            backgroundColor: "#245D51",
+            "&:hover": { backgroundColor: "#1e4a42" },
+          }}
+        >
+          Đóng
+        </Button>
       </DialogActions>
     </Dialog>
   );

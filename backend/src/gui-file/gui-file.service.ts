@@ -115,7 +115,7 @@ parseFileFormat(buffer: Buffer, fileName: string, idChuong: number) {
       return {
         tenHienThi,
         noiDungCauHoi,
-        noiDungCauHoiHTML: null,
+        noiDungCauHoiHTML: noiDungCauHoi,
         loaiCauHoi,                 // "MotDung" | "NhieuDung"
         doKho,                      // "De" | "TrungBinh" | "Kho"
         idChuong,

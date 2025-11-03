@@ -12,6 +12,7 @@ import { FindAllChuongDto } from './dto/findAll-chuong.dto';
 import { Pagination } from 'src/common/dto/pagination.dto';
 import { CauHoiService } from 'src/cau-hoi/cau-hoi.service';
 import { FilterCauHoiQueryDto } from 'src/cau-hoi/dto/filter_cau-hoi_query.dto';
+import { group } from 'console';
 
 @Injectable()
 export class ChuongService {
@@ -37,8 +38,6 @@ export class ChuongService {
     try{
       return await this.chuongRepo.save(chuong)
     }catch (err) {
-        // if (err.code === '23505') throw new BadRequestException('Thứ tự này đã tồn tại trong môn học'); // Postgres duplicate unique 
-        
         throw new InternalServerErrorException('Không thể tạo chương');
     }
 
@@ -49,11 +48,17 @@ async layTatCaChuongTheoMonHocVaNguoiDung(idMonHoc: number, idNguoiDung: number)
   const qb = this.chuongRepo.createQueryBuilder('c')
               .innerJoin('c.giangVien', 'gv')
               .innerJoin('gv.nguoiDung', 'nd')
+              .leftJoinAndSelect('c.cauHoi', 'ch')
               .where('c.idMonHoc = :idMonHoc', { idMonHoc })
               .andWhere('nd.id = :idNguoiDung', { idNguoiDung })
               .orderBy('c.create_at', 'ASC') // Sắp xếp theo thứ tự tạo
+              .groupBy('c.id'); // Nhóm theo ID chương để đếm số lượng câu hỏi chính xác
               
-  const chuong = await qb.getMany();
+  const chuong = await qb.select(
+    ['c.id AS id', 'c.tenChuong AS tenChuong', 
+      'COUNT(ch.id) AS soLuongCauHoi', 
+     ]
+  ).getRawMany()
   
   return chuong;
 }
@@ -83,7 +88,7 @@ async layTatCaChuongTheoMonHocVaNguoiDung(idMonHoc: number, idNguoiDung: number)
   }
 
   async layTatCauHoiTheoChuong(idChuong: number, query: any){
-    const { skip, limit, doKho, sortdoKho, noiDungCauHoi } = query;
+    const { skip, limit, doKho, noiDungCauHoi } = query;
     const chuong = await this.timMotChuongTheoId(idChuong)
 
     return await this.cauHoiService.layTatCaCauHoiTheoIdChuong(idChuong,{ skip, limit, doKho, noiDungCauHoi })

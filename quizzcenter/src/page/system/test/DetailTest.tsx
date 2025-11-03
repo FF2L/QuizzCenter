@@ -23,7 +23,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import QuestionDetailDialog from "../bankquestion/deTailDialog";
 import DeleteConfirmDialog from "../bankquestion/deleteConfirmDialog";
-import UpdateQuestionDialog from "../bankquestion/updateQuestionDialog";
+import UpdateQuestionDialog from "../bankquestion/updateQuestion";
 
 const BaiKiemTraDetail: React.FC = () => {
   const { idBaiKiemTra } = useParams<{ idBaiKiemTra: string }>();
@@ -40,10 +40,12 @@ const BaiKiemTraDetail: React.FC = () => {
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
   const [monHoc, setMonHoc] = useState<  any | null>(null);  
   const location = useLocation();
-  const { tenMonHoc,tenLopHoc,tenBaiKiemTra } = location.state || {};
+  const { tenMonHoc,tenLopHoc,tenBaiKiemTra,idMonHoc } = location.state || {};
   const limit = 5;
   // menu state
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const accessToken = localStorage.getItem('accessTokenGV') || '';
+
   const open = Boolean(anchorEl);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -124,30 +126,44 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
 };
 
   // fetch câu hỏi
-  useEffect(() => {
-    const fetchCauHoi = async () => {
-      if (!idBaiKiemTra || !bai) return;
-      const skip = (page - 1) * limit;
-      try {
-        const res = await fetch(
-          `http://localhost:3000/bai-kiem-tra/chi-tiet-cau-hoi/${idBaiKiemTra}?loaiKiemTra=${bai.loaiKiemTra}&xemBaiLam=${bai.xemBaiLam}&hienThiKetQua=${bai.hienThiKetQua}&skip=${skip}&limit=${limit}`
-        );
-        if (!res.ok) throw new Error("Không tìm thấy câu hỏi");
-        const data = await res.json();
+  // fetch câu hỏi
+useEffect(() => {
+  const fetchCauHoi = async () => {
+    if (!idBaiKiemTra || !bai) return;
+    const skip = (page - 1) * limit;
 
-        if (data.items && data.total) {
-          setCauHoiList(data.items);
-          setTotalPage(Math.ceil(data.total / limit));
-        } else {
-          setCauHoiList(data);
-          setTotalPage(1);
+    try {
+      const res = await fetch(
+        `http://localhost:3000/bai-kiem-tra/${idBaiKiemTra}/chi-tiet-cau-hoi?skip=${skip}&limit=${limit}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${accessToken}`, // thêm token
+            "Content-Type": "application/json",
+          },
         }
-      } catch (err) {
-        console.error("Lỗi fetch câu hỏi:", err);
+      );
+
+      if (!res.ok) throw new Error("Không tìm thấy câu hỏi");
+
+      const result = await res.json();
+
+      if (Array.isArray(result.data) && typeof result.total === "number") {
+        setCauHoiList(result.data);
+        setTotalPage(result.totalPages || 1);
+      } else {
+        setCauHoiList([]);
+        setTotalPage(1);
       }
-    };
-    fetchCauHoi();
-  }, [idBaiKiemTra, page, bai]);
+    } catch (err) {
+      console.error("Lỗi fetch câu hỏi:", err);
+      setCauHoiList([]);
+      setTotalPage(1);
+    }
+  };
+
+  fetchCauHoi();
+}, [idBaiKiemTra, page, bai, accessToken]);
+
 
   return (
     <Box sx={{ p: 3, backgroundColor:"#F8F9FA", width: "100%", minHeight: "100vh"}}>
@@ -207,13 +223,16 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
             <Typography variant="h3" sx={{ fontWeight: "medium", fontSize: "30px", color: "black"}}>{bai.tenBaiKiemTra}</Typography>
             </Box>
             <div>
-              <Button
+              {(new Date(bai.thoiGianKetThuc) > new Date()) && (
+                <Button
                 variant="contained"
                 color="primary"
                 onClick={handleClick}
               >
                 Thêm câu hỏi
               </Button>
+              )}
+              
               <Menu
                 anchorEl={anchorEl}
                 open={open}
@@ -232,7 +251,7 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
                     });
                   }}
                 >
-                  Tạo bằng tay
+                  Tạo thủ công
                 </MenuItem>
                <MenuItem
   onClick={async () => {
@@ -245,10 +264,10 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
       return;
     }
 
-    navigate(`/select-from-bank`, {
+    navigate(`/lecturer/select-from-bank`, {
       state: {
         idBaiKiemTra: Number(idBaiKiemTra),
-        idMonHoc: mh.id,                    // dùng giá trị vừa fetch
+        idMonHoc,                   
         tenMonHoc: mh.tenMonHoc,
         tenBaiKiemTra: bai?.tenBaiKiemTra,
       },
@@ -288,21 +307,12 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
   </Box>
 
   {/* Số lần làm */}
-  <Box sx={{ display: "flex", alignItems: "center" }}>
+  {/* <Box sx={{ display: "flex", alignItems: "center" }}>
     <AssignmentIcon sx={{ color: "#00796b", mr: 1 }} />
     <Typography variant="body1">
       <strong>Số lần làm:</strong>&nbsp;{bai.soLanLam}
     </Typography>
-  </Box>
-
-  {/* Thời gian */}
-  <Box sx={{ display: "flex", alignItems: "center" }}>
-    <AccessTimeIcon sx={{ color: "#00acc1", mr: 1 }} />
-    <Typography variant="body1">
-      <strong>Thời gian:</strong>&nbsp;
-      {new Date(bai.thoiGianBatDau).toLocaleString()} - {new Date(bai.thoiGianKetThuc).toLocaleString()}
-    </Typography>
-  </Box>
+  </Box> */}
 
   {/* Thời gian làm */}
   <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -311,6 +321,24 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
       <strong>Thời gian làm:</strong>&nbsp;{bai.thoiGianLam / 60} phút
     </Typography>
   </Box>
+
+  {/* Thời gian mở đề*/}
+  <Box sx={{ display: "flex", alignItems: "center" }}>
+    <AccessTimeIcon sx={{ color: "#00acc1", mr: 1 }} />
+    <Typography variant="body1">
+      <strong>Thời gian mở đề:</strong>&nbsp;
+      {new Date(bai.thoiGianBatDau).toLocaleString()}
+    </Typography>
+  </Box>
+  {/* Thời gian đóng đề */}
+    <Box sx={{ display: "flex", alignItems: "center" }}>
+    <AccessTimeIcon sx={{ color: "#00acc1", mr: 1 }} />
+    <Typography variant="body1">
+      <strong>Thời gian đóng đề:</strong>&nbsp;
+      {new Date(bai.thoiGianKetThuc).toLocaleString()}
+    </Typography>
+  </Box>
+
 </Box>
 
 
@@ -357,7 +385,8 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
                   <Stack direction="row" spacing={1}  sx={{ flexShrink: 0 }}>
                     
                     {/* Cập nhật */}
-                    <IconButton
+                    {(new Date(bai.thoiGianKetThuc) > new Date()) && (
+                      <IconButton
                         sx={{ color: "#0DC913" }}
                     
                         onClick={() => {
@@ -367,6 +396,8 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
                     >
                       <Edit />
                     </IconButton>
+                    )}
+                    
                   <IconButton
                     sx={{
                       color:"#DB9C14"
@@ -380,7 +411,8 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
                     <Visibility />
                   </IconButton>
                   {/* Xóa */}
-                  <IconButton
+                  {(new Date(bai.thoiGianKetThuc) > new Date()) && (
+                    <IconButton
                       sx={{
                         color: "#d32f2f" 
                       }}
@@ -391,6 +423,7 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
                     >
                       <Delete />
                     </IconButton>
+                  )}
                   </Stack>
                   </Stack>
                 </CardContent>
@@ -411,7 +444,7 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
                 questionName={questionToDelete?.name}
                 />
 
-                <UpdateQuestionDialog
+                {/* <UpdateQuestionDialog
                   open={openUpdateDialog}
                   onClose={() => setOpenUpdateDialog(false)}
                   cauHoiId={updateQuestionId ?? 0}
@@ -427,7 +460,7 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
                       )
                     );
                   }}
-                />
+                /> */}
 
           {/* Phân trang */}
           <Box mt={3}>

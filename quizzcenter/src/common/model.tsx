@@ -14,9 +14,9 @@ export interface MonHoc{
     create_at: string,
     update_at: string,
     delete_at: string,
-    tenChuong: string,
+    tenchuong: string,
     thuTu: number,
-    soLuongCauHoi: number,
+    soluongcauhoi: number,
     idGiangVien: number,
     idMonHoc: number
 
