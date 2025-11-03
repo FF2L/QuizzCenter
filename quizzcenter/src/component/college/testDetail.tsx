@@ -231,10 +231,9 @@ const CollegeTestDetail: React.FC = () => {
         <Typography>
           <strong>Kết thúc:</strong> {dayjs(baiKiemTra.thoiGianKetThuc).format("HH:mm DD/MM/YYYY")}
         </Typography>
-        {!isLuyenTap && (
         <Typography>
           <strong>Thời gian làm:</strong> {Math.floor(baiKiemTra.thoiGianLam / 60)} phút
-        </Typography>)}
+        </Typography>
         {/* === FIX: Chỉ hiện "Số lần làm" với bài luyện tập === */}
         {isLuyenTap && (
           <Typography>
