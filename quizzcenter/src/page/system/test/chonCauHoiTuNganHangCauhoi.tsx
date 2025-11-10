@@ -41,16 +41,18 @@ interface CauHoi {
 
 interface CauHoiDetail {
   cauHoi: CauHoi;
-  mangDapAn: Array<{
+  dapAn: Array<{  // ← BE trả về "dapAn", không phải "mangDapAn"
     id: number;
+    create_at: string;
+    update_at: string;
+    delete_at: string | null;
     noiDung: string;
-    noiDungHTML: string;
+    noiDungHTML: string | null;
     dapAnDung: boolean;
+    publicId: string | null;
+    idCauHoi: number;
   }>;
-  mangFileDinhKem: Array<{
-    id: number;
-    duongDan: string;
-  }>;
+  // Không có mangFileDinhKem trong response này
 }
 
 interface CauHoiDetailWithChuong extends CauHoiDetail {
@@ -243,13 +245,16 @@ const confirmBack = () => {
   const handleViewDetail = async (idCauHoi: number) => {
     try {
       setLoadingDetail(true);
-      const res = await fetch(`http://localhost:3000/cau-hoi/${idCauHoi}`);
+      const res = await LectureService.layChiTIetCauHoi(accessToken, idCauHoi);
+      console.log("Response:", res);
+      
       if (!res.ok) throw new Error("Không thể tải chi tiết câu hỏi");
-      const data: CauHoiDetail = await res.json();
-
+      
+      const data: CauHoiDetail = res.data; // ← Giữ nguyên, không cần mapping
+  
       const chuong = chuongList.find((c) => c.id === data.cauHoi.idChuong);
       const tenchuong = chuong ? chuong.tenchuong : `Chương ${data.cauHoi.idChuong}`;
-
+  
       setSelectedCauHoi({ ...data, tenchuong });
       setOpenDetail(true);
     } catch (error) {
@@ -259,6 +264,11 @@ const confirmBack = () => {
       setLoadingDetail(false);
     }
   };
+
+const getChuongName = (idChuong: number): string => {
+  const chuong = chuongList.find((c) => c.id === idChuong);
+  return chuong?.tenchuong || `Chương ${idChuong}`;
+};
 
   // ========== Toggle chọn câu hỏi (CHỈ đổi state, KHÔNG gọi API) ==========
   const handleToggleCauHoi = (
@@ -548,106 +558,111 @@ const handleComplete = async () => {
         </Box>
 
         <DialogContent dividers>
-          {loadingDetail && <Typography>Đang tải...</Typography>}
+  {loadingDetail && <Typography>Đang tải...</Typography>}
 
-          {!loadingDetail && selectedCauHoi && (
-            <Stack spacing={2}>
-              <Typography variant="h6">{selectedCauHoi.cauHoi.tenHienThi}</Typography>
+  {!loadingDetail && selectedCauHoi && (
+    <Stack spacing={2}>
+      {/* Tên câu hỏi */}
+      <Typography variant="h6">{selectedCauHoi.cauHoi.tenHienThi}</Typography>
 
-              <Typography variant="subtitle2" color="text.secondary">
-                Thông tin:
-              </Typography>
-              <Stack direction="row" spacing={2} flexWrap="wrap">
-                <Typography variant="body2">
-                  <strong>Loại:</strong>{" "}
-                  {selectedCauHoi.cauHoi.loaiCauHoi === "MotDung"
-                    ? "Một đáp án"
-                    : "Nhiều đáp án"}
-                </Typography>
-                <Typography variant="body2">
-                  <strong>Độ khó:</strong>{" "}
-                  {selectedCauHoi.cauHoi.doKho === "De" ? "Dễ" : "Khó"}
-                </Typography>
-                <Typography variant="body2">
-                  <strong>Chương:</strong>{" "}
-                  {selectedCauHoi.tenchuong || selectedCauHoi.cauHoi.idChuong}
-                </Typography>
-              </Stack>
+      {/* Thông tin meta */}
+      <Typography variant="subtitle2" color="text.secondary">
+        Thông tin:
+      </Typography>
+      <Stack direction="row" spacing={2} flexWrap="wrap">
+        <Typography variant="body2">
+          <strong>Loại:</strong>{" "}
+          {selectedCauHoi.cauHoi.loaiCauHoi === "MotDung" ? "Một đáp án" : "Nhiều đáp án"}
+        </Typography>
+        <Typography variant="body2">
+          <strong>Độ khó:</strong>{" "}
+          {selectedCauHoi.cauHoi.doKho === "De" ? "Dễ" : "Khó"}
+        </Typography>
+        <Typography variant="body2">
+          <strong>Chương:</strong> {selectedCauHoi.tenchuong || selectedCauHoi.cauHoi.idChuong}
+        </Typography>
+      </Stack>
 
-              <Box>
-                <Typography variant="subtitle1" sx={{ mt: 1, mb: 1 }}>
-                  Nội dung câu hỏi:
-                </Typography>
-                <Box
-                  sx={{
-                    border: "1px solid #e0e0e0",
-                    borderRadius: 1,
-                    padding: 2,
-                    backgroundColor: "#fafafa",
-                    "& p.ql-align-center": { textAlign: "center" },
-                    "& p.ql-align-right": { textAlign: "right" },
-                    "& p.ql-align-left": { textAlign: "left" },
-                    "& strong": { fontWeight: "bold" },
-                    "& em": { fontStyle: "italic" },
-                    "& u": { textDecoration: "underline" },
-                    "& img": { maxWidth: "100%", height: "auto", borderRadius: 1 },
-                    whiteSpace: "pre-wrap",
-                  }}
-                  dangerouslySetInnerHTML={{
-                    __html: (() => {
-                      let html = selectedCauHoi.cauHoi.noiDungCauHoiHTML || "";
-                      const files = selectedCauHoi.mangFileDinhKem || [];
-
-                      // thay tất cả img có data-file-index
-                      html = html.replace(
-                        /<img[^>]*data-file-index="(\d+)"[^>]*>/g,
-                        (match, idx) => {
-                          const file = files[parseInt(idx)];
-                          if (file) return match.replace(/src="[^"]*"/, `src="${file.duongDan}"`);
-                          return match;
-                        }
-                      );
-                      return html;
-                    })(),
-                  }}
-                />
-              </Box>
-
-              <Box>
-                <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
-                  Các đáp án:
-                </Typography>
-                <Stack spacing={1}>
-                  {selectedCauHoi.mangDapAn &&
-                    selectedCauHoi.mangDapAn.map((ans) => {
-                      const ansHtml = ans.noiDungHTML || ans.noiDung || "";
-                      return (
-                        <Box
-                          key={ans.id}
-                          sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            padding: 1,
-                            borderRadius: 1,
-                            border: "1px solid #ddd",
-                            backgroundColor: ans.dapAnDung ? "#e6f4ea" : "#fff",
-                            "& strong": { fontWeight: "bold" },
-                            "& em": { fontStyle: "italic" },
-                            "& u": { textDecoration: "underline" },
-                            "& p.ql-align-center": { textAlign: "center" },
-                            "& p.ql-align-right": { textAlign: "right" },
-                            "& p.ql-align-left": { textAlign: "left" },
-                            "& img": { maxWidth: "100%", height: "auto", borderRadius: 1 },
-                          }}
-                          dangerouslySetInnerHTML={{ __html: ansHtml }}
-                        />
-                      );
-                    })}
-                </Stack>
-              </Box>
-            </Stack>
+      {/* Nội dung câu hỏi */}
+      <Box>
+        <Typography variant="subtitle1" sx={{ mt: 1, mb: 1 }}>
+          Nội dung câu hỏi:
+        </Typography>
+        <Box
+          sx={{
+            border: "1px solid #e0e0e0",
+            borderRadius: 1,
+            padding: 2,
+            backgroundColor: "#fafafa",
+            "& p": { margin: 0 },
+            "& strong": { fontWeight: "bold" },
+            "& em": { fontStyle: "italic" },
+            "& u": { textDecoration: "underline" },
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {/* Hiển thị HTML nếu có, không thì hiển thị text thường */}
+          {selectedCauHoi.cauHoi.noiDungCauHoiHTML ? (
+            <div dangerouslySetInnerHTML={{ 
+              __html: selectedCauHoi.cauHoi.noiDungCauHoiHTML 
+            }} />
+          ) : (
+            <Typography>{selectedCauHoi.cauHoi.noiDungCauHoi}</Typography>
           )}
-        </DialogContent>
+        </Box>
+      </Box>
+
+      {/* Các đáp án */}
+      <Box>
+        <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
+          Các đáp án:
+        </Typography>
+        <Stack spacing={1}>
+          {/* ← ĐÂY LÀ CHỖ QUAN TRỌNG: Đổi từ mangDapAn sang dapAn */}
+          {selectedCauHoi.dapAn.map((ans, index) => {
+            // Ưu tiên noiDungHTML nếu có, không thì dùng noiDung
+            const content = ans.noiDungHTML || ans.noiDung;
+            
+            return (
+              <Box
+                key={ans.id}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  padding: 1.5,
+                  borderRadius: 1,
+                  border: "1px solid #ddd",
+                  backgroundColor: ans.dapAnDung ? "#e6f4ea" : "#fff",
+                  "& strong": { fontWeight: "bold" },
+                  "& em": { fontStyle: "italic" },
+                  "& u": { textDecoration: "underline" },
+                  "& p": { margin: 0 },
+                }}
+              >
+                {/* Số thứ tự hoặc checkbox */}
+                <Typography sx={{ 
+                  minWidth: 24, 
+                  fontWeight: ans.dapAnDung ? "bold" : "normal",
+                  color: ans.dapAnDung ? "#2e7d32" : "inherit"
+                }}>
+                  {ans.dapAnDung ? "✓" : String.fromCharCode(65 + index)}.
+                </Typography>
+                
+                {/* Nội dung đáp án */}
+                {ans.noiDungHTML ? (
+                  <div dangerouslySetInnerHTML={{ __html: content }} />
+                ) : (
+                  <Typography>{content}</Typography>
+                )}
+              </Box>
+            );
+          })}
+        </Stack>
+      </Box>
+    </Stack>
+  )}
+</DialogContent>
 
         <DialogActions>
           <Button onClick={() => setOpenDetail(false)} variant="contained" sx={{ backgroundColor: "#245D51" }}>
