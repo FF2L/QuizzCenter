@@ -229,10 +229,12 @@ const CollegeTest: React.FC = () => {
             Bắt đầu: {formatDateTime(item.thoiGianBatDau)} | Kết thúc:{" "}
             {formatDateTime(item.thoiGianKetThuc)}
           </Typography>
-          <Typography variant="body2" sx={{ color: "#666", fontSize: 13 }}>
-            Thời gian làm: {item.thoiGianLam / 60} phút | Số lần làm:{" "}
-            {item.soLanLam || 1}
+          {(item.loaiKiemTra === "BaiKiemTra") && (
+            <Typography variant="body2" sx={{ color: "#666", fontSize: 13 }}>
+            Thời gian làm: {item.thoiGianLam / 60} phút
           </Typography>
+          )}
+          
         </Box>
       </Stack>
     </Paper>
