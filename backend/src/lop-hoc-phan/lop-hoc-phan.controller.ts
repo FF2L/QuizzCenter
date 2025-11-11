@@ -92,19 +92,17 @@ export class LopHocPhanController {
   }
 
   //lấy Bảng điểm chi tiết theo lớp
-  @Get(':idLopHocPhan/bang-diem')
-  async layBangDiemCuaTatCaSinhVienCoTrongLopHocPhan(@Param('idLopHocPhan') idLopHocPhan: number,
-   @Query('skip') skip?: number,
-  @Query('limit') limit?: number,
+  @Get(':idLopHocPhan/bang-diem/bai-kiem-tra/:idBaiKiemTra')
+  async layBangDiemCuaTatCaSinhVienCoTrongLopHocPhan(@Param('idLopHocPhan') idLopHocPhan: number, @Param('idBaiKiemTra') idBaiKiemTra: number,
   @Query ('ten-sinh-vien') tenSinhVien?: string){
-    return await this.lopHocPhanService.layBangDiemChiTietTheoLop(idLopHocPhan, {skip, limit, tenSinhVien});
+    return await this.lopHocPhanService.layBangDiemChiTietTheoLopVaBaiKiemTra(idLopHocPhan, idBaiKiemTra, {tenSinhVien});
   }
 
   //Xuất bảng điểm
-  @Get(':idLopHocPhan/xuat-bang-diem/:tenLopHocPhan')
-  async xuatBangDiem(@Param('idLopHocPhan') idLopHocPhan: number, @Param('tenLopHocPhan') tenLopHocPhan: string, @Res() res: Response){
-    const buffer = await this.lopHocPhanService.exportBangDiemExcel(idLopHocPhan);
-    const filename = `BangDiem_${tenLopHocPhan}.xlsx`;
+  @Get(':idLopHocPhan/bai-kiem-tra/:idBaiKiemTra/xuat-bang-diem')
+  async xuatBangDiem(@Param('idLopHocPhan') idLopHocPhan: number, @Param('idBaiKiemTra') idBaiKiemTra: number, @Res() res: Response){
+    const buffer = await this.lopHocPhanService.exportBangDiemExcel(idLopHocPhan, idBaiKiemTra);
+    const filename = `BangDiem.xlsx`;
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -112,6 +110,12 @@ export class LopHocPhanController {
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(buffer);
 
+  }
+
+  //Thống kê
+  @Get(':idLopHocPhan/bai-kiem-tra/:idBaiKiemTra/thong-ke')
+  async thongKe(@Param('idLopHocPhan') idLopHocPhan: number, @Param('idBaiKiemTra') idBaiKiemTra: number) {
+    return await this.lopHocPhanService.thongKe(idLopHocPhan, idBaiKiemTra);
   }
 
   //Lấy tất cả lớp học phần của sinh viên

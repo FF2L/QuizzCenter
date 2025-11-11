@@ -108,10 +108,13 @@ export class NguoiDungService {
       where: { email: email, id: Not(id) }
     });
     if(nguoiDungCoEmailKhac) throw new BadRequestException('Email đã được sử dụng bởi người dùng khác');
-
+    
     const nguoiDungCoMaGiong = await this.nguoiDungRepo.findOne({
       where: { maNguoiDung: maNguoiDung, id: Not(id) }
     });
+    console.log(maNguoiDung);
+    console.log(id);
+    console.log(nguoiDungCoMaGiong);
     if(nguoiDungCoMaGiong) throw new BadRequestException('Mã người dùng đã được sử dụng bởi người dùng khác');
 
     if(!nguoiDung) throw new NotFoundException();

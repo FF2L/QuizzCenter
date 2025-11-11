@@ -140,15 +140,17 @@ const accessToken = localStorage.getItem("accessTokenGV") || "";
 
       try {
         const res = await fetch(
-          `http://localhost:3000/bai-kiem-tra/chi-tiet-cau-hoi/${idBaiKiemTra}?skip=0&limit=1000`
+          `http://localhost:3000/bai-kiem-tra/${idBaiKiemTra}/chi-tiet-cau-hoi?skip=0&limit=10000`
         );
         if (!res.ok) throw new Error("Không thể tải câu hỏi trong đề");
-        const data = await res.json();
+        const databefore = await res.json();
+        const data = databefore.data;
 
         const idSet = new Set<number>();
         const mapping = new Map<number, number>();
 
         if (Array.isArray(data)) {
+          console.log("Câu hỏi trong đề:", data);
           data.forEach((item: any) => {
             if (item.idCauHoi) {
               idSet.add(item.idCauHoi);
