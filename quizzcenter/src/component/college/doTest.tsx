@@ -3,10 +3,12 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Box, Typography, Button, Paper, Radio, Checkbox, RadioGroup,
   FormControlLabel, FormGroup, Dialog, DialogTitle, DialogContent,
-  DialogActions, CircularProgress, Alert, Chip
+  DialogActions, CircularProgress, Alert, Chip, IconButton, Tooltip
 } from "@mui/material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import FlagIcon from "@mui/icons-material/Flag";
+import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import { BaiLamSinhVienApi, BaiLamResponse } from "../../services/bai-lam-sinh-vien.api";
 
 type DapAnDaChon = Record<number, number[]>;
@@ -17,7 +19,7 @@ interface BaiKiemTraInfo {
   loaiKiemTra: string;
   thoiGianBatDau: string;
   thoiGianKetThuc: string;
-  thoiGianLam: number; // seconds
+  thoiGianLam: number;
   xemBaiLam?: boolean;
   hienThiKetQua?: boolean;
 }
@@ -34,6 +36,7 @@ const DoTestPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [baiLamData, setBaiLamData] = useState<BaiLamResponse | null>(null);
   const [dapAnDaChon, setDapAnDaChon] = useState<DapAnDaChon>({});
+  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set()); // ← State cho cờ
   const [timeLeft, setTimeLeft] = useState(0);
   const [showNopBaiDialog, setShowNopBaiDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,7 +49,6 @@ const DoTestPage: React.FC = () => {
   useEffect(() => { baiLamDataRef.current = baiLamData; }, [baiLamData]);
 
   const isLuyenTap = baiKiemTraInfo?.loaiKiemTra === "LuyenTap";
-
   const DETAIL_PATH = `/quizzcenter/bai-kiem-tra-chi-tiet/${idBaiKiemTra}`;
 
   // ------------------- INIT BÀI LÀM -------------------
@@ -79,7 +81,6 @@ const DoTestPage: React.FC = () => {
         });
         setDapAnDaChon(saved);
 
-        // deadline cho bài kiểm tra
         if (!isLuyenTap) {
           const startMs = new Date(response.baiLam.thoiGianBatDau).getTime();
           const byDuration = startMs + ((baiKiemTraInfo?.thoiGianLam ?? 3600) * 1000);
@@ -98,7 +99,6 @@ const DoTestPage: React.FC = () => {
     };
 
     void init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idBaiKiemTra]);
 
   // ------------------- AUTO SUBMIT -------------------
@@ -131,7 +131,7 @@ const DoTestPage: React.FC = () => {
       if (remain <= 0) handleAutoSubmit();
     };
 
-    tick(); // render ngay
+    tick();
     const id = setInterval(tick, 1000);
     document.addEventListener("visibilitychange", tick);
 
@@ -177,6 +177,20 @@ const DoTestPage: React.FC = () => {
     });
   };
 
+  // ------------------- CẮM CỜ -------------------
+  const handleToggleFlag = (idCauHoiBaiKiemTra: number, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setFlaggedQuestions((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(idCauHoiBaiKiemTra)) {
+        newSet.delete(idCauHoiBaiKiemTra);
+      } else {
+        newSet.add(idCauHoiBaiKiemTra);
+      }
+      return newSet;
+    });
+  };
+
   // ------------------- NỘP BÀI -------------------
   const handleNopBai = async () => {
     if (!baiLamData) return;
@@ -202,6 +216,8 @@ const DoTestPage: React.FC = () => {
     () => Object.values(dapAnDaChon).filter((arr) => arr.length > 0).length,
     [dapAnDaChon]
   );
+
+  const soCauDaCamCo = flaggedQuestions.size;
 
   // ------------------- RENDER -------------------
   if (loading) {
@@ -229,7 +245,7 @@ const DoTestPage: React.FC = () => {
               {baiKiemTraInfo?.tenBaiKiemTra || "Bài kiểm tra"}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Tổng số câu: {baiLamData.cauHoi.length} | Đã làm: {soCauDaLam}/{baiLamData.cauHoi.length}
+              Tổng số câu: {baiLamData.cauHoi.length} | Đã làm: {soCauDaLam}/{baiLamData.cauHoi.length} | Đã cắm cờ: {soCauDaCamCo}
             </Typography>
           </Paper>
 
@@ -245,6 +261,25 @@ const DoTestPage: React.FC = () => {
                     Đang lưu...
                   </Typography>
                 )}
+                
+                {/* Nút cắm cờ */}
+                <Box sx={{ ml: "auto" }}>
+                  <Tooltip title={flaggedQuestions.has(item.idCauHoiBaiKiemTra) ? "Bỏ cắm cờ" : "Cắm cờ"}>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => handleToggleFlag(item.idCauHoiBaiKiemTra, e)}
+                      sx={{
+                        color: flaggedQuestions.has(item.idCauHoiBaiKiemTra) ? "#ff9800" : "text.secondary",
+                      }}
+                    >
+                      {flaggedQuestions.has(item.idCauHoiBaiKiemTra) ? (
+                        <FlagIcon />
+                      ) : (
+                        <FlagOutlinedIcon />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               </Box>
 
               <Typography
@@ -325,17 +360,44 @@ const DoTestPage: React.FC = () => {
 
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Danh sách câu hỏi</Typography>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-              {baiLamData.cauHoi.map((item, index) => (
-                <Button
-                  key={item.idCauHoiBaiKiemTra}
-                  variant={isCauHoiDaTraLoi(item.idCauHoiBaiKiemTra) ? "contained" : "outlined"}
-                  color={isCauHoiDaTraLoi(item.idCauHoiBaiKiemTra) ? "success" : "inherit"}
-                  sx={{ minWidth: 50, minHeight: 50, fontWeight: 600 }}
-                  onClick={() => document.getElementById(`cau-${index}`)?.scrollIntoView({ behavior: "smooth" })}
-                >
-                  {index + 1}
-                </Button>
-              ))}
+              {baiLamData.cauHoi.map((item, index) => {
+                const isFlagged = flaggedQuestions.has(item.idCauHoiBaiKiemTra);
+                const isDone = isCauHoiDaTraLoi(item.idCauHoiBaiKiemTra);
+                
+                return (
+                  <Box key={item.idCauHoiBaiKiemTra} sx={{ position: "relative" }}>
+                    <Button
+                      variant={isDone ? "contained" : "outlined"}
+                      color={isDone ? "success" : "inherit"}
+                      sx={{
+                        minWidth: 50,
+                        minHeight: 50,
+                        fontWeight: 600,
+                        // Nếu có cờ thì border màu cam
+                        ...(isFlagged && {
+                          border: "2px solid #ff9800",
+                          backgroundColor: isDone ? undefined : "#fff3e0",
+                        }),
+                      }}
+                      onClick={() => document.getElementById(`cau-${index}`)?.scrollIntoView({ behavior: "smooth" })}
+                    >
+                      {index + 1}
+                    </Button>
+                    {/* Icon cờ nhỏ góc trên bên phải */}
+                    {isFlagged && (
+                      <FlagIcon
+                        sx={{
+                          position: "absolute",
+                          top: -4,
+                          right: -4,
+                          fontSize: 16,
+                          color: "#ff9800",
+                        }}
+                      />
+                    )}
+                  </Box>
+                );
+              })}
             </Box>
 
             <Button
@@ -357,6 +419,11 @@ const DoTestPage: React.FC = () => {
         <DialogTitle>Xác nhận nộp bài</DialogTitle>
         <DialogContent>
           <Typography>Bạn đã làm {soCauDaLam}/{baiLamData.cauHoi.length} câu.</Typography>
+          {soCauDaCamCo > 0 && (
+            <Typography sx={{ mt: 1, color: "#ff9800" }}>
+              ⚠️ Bạn còn {soCauDaCamCo} câu đã cắm cờ chưa xem lại.
+            </Typography>
+          )}
           <Typography sx={{ mt: 1 }}>Bạn có chắc chắn muốn nộp bài không?</Typography>
         </DialogContent>
         <DialogActions>
@@ -367,7 +434,6 @@ const DoTestPage: React.FC = () => {
         </DialogActions>
       </Dialog>
     </Box>
-    
   );
 };
 
