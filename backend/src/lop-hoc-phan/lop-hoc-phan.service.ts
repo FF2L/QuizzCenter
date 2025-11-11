@@ -280,76 +280,67 @@ async layTatCaLopHocPhanTheoIdGiaoVien( idGiangVien: number, query: any) {
     return lopHocPhan;
   }
 
-async layBangDiemChiTietTheoLop(idLopHocPhan: number, query: any) {
-  const {skip, limit, tenSinhVien} = query;
-  const qb = this.lopHocPhanRep
-    .createQueryBuilder('lhp')
+async layBangDiemChiTietTheoLopVaBaiKiemTra(idLopHocPhan: number, idBaiKiemTra: number, query: any) {
+  const { tenSinhVien } = query;
+  console.log(idBaiKiemTra, idLopHocPhan, tenSinhVien);
+
+  // 1. Lấy danh sách sinh viên (raw rows) — giữ nguyên alias/keys bạn muốn
+  const qbSinhVien = this.lopHocPhanRep.createQueryBuilder('lhp')
     .leftJoin('lhp.sinhVien', 'sv')
     .leftJoin('sv.nguoiDung', 'nd')
-    .leftJoin('sv.baiLamSInhVien', 'blsv')
-    .leftJoin('blsv.baiKiemTra','bkt',
-    `bkt.thoiGianKetThuc <= :now 
-    AND bkt.loaiKiemTra = :loaiKiemTra
-  `,{ now: new Date(), loaiKiemTra: LoaiKiemTra.BaiKiemTra }
-)
-    .where('lhp.id = :idLopHocPhan', { idLopHocPhan })
+    .where('lhp.id = :idLopHocPhan', { idLopHocPhan });
 
-  const { count } = await qb.clone()
-  .select('COUNT(DISTINCT nd.id)')
-  .getRawOne();
-
-  const total = Number(count) || 0
   if (tenSinhVien) {
     const ten = tenSinhVien.trim();
-    qb.andWhere(
+    qbSinhVien.andWhere(
       `unaccent(lower(nd.hoTen)) ILIKE unaccent(lower(:tenSinhVien))`,
       { tenSinhVien: `%${ten}%` }
     );
   }
 
-  const rows = await qb
-    .select([
-      'nd.id               AS nd_id',
-      'nd.maNguoiDung      AS maSinhVien',
-      'nd.anhDaiDien       AS anhDaiDienSinhVien',
-      'nd.hoTen            AS hoTenSinhVien',
-      'nd.email            AS emailSinhVien',
+  const dsSinhVien = await qbSinhVien.select([
+    'nd.id               AS nd_id',
+    'nd.maNguoiDung      AS maSinhVien',
+    'nd.hoTen            AS hoTenSinhVien',
+    'nd.email            AS emailSinhVien',
+  ]).getRawMany();
 
-      'bkt.id              AS bkt_id',
-      'bkt.tenBaiKiemTra   AS tenBaiKiemTra',
-      'blsv.tongDiem       AS tongDiem',
+  if (dsSinhVien.length === 0) return [];
+  console.log('dsSinhVien', dsSinhVien);
+
+
+  const tenBaiKiemTra = await this.bktRepo.createQueryBuilder('bkt')
+    .where('bkt.id = :idBaiKiemTra', { idBaiKiemTra })
+    .select(['bkt.tenBaiKiemTra AS tenBaiKiemTra'])
+    .getRawOne();
+
+  const result = await Promise.all(
+   dsSinhVien.map(async sv => {
+    const svId = sv.nd_id;
+
+    const qbDiem = this.lopHocPhanRep.createQueryBuilder('lhp')
+      .leftJoin('lhp.baiKiemTra', 'bkt')
+      .leftJoin('bkt.baiLamSinhVien', 'blsv', 'bkt.id = :idBaiKiemTra AND blsv.idSinhVien = :svId', { idBaiKiemTra, svId });
+
+    const diemT = await qbDiem.select([
+      'blsv.tongDiem AS tongDiem',
     ])
-    .offset(skip ?? 0)
-    .limit(limit ?? DEFAULT_PAGE_LIMIT)
-    .getRawMany();
+    .getRawOne();
+    console.log('diemT', diemT);
 
-  const map = new Map<string, SinhVienWithBaiKiemTra>();
+    return {
+      nd_id: svId,
+      maSinhVien: sv.masinhvien,
+      hoTenSinhVien: sv.hotensinhvien,
+      emailSinhVien: sv.emailsinhvien,
+      tenBaiKiemTra: tenBaiKiemTra.tenbaikiemtra,
+      diem: diemT?.tongdiem ?? 0,
+    };
+  }))
 
-  for (const r of rows) {
-    if (!map.has(r.nd_id)) {
-      map.set(r.nd_id, {
-        maSinhVien: r.masinhvien,
-        anhDaiDienSinhVien: r.anhdaiDiensinhvien ?? null,
-        hoTenSinhVien: r.hotensinhvien,
-        emailSinhVien: r.emailsinhvien,
-        danhSachBaiKiemTra: [],
-      });
-    }
-    const sv = map.get(r.nd_id)!;
-
-    if (r.bkt_id) {
-      sv.danhSachBaiKiemTra.push({
-        idBaiKiemTra: r.bkt_id,
-        tenBaiKiemTra: r.tenbaikiemtra,
-        tongDiem: r.tongdiem ?? 0,
-      });
-    }
-  }
-
-  const data = Array.from(map.values());
-
-  return { data, total, currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1, totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT)) };
+  return result;
 }
+
 
 async layDanhSachBaiKiemTra(idLopHocPhan: number) {
     const danhSachBaiKiemTra = await this.bktRepo
@@ -365,113 +356,114 @@ async layDanhSachBaiKiemTra(idLopHocPhan: number) {
     return danhSachBaiKiemTra;
 }
 
-async exportBangDiemExcel(idLopHocPhan: number): Promise<Buffer> {
-    const now = new Date();
+async exportBangDiemExcel(idLopHocPhan: number, idBaiKiemTra:number): Promise<Buffer> {
+    const tenBaiKiemTra = await this.bktRepo.createQueryBuilder('bkt')
+    .where('bkt.id = :idBaiKiemTra', { idBaiKiemTra })
+    .select(['bkt.tenBaiKiemTra AS tenBaiKiemTra'])
+    .getRawOne();
 
-    const svRows = await this.lopHocPhanRep
-      .createQueryBuilder('lhp')
-      .leftJoin('lhp.sinhVien', 'sv')
-      .leftJoin('sv.nguoiDung', 'nd')
-      .where('lhp.id = :id', { id: idLopHocPhan })
-      .select([
-        'sv.idNguoiDung AS "svId"',
-        'nd.maNguoiDung AS "maNguoiDung"',
-        'nd.hoTen AS "hoTen"',
-        'nd.email AS "email"',
-      ])
-      .orderBy('nd.maNguoiDung', 'ASC')
-      .getRawMany<{
-        svId: number;
-        maNguoiDung: string;
-        hoTen: string;
-        email: string;
-      }>();
+    const tenBKT = tenBaiKiemTra.tenbaikiemtra
 
-    const bktRows = await this.bktRepo
-      .createQueryBuilder('bkt')
-      .where('bkt.idLopHocPhan = :id', { id: idLopHocPhan })
-      .andWhere('bkt.loaiKiemTra = :loai', { loai: LoaiKiemTra.BaiKiemTra })
-      .andWhere('bkt.thoiGianKetThuc <= :now', { now })
-      .select([
-        'bkt.id AS "bktId"',
-        'bkt.tenBaiKiemTra AS "tenBaiKiemTra"',
-        'bkt.thoiGianKetThuc AS "thoiGianKetThuc"',
-      ])
-      .orderBy('bkt.thoiGianKetThuc', 'ASC') 
-      .getRawMany<{
-        bktId: number;
-        tenBaiKiemTra: string;
-        thoiGianKetThuc: Date;
-      }>();
+    const dsXuat = await this.layBangDiemChiTietTheoLopVaBaiKiemTra(idLopHocPhan, idBaiKiemTra, {});
 
-    const bktIds = bktRows.map(r => r.bktId);
-
-    let diemMap = new Map<string, number | null>();
-    if (bktIds.length > 0 && svRows.length > 0) {
-      const blRows = await this.blsvRepo
-        .createQueryBuilder('bl')
-        .where('bl.idBaiKiemTra IN (:...bktIds)', { bktIds })
-        .andWhere('bl.idSinhVien IN (:...svIds)', { svIds: svRows.map(s => s.svId) })
-        .select([
-          'bl.idSinhVien AS "svId"',
-          'bl.idBaiKiemTra AS "bktId"',
-          'bl.tongDiem AS "tongDiem"',
-        ])
-        .getRawMany<{ svId: number; bktId: number; tongDiem: number | 0 }>();
-
-      diemMap = new Map(
-        blRows.map(r => [`${r.svId}_${r.bktId}`, r.tongDiem]),
-      );
-    }
 
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Bang diem');
 
       ws.columns = [
-      { header: 'Mã người dùng', key: 'maNguoiDung', width: 18 },
-      { header: 'Họ tên', key: 'hoTen', width: 28 },
-      { header: 'Email', key: 'email', width: 28 },
-
-      ...bktRows.map((bkt, idx) => ({
-        header: bkt.tenBaiKiemTra || `BKT ${idx + 1}`,
-        key: `bkt_${bkt.bktId}`,
-        width: 14,
-      })),
+      { header: 'Mã sinh viên', key: 'maSinhVien', width: 18 },
+      { header: 'Họ tên', key: 'hoTenSinhVien', width: 28 },
+      { header: 'Email', key: 'emailSinhVien', width: 28 },
+      { header: tenBKT, key: 'diem', width: 14 },
     ];
 
 
     ws.views = [{ state: 'frozen', xSplit: 0, ySplit: 1 }];
 
 
-    for (const sv of svRows) {
+    for (const sv of dsXuat) {
       const rowData: Record<string, any> = {
-        maNguoiDung: sv.maNguoiDung,
-        hoTen: sv.hoTen,
-        email: sv.email,
+        maSinhVien: sv.maSinhVien,
+        hoTenSinhVien: sv.hoTenSinhVien,
+        emailSinhVien: sv.emailSinhVien,
+        diem: sv.diem,
       };
-
-      for (const bkt of bktRows) {
-        const key = `bkt_${bkt.bktId}`;
-        const mapKey = `${sv.svId}_${bkt.bktId}`;
-        rowData[key] = diemMap.get(mapKey) ?? 0; // chưa làm => 0
-      }
 
       ws.addRow(rowData);
     }
 
     ws.getRow(1).font = { bold: true };
-    if (bktRows.length > 0) {
-      const startCol = 3 + 1; // sau 3 cột cố định
-      for (let c = startCol; c <= 3 + bktRows.length; c++) {
-        ws.getColumn(c).alignment = { horizontal: 'center' };
-        ws.getColumn(c).numFmt = '0.0#'; 
-      }
-    }
 
     // 7) Xuất buffer
     const buffer = await wb.xlsx.writeBuffer();
     return Buffer.from(buffer);
-  }
+}
+
+async thongKe(idLopHocPhan: number, idBaiKiemTra:number) {
+    const dsXuat = await this.layBangDiemChiTietTheoLopVaBaiKiemTra(idLopHocPhan, idBaiKiemTra, {});
+    const tongSoSinhVien = dsXuat.length;
+    if (tongSoSinhVien === 0) {
+      return {
+        diemCaoNhat: 0,
+        diemThapNhat: 0,
+        diemTrungBinh: 0,
+        soSVCoDiemLonHon5: 0,
+        soSVCoDiemBeHon5: 0,
+        soSVCoDiemBang10: 0,
+        soSVCoDiemBHB1:0,
+        soSVCoDiemBHB2:0,
+        soSVCoDiemBHB3:0,
+        soSVCoDiemBHB4:0,
+        soSVCoDiemBHB5:0,
+        soSVCoDiemBHB6:0,
+        soSVCoDiemBHB7:0,
+        soSVCoDiemBHB8:0,
+        soSVCoDiemBHB9:0,
+        soSVCoDiemBHB10:0
+      };
+    }
+    const diemCaoNhat = Math.max(...dsXuat.map(sv => sv.diem));
+    const diemThapNhat = Math.min(...dsXuat.map(sv => sv.diem));
+    const diemTrungBinh = dsXuat.reduce((sum, sv) => sum + sv.diem, 0) / tongSoSinhVien;
+
+    let soSVCoDiemLonHon5 = 0;
+    let soSVCoDiemBeHon5 = 0;
+    let soSVCoDiemBang10 = 0;
+    const soSVCoDiemBHB: Record<number, number> = {};
+
+    for (let i = 1; i <= 10; i++) {
+      soSVCoDiemBHB[i] = 0;
+    }
+
+    for (const sv of dsXuat) {
+      if (sv.diem > 5) soSVCoDiemLonHon5++;
+      if (sv.diem < 5) soSVCoDiemBeHon5++;
+      if (sv.diem === 10) soSVCoDiemBang10++;
+
+      const diemBHB = Math.ceil(sv.diem);
+        soSVCoDiemBHB[diemBHB]++;
+    }
+
+    return {
+      diemCaoNhat,
+      diemThapNhat,
+      diemTrungBinh,
+      soSVCoDiemLonHon5,
+      soSVCoDiemBeHon5,
+      soSVCoDiemBang10,
+      soSVCoDiemBHB1: soSVCoDiemBHB[1],
+      soSVCoDiemBHB2: soSVCoDiemBHB[2],
+      soSVCoDiemBHB3: soSVCoDiemBHB[3],
+      soSVCoDiemBHB4: soSVCoDiemBHB[4],
+      soSVCoDiemBHB5: soSVCoDiemBHB[5],
+      soSVCoDiemBHB6: soSVCoDiemBHB[6],
+      soSVCoDiemBHB7: soSVCoDiemBHB[7],
+      soSVCoDiemBHB8: soSVCoDiemBHB[8],
+      soSVCoDiemBHB9: soSVCoDiemBHB[9],
+      soSVCoDiemBHB10: soSVCoDiemBHB[10],
+    };
+
+}
 
 
 

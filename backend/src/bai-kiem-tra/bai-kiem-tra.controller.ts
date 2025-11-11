@@ -57,6 +57,7 @@ export class BaiKiemTraController {
       @Query('skip') skip?: number,
       @Query('limit') limit?: number){
       return await this.baiKiemTraService.layTatCaCauHoiCoTrongBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra, {skip, limit});
+      console.log('hello')
   }
 
   @Post('/chi-tiet-cau-hoi')
