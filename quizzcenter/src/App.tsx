@@ -39,6 +39,7 @@ import PhanCongMonHoc from './page/system/phan-cong-mon-hoc/pcmh';
 import QuanLyLopHoc from './page/system/quan-ly-lop-hoc/qllh';
 import QuanLyMonHoc from './page/system/quan-ly-mon-hoc/plmh';
 import ThemSinhVienVaoLopHocPhan from './page/system/quan-ly-lop-hoc/tsvlh';
+import BangDiemPage from './page/system/test/result';
 const App: FC = () => {
   return (
     <UserProvider>
@@ -76,6 +77,7 @@ const App: FC = () => {
               <Route path="course/:idMonHoc" element={<Page />} />
               <Route path="lop-hoc-phan/bai-kiem-tra/:idLopHocPhan" element={<BaiKiemTraList />} />
               <Route path="bai-kiem-tra/:idBaiKiemTra" element={<BaiKiemTraDetail />} />
+              <Route path="lop-hoc-phan/:idLopHocPhan/bai-kiem-tra/:idBaiKiemTra/bang-diem" element={<BangDiemPage />} />
               <Route path="create-question" element={<CreateQuestionPage />} />
               <Route path="update-question/:cauHoiId" element={<UpdateQuestionPage />} />
               <Route path="bai-kiem-tra/:idBaiKiemTra/create-question-test" element={<CreateQuestionForTest />} />

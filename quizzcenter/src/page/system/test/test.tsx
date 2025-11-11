@@ -25,6 +25,9 @@ import ViewBaiKiemTraDialog from "../test/testDetailDalog";
 import UpdateBaiKiemTraDialog from "../test/updateTestDialog";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 
 interface ApiResponse {
   data: BaiKiemTra[];
@@ -42,7 +45,10 @@ const BaiKiemTraList = () => {
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
   const [selectedBai, setSelectedBai] = useState<BaiKiemTra | null>(null);
-  
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedBaiForMenu, setSelectedBaiForMenu] = useState<BaiKiemTra | null>(null);
+  const openMenu = Boolean(anchorEl);
+
   const [tabValue, setTabValue] = useState<number>(0);
   const [searchValue, setSearchValue] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -54,7 +60,31 @@ const BaiKiemTraList = () => {
   const navigate = useNavigate();
 
   const accessToken = localStorage.getItem("accessTokenGV") || "";
-
+  
+  const handleOpenMenu = (event: React.MouseEvent<HTMLButtonElement>, bai: BaiKiemTra) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+    setSelectedBaiForMenu(bai);
+  };
+  
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+    setSelectedBaiForMenu(null);
+  };
+  
+  const handleXemBangDiem = () => {
+    if (!selectedBaiForMenu) return;
+    navigate(`/lecturer/lop-hoc-phan/${idLopHocPhan}/bai-kiem-tra/${selectedBaiForMenu.id}/bang-diem`, {
+      state: {
+        tenLopHoc,
+        tenMonHoc,
+        tenBaiKiemTra: selectedBaiForMenu.tenBaiKiemTra,
+        idMonHoc
+      },
+    });
+    handleCloseMenu();
+  };
+  
   const getLoaiKiemTra = () => {
     return tabValue === 0 ? "BaiKiemTra" : "LuyenTap";
   };
@@ -276,11 +306,11 @@ const BaiKiemTraList = () => {
           }}
         >
           <Typography sx={{ color: "#555" }}>
-            Môn học (<span style={{ color: "#e91e63" }}>{tenMonHoc}</span>)
+            Môn học:<span style={{ color: "#e91e63" }}>{tenMonHoc}</span>
           </Typography>
 
           <Typography sx={{ color: "#555" }}>
-            Lớp học (<span style={{ color: "#007CD5" }}>{tenLopHoc}</span>)
+            Lớp học:<span style={{ color: "#007CD5" }}>{tenLopHoc}</span>
           </Typography>
 
           <Typography sx={{ color: "#555", fontWeight: "bold" }}>
@@ -391,7 +421,6 @@ const BaiKiemTraList = () => {
                     >
                       {bai.tenBaiKiemTra}
                     </Typography>
-
                     <Stack direction="row" spacing={1} alignItems="center">
                       <Chip
                         label={bai.loaiKiemTra === "BaiKiemTra" ? "Kiểm tra" : "Luyện tập"}
@@ -516,6 +545,20 @@ const BaiKiemTraList = () => {
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
+
+                    {(new Date(bai.thoiGianKetThuc) <= new Date()) && (
+                      <IconButton
+                        size="small"
+                        sx={{
+                          color: "#424242",
+                          "&:hover": { backgroundColor: "#f5f5f5" }
+                        }}
+                        onClick={(e) => handleOpenMenu(e, bai)}
+                        title="Tùy chọn"
+                      >
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+                    )}
                   </Stack>
                 </CardContent>
               </Card>
@@ -555,6 +598,25 @@ const BaiKiemTraList = () => {
         baiKiemTra={selectedBai}
         onUpdate={handleUpdateBaiKiemTra}
       />
+
+      {/* Menu 3 chấm */}
+      <Menu
+        anchorEl={anchorEl}
+        open={openMenu}
+        onClose={handleCloseMenu}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem onClick={handleXemBangDiem}>
+          Xem bảng điểm
+        </MenuItem>
+      </Menu>
     </Box>
   );
 };

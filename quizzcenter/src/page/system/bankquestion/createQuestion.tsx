@@ -26,9 +26,43 @@ import ReactQuill, { Quill } from "react-quill";
 import ImageResize from "quill-image-resize-module-react";
 import { CauHoiPayload } from "../../../common/model";
 import './quill.css';
+declare global {
+  interface Window {
+    Quill: any;
+  }
+}
 
 // Đăng ký module resize ảnh
 Quill.register("modules/imageResize", ImageResize);
+// ⚙️ Fix bug crash khi xóa ảnh trong ReactQuill
+if (typeof window !== "undefined") {
+  window.Quill = Quill;
+
+  const fixImageResizeBug = () => {
+    // 👇 Ép kiểu thủ công cho TypeScript hiểu đúng
+    const ImageResizeModule = Quill.import("modules/imageResize") as {
+      prototype: { checkImage: (...args: any[]) => boolean };
+    };
+
+    if (!ImageResizeModule || !ImageResizeModule.prototype) return;
+
+    const originalCheckImage = ImageResizeModule.prototype.checkImage;
+
+    // Gói lại checkImage để tránh lỗi khi xóa ảnh
+    ImageResizeModule.prototype.checkImage = function (...args: any[]): boolean {
+      try {
+        if ((this as any).img) {
+          return originalCheckImage.apply(this, args);
+        }
+      } catch (err) {
+        console.warn("🧩 Quill image resize safe-check:", err);
+      }
+      return false;
+    };
+  };
+
+  fixImageResizeBug();
+}
 
 interface DapAnInput {
   noiDung: string;

@@ -187,15 +187,15 @@ useEffect(() => {
     }}
   >
     <Typography sx={{ color: "#555" }}>
-      Môn học (
+      Môn học:
       <span style={{ color: "#e91e63" }}>{tenMonHoc}</span>
-      )
+      
     </Typography>
 
     <Typography sx={{ color: "#555" }}>
-      Lớp học (
+      Lớp học:
       <span style={{ color: "#007CD5" }}>{tenLopHoc}</span>
-      )
+      
     </Typography>
 
     <Typography sx={{ color: "#555" }}>
