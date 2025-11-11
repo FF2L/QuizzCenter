@@ -16,7 +16,11 @@ import {
   Stack,
   TextField,
   Typography,
+  Chip,
+  InputAdornment,
+  CircularProgress,
 } from "@mui/material";
+import { Search, CalendarToday, People } from "@mui/icons-material";
 
 // Interface cho dữ liệu trả về từ API
 interface LopHocPhanData {
@@ -57,7 +61,7 @@ enum TrangThaiGiangDay {
 const LectureClass = () => {
   const navigate = useNavigate();
 
-  const [allData, setAllData] = useState<LopHocPhanData[]>([]); // Data gốc từ API 1
+  const [allData, setAllData] = useState<LopHocPhanData[]>([]);
   const [monHocGroups, setMonHocGroups] = useState<MonHocGroup[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchValue, setSearchValue] = useState("");
@@ -66,10 +70,9 @@ const LectureClass = () => {
   const [totalPages, setTotalPages] = useState(1);
   const limit = 10;
 
-  // Lấy accessToken từ localStorage
   const accessToken = localStorage.getItem("accessTokenGV") || "";
 
-  // Hàm xác định trạng thái lớp học (dùng cho API 1)
+  // Hàm xác định trạng thái lớp học
   const getTrangThaiLop = (thoiGianBatDau: string, thoiGianKetThuc: string): number => {
     const now = new Date();
     const batDau = new Date(thoiGianBatDau);
@@ -84,7 +87,7 @@ const LectureClass = () => {
     }
   };
 
-  // API 1: Fetch toàn bộ dữ liệu lớp học phần (không có params)
+  // API 1: Fetch toàn bộ dữ liệu
   const fetchAllLopHocPhan = async () => {
     try {
       setLoading(true);
@@ -100,8 +103,6 @@ const LectureClass = () => {
 
       const response: ApiResponse = await res.json();
       setAllData(response.data);
-      
-      // Filter và group ngay sau khi fetch
       filterAndGroupFromAllData(response.data);
     } catch (error) {
       console.error("Lỗi fetch tất cả lớp học phần:", error);
@@ -110,16 +111,16 @@ const LectureClass = () => {
     }
   };
 
-  // API 2: Fetch dữ liệu với tìm kiếm (có params)
+  // API 2: Fetch với tìm kiếm
   const fetchSearchLopHocPhan = async () => {
     try {
       setLoading(true);
-      setMonHocGroups([]); // Clear data cũ
+      setMonHocGroups([]);
       
       const skip = (currentPage - 1) * limit;
       
       const params = new URLSearchParams({
-        "ten-mon-hoc": searchValue.trim(),
+        tenMonHoc: searchValue.trim(),
         "giang-day": trangThai.toString(),
         skip: skip.toString(),
         limit: limit.toString(),
@@ -138,10 +139,7 @@ const LectureClass = () => {
       }
 
       const response: ApiResponse = await res.json();
-      console.log("Search API Response:", response);
       setTotalPages(response.totalPages);
-
-      // Nhóm dữ liệu
       const grouped = groupByMonHoc(response.data);
       setMonHocGroups(grouped);
     } catch (error) {
@@ -151,25 +149,21 @@ const LectureClass = () => {
     }
   };
 
-  // Filter và group từ allData (dùng khi không search)
+  // Filter và group từ allData
   const filterAndGroupFromAllData = (data: LopHocPhanData[]) => {
     let filtered = data;
 
-    // Lọc theo trạng thái
     filtered = filtered.filter((lop) => {
       const trangThaiLop = getTrangThaiLop(lop.thoigianbatdau, lop.thoigianketthuc);
       return trangThaiLop === trangThai;
     });
 
-    // Nhóm theo môn học
     const grouped = groupByMonHoc(filtered);
     setMonHocGroups(grouped);
-    
-    // Tính phân trang thủ công (vì không có từ API)
     setTotalPages(Math.ceil(filtered.length / limit));
   };
 
-  // Nhóm các lớp học phần theo môn học
+  // Nhóm các lớp theo môn học
   const groupByMonHoc = (data: LopHocPhanData[]): MonHocGroup[] => {
     const map = new Map<string, MonHocGroup>();
 
@@ -182,7 +176,7 @@ const LectureClass = () => {
           maMonHoc: lop.mamonhoc,
           hocKy: lop.hocky,
           danhSachLop: [],
-          expanded: true,
+          expanded: false, // Mặc định là collapsed
         });
       }
 
@@ -218,7 +212,35 @@ const LectureClass = () => {
     setCurrentPage(page);
   };
 
-  // Fetch data ban đầu (API 1 - toàn bộ data)
+  // Get label cho trạng thái
+  const getTrangThaiLabel = (status: number) => {
+    switch (status) {
+      case TrangThaiGiangDay.DANG_GIANG_DAY:
+        return "Đang giảng dạy";
+      case TrangThaiGiangDay.DA_KET_THUC:
+        return "Đã kết thúc";
+      case TrangThaiGiangDay.SAP_DAY:
+        return "Sắp dạy";
+      default:
+        return "";
+    }
+  };
+
+  // Get color cho chip trạng thái
+  const getTrangThaiColor = (status: number): "success" | "error" | "warning" => {
+    switch (status) {
+      case TrangThaiGiangDay.DANG_GIANG_DAY:
+        return "success";
+      case TrangThaiGiangDay.DA_KET_THUC:
+        return "error";
+      case TrangThaiGiangDay.SAP_DAY:
+        return "warning";
+      default:
+        return "success";
+    }
+  };
+
+  // Fetch data ban đầu
   useEffect(() => {
     if (accessToken) {
       fetchAllLopHocPhan();
@@ -228,10 +250,8 @@ const LectureClass = () => {
   // Khi trạng thái thay đổi
   useEffect(() => {
     if (searchValue.trim()) {
-      // Nếu đang search, gọi API search
       fetchSearchLopHocPhan();
     } else {
-      // Nếu không search, filter từ allData
       filterAndGroupFromAllData(allData);
     }
   }, [trangThai]);
@@ -247,7 +267,6 @@ const LectureClass = () => {
 
       return () => clearTimeout(timeoutId);
     } else {
-      // Khi xóa hết search, quay về filter từ allData
       filterAndGroupFromAllData(allData);
     }
   }, [searchValue]);
@@ -255,180 +274,226 @@ const LectureClass = () => {
   // Khi phân trang thay đổi
   useEffect(() => {
     if (searchValue.trim() && accessToken) {
-      // Chỉ gọi API khi đang search
       fetchSearchLopHocPhan();
     }
   }, [currentPage]);
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-        minHeight: "100vh",
-        p: 3,
-      }}
-    >
-      <Typography
-        variant="h3"
-        sx={{ fontWeight: "medium", fontSize: "30px", color: "black", mb: 4 }}
-      >
-        Lớp học của tôi
-      </Typography>
+    <Box sx={{ width: "100%", minHeight: "100vh", p: 0 }}>
+      <Stack spacing={4}>
+        {/* Header */}
+        <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
+          <Typography variant="h3" sx={{ fontWeight: "bold", fontSize: "30px", color: "black" }}>
+            Lớp học của tôi
+          </Typography>
+        </Box>
 
-      {/* Header - Tìm kiếm và Filter */}
-      <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
-        <TextField
-          placeholder="Tìm kiếm theo tên môn học..."
-          value={searchValue}
-          onChange={handleSearch}
-          sx={{
-            width: "300px",
-            "& .MuiOutlinedInput-root": {
-              backgroundColor: "white",
-              height: "50px",
-            },
-            "& .MuiInputBase-input": {
-              color: "black",
-              fontSize: "16px",
-              fontWeight: "medium",
-              fontFamily: "Poppins",
-            },
-          }}
-        />
+        {/* Toolbar - Tìm kiếm và Filter */}
+        <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" gap={2}>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }}>
+            <TextField
+              placeholder="Tìm kiếm theo tên môn học..."
+              value={searchValue}
+              onChange={handleSearch}
+              sx={{
+                width: "30vw",
+                minWidth: "300px",
+                backgroundColor: "white",
+                borderRadius: 2,
+              }}
+              size="small"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search fontSize="small" />
+                  </InputAdornment>
+                ),
+              }}
+            />
 
-        <Select
-          value={trangThai}
-          onChange={handleTrangThaiChange}
-          sx={{
-            width: "200px",
-            height: "50px",
-            backgroundColor: "white",
-            "& .MuiSelect-select": {
-              fontSize: "16px",
-              fontWeight: "medium",
-              fontFamily: "Poppins",
-            },
-          }}
-        >
-          <MenuItem value={TrangThaiGiangDay.DANG_GIANG_DAY}>
-            Đang giảng dạy
-          </MenuItem>
-          <MenuItem value={TrangThaiGiangDay.DA_KET_THUC}>
-            Đã kết thúc
-          </MenuItem>
-          <MenuItem value={TrangThaiGiangDay.SAP_DAY}>Sắp dạy</MenuItem>
-        </Select>
-      </Box>
+            <Select
+              value={trangThai}
+              onChange={handleTrangThaiChange}
+              sx={{
+                minWidth: 200,
+                backgroundColor: "white",
+                borderRadius: 2,
+              }}
+              size="small"
+            >
+              <MenuItem value={TrangThaiGiangDay.DANG_GIANG_DAY}>
+                Đang giảng dạy
+              </MenuItem>
+              <MenuItem value={TrangThaiGiangDay.DA_KET_THUC}>
+                Đã kết thúc
+              </MenuItem>
+              <MenuItem value={TrangThaiGiangDay.SAP_DAY}>Sắp dạy</MenuItem>
+            </Select>
+          </Stack>
+        </Stack>
 
-      {/* Nội dung */}
-      <Stack spacing={3}>
-        {loading && <Typography>Đang tải...</Typography>}
-        
-        {!loading && monHocGroups.length === 0 && (
-          <Typography>Không có lớp học phần nào.</Typography>
-        )}
+        {/* Summary bar */}
+        <Stack direction="row" alignItems="center" gap={2}>
+          <Typography variant="body2" sx={{ color: "#245D51" }}>
+            Tổng số môn học: <b>{monHocGroups.length}</b>
+          </Typography>
+          {loading && <CircularProgress size={16} />}
+        </Stack>
 
-        {!loading &&
-          monHocGroups.map((group, index) => (
-            <Box key={`${group.maMonHoc}_${group.hocKy}_${index}`}>
-              {/* Header môn học */}
-              <Card
-                sx={{
-                  backgroundColor: "#f5f5f5",
-                  cursor: "pointer",
-                  "&:hover": { backgroundColor: "#eeeeee" },
-                }}
-                onClick={() => toggleExpand(index)}
-              >
-                <CardContent sx={{ p: 2 }}>
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    justifyContent="space-between"
+        {/* Danh sách môn học */}
+        <Box>
+          <Typography sx={{ mb: 2, color: "#245D51" }}>
+            Danh sách môn học
+          </Typography>
+          <Box sx={{ border: "1px solid #ddd", borderRadius: 2, p: 2, backgroundColor: "#fafafa" }}>
+            {loading && (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                <CircularProgress />
+              </Box>
+            )}
+            
+            {!loading && monHocGroups.length === 0 && (
+              <Typography variant="body2" sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
+                Không có lớp học phần nào.
+              </Typography>
+            )}
+
+            {!loading &&
+              monHocGroups.map((group, index) => (
+                <Card
+                  key={`${group.maMonHoc}_${group.hocKy}_${index}`}
+                  sx={{
+                    mb: 2,
+                    borderRadius: 2,
+                    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+                    "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.15)" },
+                    backgroundColor: "#ffffff",
+                  }}
+                >
+                  {/* Header môn học - Clickable */}
+                  <CardContent
+                    sx={{
+                      p: 2,
+                      cursor: "pointer",
+                      "&:hover": { backgroundColor: "#f5f5f5" },
+                    }}
+                    onClick={() => toggleExpand(index)}
                   >
-                    <Typography
-                      sx={{
-                        fontSize: "18px",
-                        fontWeight: "600",
-                        color: "#333",
-                      }}
-                    >
-                      {group.tenMonHoc} - {group.maMonHoc} - {group.hocKy}
-                    </Typography>
-                    <IconButton>
-                      {group.expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                    </IconButton>
-                  </Stack>
-                </CardContent>
-              </Card>
-
-              {/* Danh sách lớp học phần */}
-              <Collapse in={group.expanded}>
-                <Stack spacing={2} sx={{ mt: 2, pl: 2 }}>
-                  {group.danhSachLop.map((lop) => (
-                    <Card
-                      key={lop.lhp_id}
-                      sx={{
-                        cursor: "pointer",
-                        "&:hover": { boxShadow: 3 },
-                      }}
-                      onClick={() =>
-                        navigate(`/lecturer/lop-hoc-phan/bai-kiem-tra/${lop.lhp_id}`, {
-                          state: {
-                            tenLopHoc: lop.tenlhp,
-                            tenMonHoc: lop.tenmonhoc,
-                            idMonHoc: lop.mh_id,
-                          },
-                        })
-                      }
-                      
-                    >
-                      <CardContent sx={{ p: 3, backgroundColor: "white" }}>
-                        <Stack spacing={1}>
+                    <Stack direction="row" alignItems="center" justifyContent="space-between">
+                      <Stack direction="row" alignItems="center" spacing={2} flex={1}>
+                        <IconButton size="small">
+                          {group.expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                        </IconButton>
+                        <Box>
                           <Typography
                             sx={{
-                              fontSize: "20px",
-                              fontWeight: "medium",
-                              color: "black",
+                              fontSize: "18px",
+                              fontWeight: "bold",
+                              color: "#333",
                             }}
                           >
-                            {lop.tenlhp}
+                            {group.tenMonHoc}
                           </Typography>
-                          <Stack direction="row" spacing={4}>
-                            <Typography
-                              sx={{ fontSize: "14px", color: "#a5a5a5" }}
-                            >
-                              Ngày bắt đầu:{" "}
-                              {new Date(
-                                lop.thoigianbatdau
-                              ).toLocaleDateString("vi-VN")}
-                            </Typography>
-                            <Typography
-                              sx={{ fontSize: "14px", color: "#a5a5a5" }}
-                            >
-                              Ngày kết thúc:{" "}
-                              {new Date(
-                                lop.thoigianketthuc
-                              ).toLocaleDateString("vi-VN")}
-                            </Typography>
-                            <Typography
-                              sx={{ fontSize: "14px", color: "#a5a5a5" }}
-                            >
-                              Sĩ số: {lop.siso}
-                            </Typography>
-                          </Stack>
-                        </Stack>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </Stack>
-              </Collapse>
-            </Box>
-          ))}
+                          <Typography
+                            variant="body2"
+                            sx={{ color: "#666", mt: 0.5 }}
+                          >
+                            {group.maMonHoc} • {group.hocKy}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                      <Chip
+                        label={`${group.danhSachLop.length} lớp`}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                    </Stack>
+                  </CardContent>
 
-        {/* Phân trang - chỉ hiện khi search */}
+                  {/* Danh sách lớp học phần - Collapse */}
+                  <Collapse in={group.expanded}>
+                    <Box sx={{ px: 2, pb: 2 }}>
+                      <Stack spacing={2} sx={{ pl: 2 }}>
+                        {group.danhSachLop.map((lop) => {
+                          const trangThaiLop = getTrangThaiLop(
+                            lop.thoigianbatdau,
+                            lop.thoigianketthuc
+                          );
+                          
+                          return (
+                            <Card
+                              key={lop.lhp_id}
+                              sx={{
+                                cursor: "pointer",
+                                transition: "all 0.2s",
+                                "&:hover": {
+                                  boxShadow: 3,
+                                  transform: "translateY(-2px)",
+                                },
+                                borderLeft: "4px solid #1976d2",
+                              }}
+                              onClick={() =>
+                                navigate(`/lecturer/lop-hoc-phan/bai-kiem-tra/${lop.lhp_id}`, {
+                                  state: {
+                                    tenLopHoc: lop.tenlhp,
+                                    tenMonHoc: lop.tenmonhoc,
+                                    idMonHoc: lop.mh_id,
+                                  },
+                                })
+                              }
+                            >
+                              <CardContent sx={{ p: 2 }}>
+                                <Stack spacing={2}>
+                                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                    <Typography
+                                      sx={{
+                                        fontSize: "16px",
+                                        fontWeight: "600",
+                                        color: "#1976d2",
+                                      }}
+                                    >
+                                      {lop.tenlhp}
+                                    </Typography>
+                                    <Chip
+                                      label={getTrangThaiLabel(trangThaiLop)}
+                                      size="small"
+                                      color={getTrangThaiColor(trangThaiLop)}
+                                    />
+                                  </Stack>
+
+                                  <Stack direction="row" spacing={3} flexWrap="wrap">
+                                    <Stack direction="row" spacing={1} alignItems="center">
+                                      <CalendarToday sx={{ fontSize: 16, color: "#666" }} />
+                                      <Typography variant="body2" sx={{ color: "#666" }}>
+                                        {new Date(lop.thoigianbatdau).toLocaleDateString("vi-VN")}
+                                        {" - "}
+                                        {new Date(lop.thoigianketthuc).toLocaleDateString("vi-VN")}
+                                      </Typography>
+                                    </Stack>
+                                    <Stack direction="row" spacing={1} alignItems="center">
+                                      <People sx={{ fontSize: 16, color: "#666" }} />
+                                      <Typography variant="body2" sx={{ color: "#666" }}>
+                                        {lop.siso} sinh viên
+                                      </Typography>
+                                    </Stack>
+                                  </Stack>
+                                </Stack>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </Stack>
+                    </Box>
+                  </Collapse>
+                </Card>
+              ))}
+          </Box>
+        </Box>
+
+        {/* Pagination - chỉ hiện khi search */}
         {!loading && searchValue.trim() && totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+          <Stack alignItems="center" sx={{ mt: 2 }}>
             <Pagination
               count={totalPages}
               page={currentPage}
@@ -436,7 +501,7 @@ const LectureClass = () => {
               color="primary"
               size="large"
             />
-          </Box>
+          </Stack>
         )}
       </Stack>
     </Box>

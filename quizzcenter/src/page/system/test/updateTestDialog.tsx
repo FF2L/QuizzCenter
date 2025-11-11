@@ -29,6 +29,7 @@ const UpdateBaiKiemTraDialog: React.FC<UpdateBaiKiemTraDialogProps> = ({
   const [loaiKiemTra, setLoaiKiemTra] = useState<"LuyenTap" | "BaiKiemTra">(
     "BaiKiemTra"
   );
+  const [soLanLam, setSoLanLam] = useState(1);
   const [thoiGianBatDau, setThoiGianBatDau] = useState("");
   const [thoiGianKetThuc, setThoiGianKetThuc] = useState("");
   const [thoiGianLam, setThoiGianLam] = useState(0);
@@ -55,6 +56,7 @@ const UpdateBaiKiemTraDialog: React.FC<UpdateBaiKiemTraDialogProps> = ({
     if (baiKiemTra) {
       setTenBaiKiemTra(baiKiemTra.tenBaiKiemTra);
       setLoaiKiemTra(baiKiemTra.loaiKiemTra as "LuyenTap" | "BaiKiemTra");
+      setSoLanLam(baiKiemTra.soLanLam);
       setThoiGianBatDau(toLocalDatetime(baiKiemTra.thoiGianBatDau));
       setThoiGianKetThuc(toLocalDatetime(baiKiemTra.thoiGianKetThuc));
       setThoiGianLam(baiKiemTra.thoiGianLam);
@@ -73,11 +75,112 @@ const UpdateBaiKiemTraDialog: React.FC<UpdateBaiKiemTraDialogProps> = ({
   const disableStartTime = isEnded || hasStarted;
   const disableEndTime = isEnded;
 
-  // Tính max duration
+  // Tính toán min datetime cho các input
+  const getMinStartTime = () => {
+    if (hasStarted || isEnded) return "";
+    const now = new Date();
+    const minTime = new Date(now.getTime() + 5 * 60 * 1000);
+    const tzOffset = minTime.getTimezoneOffset() * 60000;
+    const localISOTime = new Date(minTime.getTime() - tzOffset)
+      .toISOString()
+      .slice(0, 16);
+    return localISOTime;
+  };
+
+  const getMinEndTime = () => {
+    if (isEnded) return "";
+    if (!thoiGianBatDau) return getMinStartTime();
+    const startDate = new Date(thoiGianBatDau);
+    const minEndTime = new Date(startDate.getTime() + 1 * 60 * 1000);
+    const tzOffset = minEndTime.getTimezoneOffset() * 60000;
+    const localISOTime = new Date(minEndTime.getTime() - tzOffset)
+      .toISOString()
+      .slice(0, 16);
+    return localISOTime;
+  };
+
   const getMaxDuration = () => {
-    if (!startDate || !endDate) return 0;
-    const diffMinutes = Math.floor((endDate.getTime() - startDate.getTime()) / 60000);
+    if (!thoiGianBatDau || !thoiGianKetThuc) return 0;
+    const start = new Date(thoiGianBatDau);
+    const end = new Date(thoiGianKetThuc);
+    const diffMinutes = Math.floor((end.getTime() - start.getTime()) / (60 * 1000));
     return diffMinutes > 0 ? diffMinutes : 0;
+  };
+
+  // Handler cho thời gian bắt đầu với validation
+  const handleStartTimeChange = (value: string) => {
+    setErrorMessage("");
+    
+    if (value && !hasStarted && !isEnded) {
+      const selectedDate = new Date(value);
+      const minTime = new Date(Date.now() + 5 * 60 * 1000);
+      
+      if (selectedDate < minTime) {
+        setErrorMessage("⚠️ Thời gian bắt đầu phải sau thời gian hiện tại ít nhất 5 phút!");
+        return;
+      }
+    }
+    
+    setThoiGianBatDau(value);
+    
+    // Reset thời gian kết thúc nếu nó nhỏ hơn thời gian bắt đầu mới
+    if (value && thoiGianKetThuc) {
+      const start = new Date(value);
+      const end = new Date(thoiGianKetThuc);
+      if (end <= start) {
+        setThoiGianKetThuc("");
+        setThoiGianLam(0);
+      }
+    }
+  };
+
+  // Handler cho thời gian kết thúc với validation
+  const handleEndTimeChange = (value: string) => {
+    setThoiGianKetThuc(value);
+    setErrorMessage("");
+    
+    if (value && thoiGianBatDau) {
+      const startDate = new Date(thoiGianBatDau);
+      const endDate = new Date(value);
+      
+      if (endDate <= startDate) {
+        setErrorMessage("⚠️ Thời gian kết thúc phải sau thời gian bắt đầu!");
+        setThoiGianKetThuc("");
+        setThoiGianLam(0);
+        return;
+      }
+      
+      // Auto-adjust thời gian làm nếu vượt quá
+      if (thoiGianLam > 0) {
+        const maxSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
+        if (thoiGianLam > maxSeconds) {
+          setThoiGianLam(0);
+          setErrorMessage("⚠️ Thời gian làm đã bị reset vì vượt quá khoảng thời gian mở bài mới!");
+        }
+      }
+    }
+  };
+
+  // Handler cho thời gian làm với validation
+  const handleDurationChange = (value: string) => {
+    const phut = Number(value);
+    const giay = phut > 0 ? phut * 60 : 0;
+    
+    if (giay > 0 && thoiGianBatDau && thoiGianKetThuc) {
+      const start = new Date(thoiGianBatDau);
+      const end = new Date(thoiGianKetThuc);
+      const maxSeconds = (end.getTime() - start.getTime()) / 1000;
+      
+      if (giay > maxSeconds) {
+        setErrorMessage(
+          `⚠️ Thời gian làm không được vượt quá ${Math.floor(maxSeconds / 60)} phút!`
+        );
+        return;
+      }
+    }
+    
+    setThoiGianLam(giay);
+    setErrorMessage("");
   };
 
   const handleSubmit = () => {
@@ -99,14 +202,33 @@ const UpdateBaiKiemTraDialog: React.FC<UpdateBaiKiemTraDialogProps> = ({
     const batDauDate = new Date(thoiGianBatDauISO);
     const ketThucDate = new Date(thoiGianKetThucISO);
 
-    if (batDauDate > ketThucDate) {
+    // Chỉ check thời gian bắt đầu nếu chưa bắt đầu
+    if (!hasStarted && !isEnded) {
+      const minStartTime = new Date(now.getTime() + 5 * 60 * 1000);
+      if (batDauDate < minStartTime) {
+        setErrorMessage("Thời gian bắt đầu phải sau thời gian hiện tại ít nhất 5 phút!");
+        return;
+      }
+    }
+
+    if (ketThucDate <= batDauDate) {
       setErrorMessage("Thời gian kết thúc phải sau thời gian bắt đầu!");
       return;
     }
 
-    if (loaiKiemTra === "BaiKiemTra" && thoiGianLam <= 0) {
-      setErrorMessage("Thời gian làm phải lớn hơn 0!");
-      return;
+    if (loaiKiemTra === "BaiKiemTra") {
+      if (thoiGianLam <= 0) {
+        setErrorMessage("Thời gian làm phải lớn hơn 0!");
+        return;
+      }
+
+      const khoangThoiGian = (ketThucDate.getTime() - batDauDate.getTime()) / 1000;
+      if (thoiGianLam > khoangThoiGian) {
+        setErrorMessage(
+          `Thời gian làm (${thoiGianLam / 60} phút) không được vượt quá khoảng thời gian mở bài (${Math.floor(khoangThoiGian / 60)} phút)!`
+        );
+        return;
+      }
     }
 
     const payload = {
@@ -155,13 +277,23 @@ const UpdateBaiKiemTraDialog: React.FC<UpdateBaiKiemTraDialogProps> = ({
           value={loaiKiemTra}
           fullWidth
           required
-          disabled // khóa loại bài
+          disabled
         >
           <MenuItem value="BaiKiemTra">Bài kiểm tra</MenuItem>
           <MenuItem value="LuyenTap">Bài luyện tập</MenuItem>
         </TextField>
 
-
+        {loaiKiemTra === "LuyenTap" && (
+          <TextField
+            type="number"
+            label="Số lần làm"
+            value={soLanLam}
+            onChange={(e) => setSoLanLam(Math.max(1, Number(e.target.value)))}
+            fullWidth
+            inputProps={{ min: 1 }}
+            helperText="Sinh viên có thể làm bài luyện tập nhiều lần"
+          />
+        )}
 
         {loaiKiemTra === "BaiKiemTra" && (
           <Box sx={{ p: 2, backgroundColor: "#f5f5f5", borderRadius: 1, fontSize: 14, color: "#666" }}>
@@ -173,22 +305,40 @@ const UpdateBaiKiemTraDialog: React.FC<UpdateBaiKiemTraDialogProps> = ({
           type="datetime-local"
           label="Thời gian bắt đầu"
           value={thoiGianBatDau}
-          onChange={(e) => setThoiGianBatDau(e.target.value)}
+          onChange={(e) => handleStartTimeChange(e.target.value)}
           fullWidth
           required
           InputLabelProps={{ shrink: true }}
+          inputProps={{ 
+            min: getMinStartTime()
+          }}
           disabled={disableStartTime}
+          helperText={
+            disableStartTime 
+              ? "Không thể chỉnh sửa (đã bắt đầu hoặc kết thúc)"
+              : "Phải sau thời gian hiện tại ít nhất 5 phút"
+          }
         />
 
         <TextField
           type="datetime-local"
           label="Thời gian kết thúc"
           value={thoiGianKetThuc}
-          onChange={(e) => setThoiGianKetThuc(e.target.value)}
+          onChange={(e) => handleEndTimeChange(e.target.value)}
           fullWidth
           required
           InputLabelProps={{ shrink: true }}
+          inputProps={{ 
+            min: getMinEndTime()
+          }}
           disabled={disableEndTime}
+          helperText={
+            disableEndTime
+              ? "Không thể chỉnh sửa (đã kết thúc)"
+              : thoiGianBatDau 
+                ? "Phải sau thời gian bắt đầu" 
+                : "Chọn thời gian bắt đầu trước"
+          }
         />
 
         {loaiKiemTra === "BaiKiemTra" && (
@@ -196,14 +346,19 @@ const UpdateBaiKiemTraDialog: React.FC<UpdateBaiKiemTraDialogProps> = ({
             type="number"
             label="Thời gian làm (phút)"
             value={thoiGianLam > 0 ? thoiGianLam / 60 : ""}
-            onChange={(e) => {
-              const phut = Number(e.target.value);
-              setThoiGianLam(phut > 0 ? phut * 60 : 0);
-            }}
+            onChange={(e) => handleDurationChange(e.target.value)}
             fullWidth
             required
-            inputProps={{ min: 1, max: getMaxDuration() }}
+            inputProps={{ 
+              min: 1,
+              max: getMaxDuration()
+            }}
             placeholder="Nhập thời gian làm bài (phút)"
+            helperText={
+              getMaxDuration() > 0 
+                ? `Tối đa: ${getMaxDuration()} phút (dựa trên khoảng thời gian mở bài)`
+                : "Chọn thời gian bắt đầu và kết thúc trước"
+            }
           />
         )}
       </DialogContent>
