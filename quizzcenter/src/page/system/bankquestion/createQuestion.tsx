@@ -8,6 +8,7 @@ import {
   MenuItem,
   IconButton,
   Stack,
+  Breadcrumbs,
   Checkbox,
   Typography,
   Snackbar,
@@ -405,25 +406,29 @@ export default function CreateQuestionPage() {
               <Typography variant="h5" fontWeight="bold" color="#1a1a1a">
                 Tạo câu hỏi mới
               </Typography>
-              <Stack direction="row" spacing={1} alignItems="center" mt={1}>
-                <Typography variant="body2" color="text.secondary">
-                  {tenMonHoc}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">•</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Ngân hàng câu hỏi
-                </Typography>
-                <Typography variant="body2" color="text.secondary">•</Typography>
-                <Chip 
-                  label={tenChuong} 
-                  size="small" 
-                  sx={{ 
-                    backgroundColor: '#e3f2fd',
-                    color: '#1976d2',
-                    fontWeight: 500
-                  }}
-                />
-              </Stack>
+              <Breadcrumbs
+  aria-label="breadcrumb"
+  separator="›"
+  sx={{
+    color: "#555",
+    "& .MuiTypography-root": { fontSize: 15 },
+  }}
+>
+  <Typography sx={{ color: "#777" }}>
+    Môn học:
+    <span style={{ fontWeight: 600, color: "#777" }}> {tenMonHoc}</span>
+  </Typography>
+
+  <Typography sx={{ color: "#777", fontWeight: 500 }}>
+    Ngân hàng câu hỏi:
+    <span style={{ fontWeight: 600, color: "#777" }}> {tenChuong}</span>
+  </Typography>
+
+  <Typography sx={{ color: "#333", fontWeight: 600 }}>
+    Tạo câu hỏi mới
+  </Typography>
+</Breadcrumbs>
+
             </Box>
           </Stack>
         </Paper>

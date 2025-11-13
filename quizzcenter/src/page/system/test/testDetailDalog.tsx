@@ -50,9 +50,7 @@ const ViewBaiKiemTraDialog: React.FC<Props> = ({ open, onClose, idBaiKiemTra }) 
         {!loading && detail && (
           <Stack spacing={1}>
             <Typography><b>Tên:</b> {detail.tenBaiKiemTra}</Typography>
-            <Typography><b>Loại kiểm tra:</b> {detail.loaiKiemTra}</Typography>
-            <Typography><b>Số lần làm:</b> {detail.soLanLam}</Typography>
-            {/* <Typography><b>Xem bài làm:</b> {detail.xemBaiLam ? "Có" : "Không"}</Typography>
+            <Typography><b>Loại kiểm tra:</b> {detail.loaiKiemTra}</Typography>            {/* <Typography><b>Xem bài làm:</b> {detail.xemBaiLam ? "Có" : "Không"}</Typography>
             <Typography><b>Hiển thị kết quả:</b> {detail.hienThiKetQua ? "Có" : "Không"}</Typography> */}
             <Typography>
               <b>Thời gian bắt đầu:</b>{" "}

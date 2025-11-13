@@ -305,15 +305,11 @@ const BaiKiemTraList = () => {
             "& .MuiTypography-root": { fontSize: 15 },
           }}
         >
-          <Typography sx={{ color: "#555" }}>
-            Môn học:<span style={{ color: "#e91e63" }}>{tenMonHoc}</span>
+          <Typography sx={{ color: "#777" }}>
+            Lớp học:<span style={{ fontWeight: 600, color: "#777" }}>{tenLopHoc}</span>
           </Typography>
 
-          <Typography sx={{ color: "#555" }}>
-            Lớp học:<span style={{ color: "#007CD5" }}>{tenLopHoc}</span>
-          </Typography>
-
-          <Typography sx={{ color: "#555", fontWeight: "bold" }}>
+          <Typography sx={{ color: "#333", fontWeight: 600 }}>
             Bài kiểm tra
           </Typography>
         </Breadcrumbs>
@@ -357,7 +353,9 @@ const BaiKiemTraList = () => {
           }}
         />
       </Box>
-
+      <Typography sx={{ color: "#333", marginBottom:"10px" }}>
+            Môn học: <span style={{ fontWeight: 600, color: "green" }}>{tenMonHoc}</span>
+          </Typography>
       {/* Danh sách - Grid Layout */}
       {loading && <Typography>Đang tải...</Typography>}
       {!loading && baiKiemTraList.length === 0 && (
