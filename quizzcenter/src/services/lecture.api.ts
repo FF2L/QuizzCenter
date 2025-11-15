@@ -151,4 +151,67 @@ export class LectureService {
             return {ok: false, error}
         }
     }
+    // ======================== API BẢNG ĐIỂM ========================
+
+static async xemTatCaBangDiem(accessToken: string, idLopHocPhan: number, idBaiKiemTra:number) {
+    try {
+        const res = await axios.get(`${API_URL}/lop-hoc-phan/${idLopHocPhan}/bang-diem/bai-kiem-tra/${idBaiKiemTra}`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            }
+        });
+        return { ok: true, data: res.data };
+    } catch (error) {
+        console.error("Error fetching all scores:", error);
+        return { ok: false, error };
+    }
+}
+
+static async timKiemBangDiemTheoTen(accessToken:string, idLopHocPhan:number, idBaiKiemTra:number, tenSinhVien:string) {
+    try {
+        const res = await axios.get(`${API_URL}/lop-hoc-phan/${idLopHocPhan}/bang-diem/bai-kiem-tra/${idBaiKiemTra}`, {
+            params: { "ten-sinh-vien": tenSinhVien },
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            }
+        });
+        return { ok: true, data: res.data };
+    } catch (error) {
+        console.error("Error searching score by name:", error);
+        return { ok: false, error };
+    }
+}
+
+static async xuatBangDiem(accessToken:string, idLopHocPhan:number, idBaiKiemTra:number) {
+    try {
+        const res = await axios.get(`${API_URL}/lop-hoc-phan/${idLopHocPhan}/bai-kiem-tra/${idBaiKiemTra}/xuat-bang-diem`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            },
+            responseType: "blob" // nếu trả về file (PDF, Excel,...)
+        });
+        return { ok: true, data: res.data };
+    } catch (error) {
+        console.error("Error exporting score sheet:", error);
+        return { ok: false, error };
+    }
+}
+
+static async thongKeBangDiem(accessToken: string, idLopHocPhan: number, idBaiKiemTra: number) {
+    try {
+        const res = await axios.get(
+            `${API_URL}/lop-hoc-phan/${idLopHocPhan}/bai-kiem-tra/${idBaiKiemTra}/thong-ke`,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            }
+        );
+        return { ok: true, data: res.data };
+    } catch (error) {
+        console.error("Error fetching score statistics:", error);
+        return { ok: false, error };
+    }
+}
+
 }

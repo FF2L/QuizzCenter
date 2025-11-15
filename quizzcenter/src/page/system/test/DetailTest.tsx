@@ -186,24 +186,18 @@ useEffect(() => {
       "& .MuiTypography-root": { fontSize: 15 },
     }}
   >
-    <Typography sx={{ color: "#555" }}>
-      Môn học (
-      <span style={{ color: "#e91e63" }}>{tenMonHoc}</span>
-      )
+    <Typography sx={{ color: "#777" }}>
+      Lớp học:
+      <span style={{ fontWeight: 600, color: "#777" }}>{tenLopHoc}</span>
+      
     </Typography>
 
-    <Typography sx={{ color: "#555" }}>
-      Lớp học (
-      <span style={{ color: "#007CD5" }}>{tenLopHoc}</span>
-      )
-    </Typography>
-
-    <Typography sx={{ color: "#555" }}>
-      Bài kiểm tra
+    <Typography sx={{ color: "#777" }}>
+      Bài kiểm tra:<span style={{ fontWeight: 600, color: "#777" }}>{tenMonHoc}</span>
     </Typography>
 
     <Typography sx={{ color: "black" }}>
-    <span style={{ fontWeight:"bold" }}>{tenBaiKiemTra}</span>
+    <span style={{ color: "#333", fontWeight: 600 }}>{tenBaiKiemTra}</span>
     </Typography>
   </Breadcrumbs>
 </Box>
@@ -353,13 +347,13 @@ useEffect(() => {
       backgroundColor: "#fafafa",
     }}
   >
-            {cauHoiList.map((item: any,index) => (
+               {cauHoiList.map((item: any,index) => (
               <Card key={item.id} sx={{mb: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
               "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}}>
                 <CardContent sx={{ height:"20px",}}>
                   <Stack spacing={2} direction="row">
                 <Typography sx={{ fontWeight: "bold" }}>
-               Câu {index + 1}:
+               Câu {(page - 1) * limit + index + 1}:
               </Typography>
                   <Typography >
                     {item.__cauHoi__?.tenHienThi}

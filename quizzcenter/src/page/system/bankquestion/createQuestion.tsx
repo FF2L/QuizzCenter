@@ -8,6 +8,7 @@ import {
   MenuItem,
   IconButton,
   Stack,
+  Breadcrumbs,
   Checkbox,
   Typography,
   Snackbar,
@@ -26,9 +27,43 @@ import ReactQuill, { Quill } from "react-quill";
 import ImageResize from "quill-image-resize-module-react";
 import { CauHoiPayload } from "../../../common/model";
 import './quill.css';
+declare global {
+  interface Window {
+    Quill: any;
+  }
+}
 
 // Đăng ký module resize ảnh
 Quill.register("modules/imageResize", ImageResize);
+// ⚙️ Fix bug crash khi xóa ảnh trong ReactQuill
+if (typeof window !== "undefined") {
+  window.Quill = Quill;
+
+  const fixImageResizeBug = () => {
+    // 👇 Ép kiểu thủ công cho TypeScript hiểu đúng
+    const ImageResizeModule = Quill.import("modules/imageResize") as {
+      prototype: { checkImage: (...args: any[]) => boolean };
+    };
+
+    if (!ImageResizeModule || !ImageResizeModule.prototype) return;
+
+    const originalCheckImage = ImageResizeModule.prototype.checkImage;
+
+    // Gói lại checkImage để tránh lỗi khi xóa ảnh
+    ImageResizeModule.prototype.checkImage = function (...args: any[]): boolean {
+      try {
+        if ((this as any).img) {
+          return originalCheckImage.apply(this, args);
+        }
+      } catch (err) {
+        console.warn("🧩 Quill image resize safe-check:", err);
+      }
+      return false;
+    };
+  };
+
+  fixImageResizeBug();
+}
 
 interface DapAnInput {
   noiDung: string;
@@ -371,25 +406,29 @@ export default function CreateQuestionPage() {
               <Typography variant="h5" fontWeight="bold" color="#1a1a1a">
                 Tạo câu hỏi mới
               </Typography>
-              <Stack direction="row" spacing={1} alignItems="center" mt={1}>
-                <Typography variant="body2" color="text.secondary">
-                  {tenMonHoc}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">•</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Ngân hàng câu hỏi
-                </Typography>
-                <Typography variant="body2" color="text.secondary">•</Typography>
-                <Chip 
-                  label={tenChuong} 
-                  size="small" 
-                  sx={{ 
-                    backgroundColor: '#e3f2fd',
-                    color: '#1976d2',
-                    fontWeight: 500
-                  }}
-                />
-              </Stack>
+              <Breadcrumbs
+  aria-label="breadcrumb"
+  separator="›"
+  sx={{
+    color: "#555",
+    "& .MuiTypography-root": { fontSize: 15 },
+  }}
+>
+  <Typography sx={{ color: "#777" }}>
+    Môn học:
+    <span style={{ fontWeight: 600, color: "#777" }}> {tenMonHoc}</span>
+  </Typography>
+
+  <Typography sx={{ color: "#777", fontWeight: 500 }}>
+    Ngân hàng câu hỏi:
+    <span style={{ fontWeight: 600, color: "#777" }}> {tenChuong}</span>
+  </Typography>
+
+  <Typography sx={{ color: "#333", fontWeight: 600 }}>
+    Tạo câu hỏi mới
+  </Typography>
+</Breadcrumbs>
+
             </Box>
           </Stack>
         </Paper>

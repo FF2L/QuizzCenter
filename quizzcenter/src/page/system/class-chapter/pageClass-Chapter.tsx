@@ -128,12 +128,12 @@ function PageClassChapterBankQuestion() {
             "& .MuiTypography-root": { fontSize: 15 },
           }}
         >
-          <Typography sx={{ color: "#666" }}>
+          <Typography sx={{ color: "#777" }}>
             Môn học: 
-            <span style={{ fontWeight: 600, color: "#000" }}> {tenMonHoc}</span>
+            <span style={{ fontWeight: 600, color: "#777" }}> {tenMonHoc}</span>
           </Typography>
 
-          <Typography sx={{ color: "#e91e63", fontWeight: 600 }}>
+          <Typography sx={{ color: "#333", fontWeight: 600 }}>
            {selectedTab === 1 ? "Ngân hàng câu hỏi" : "Danh mục"} 
           </Typography>
         </Breadcrumbs>

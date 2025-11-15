@@ -366,14 +366,15 @@ const CollegeTestDetail: React.FC = () => {
       Tiếp tục làm bài
     </Button>
   ) : (
+    baiKiemTra.loaiKiemTra !== "BaiKiemTra" && (
     <Button
       variant="outlined"
       onClick={() => handleXemBaiLam(att.id)}
       disabled={loadingView === att.id}
       sx={{ fontWeight: 600 }}
     >
-      {loadingView === att.id ? "Đang mở…" : "Xem chi tiết"}
-    </Button>
+      {loadingView === att.id ? "Đang mở…" :  "Xem chi tiết"}
+    </Button> )
   )}
 </Box>
               </Box>

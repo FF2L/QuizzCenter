@@ -3,7 +3,8 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Box, Typography, Button, Paper, Radio, Checkbox, RadioGroup,
   FormControlLabel, FormGroup, Dialog, DialogTitle, DialogContent,
-  DialogActions, CircularProgress, Alert, Chip, IconButton, Tooltip
+  DialogActions, CircularProgress, Alert, Chip, IconButton, Tooltip,
+  Pagination
 } from "@mui/material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -24,6 +25,8 @@ interface BaiKiemTraInfo {
   hienThiKetQua?: boolean;
 }
 
+const QUESTIONS_PER_PAGE = 8;
+
 const DoTestPage: React.FC = () => {
   const { idBaiKiemTra } = useParams<{ idBaiKiemTra: string }>();
   const navigate = useNavigate();
@@ -36,7 +39,8 @@ const DoTestPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [baiLamData, setBaiLamData] = useState<BaiLamResponse | null>(null);
   const [dapAnDaChon, setDapAnDaChon] = useState<DapAnDaChon>({});
-  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set()); // ← State cho cờ
+  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
   const [timeLeft, setTimeLeft] = useState(0);
   const [showNopBaiDialog, setShowNopBaiDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,6 +54,24 @@ const DoTestPage: React.FC = () => {
 
   const isLuyenTap = baiKiemTraInfo?.loaiKiemTra === "LuyenTap";
   const DETAIL_PATH = `/quizzcenter/bai-kiem-tra-chi-tiet/${idBaiKiemTra}`;
+
+  // ------------------- PHÂN TRANG -------------------
+  const totalPages = useMemo(() => {
+    if (!baiLamData) return 0;
+    return Math.ceil(baiLamData.cauHoi.length / QUESTIONS_PER_PAGE);
+  }, [baiLamData]);
+
+  const currentQuestions = useMemo(() => {
+    if (!baiLamData) return [];
+    const startIndex = (currentPage - 1) * QUESTIONS_PER_PAGE;
+    const endIndex = startIndex + QUESTIONS_PER_PAGE;
+    return baiLamData.cauHoi.slice(startIndex, endIndex);
+  }, [baiLamData, currentPage]);
+
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // ------------------- INIT BÀI LÀM -------------------
   useEffect(() => {
@@ -219,6 +241,16 @@ const DoTestPage: React.FC = () => {
 
   const soCauDaCamCo = flaggedQuestions.size;
 
+  // Hàm chuyển đến trang chứa câu hỏi cụ thể
+  const navigateToQuestion = (globalIndex: number) => {
+    const page = Math.floor(globalIndex / QUESTIONS_PER_PAGE) + 1;
+    setCurrentPage(page);
+    setTimeout(() => {
+      const localIndex = globalIndex % QUESTIONS_PER_PAGE;
+      document.getElementById(`cau-${localIndex}`)?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  };
+
   // ------------------- RENDER -------------------
   if (loading) {
     return (
@@ -247,102 +279,138 @@ const DoTestPage: React.FC = () => {
             <Typography variant="body2" color="text.secondary">
               Tổng số câu: {baiLamData.cauHoi.length} | Đã làm: {soCauDaLam}/{baiLamData.cauHoi.length} | Đã cắm cờ: {soCauDaCamCo}
             </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              Trang {currentPage}/{totalPages}
+            </Typography>
           </Paper>
 
-          {baiLamData.cauHoi.map((item, index) => (
-            <Paper key={item.idCauHoiBaiKiemTra} sx={{ p: 3, mb: 2 }} id={`cau-${index}`}>
-              <Box sx={{ display: "flex", alignItems: "flex-start", mb: 2, gap: 1 }}>
-                <Chip label={`Câu ${index + 1}`} color="primary" size="small" sx={{ fontWeight: 600 }} />
-                {isCauHoiDaTraLoi(item.idCauHoiBaiKiemTra) && (
-                  <CheckCircleIcon sx={{ color: "#4caf50", fontSize: 20 }} />
-                )}
-                {savingQuestionId === item.idCauHoiBaiKiemTra && (
-                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                    Đang lưu...
-                  </Typography>
-                )}
-                
-                {/* Nút cắm cờ */}
-                <Box sx={{ ml: "auto" }}>
-                  <Tooltip title={flaggedQuestions.has(item.idCauHoiBaiKiemTra) ? "Bỏ cắm cờ" : "Cắm cờ"}>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => handleToggleFlag(item.idCauHoiBaiKiemTra, e)}
-                      sx={{
-                        color: flaggedQuestions.has(item.idCauHoiBaiKiemTra) ? "#ff9800" : "text.secondary",
-                      }}
-                    >
-                      {flaggedQuestions.has(item.idCauHoiBaiKiemTra) ? (
-                        <FlagIcon />
-                      ) : (
-                        <FlagOutlinedIcon />
-                      )}
-                    </IconButton>
-                  </Tooltip>
+          {currentQuestions.map((item, localIndex) => {
+            const globalIndex = (currentPage - 1) * QUESTIONS_PER_PAGE + localIndex;
+            return (
+              <Paper key={item.idCauHoiBaiKiemTra} sx={{ p: 3, mb: 2 }} id={`cau-${localIndex}`}>
+                <Box sx={{ display: "flex", alignItems: "flex-start", mb: 2, gap: 1 }}>
+                  <Chip label={`Câu ${globalIndex + 1}`} color="primary" size="small" sx={{ fontWeight: 600 }} />
+                  {isCauHoiDaTraLoi(item.idCauHoiBaiKiemTra) && (
+                    <CheckCircleIcon sx={{ color: "#4caf50", fontSize: 20 }} />
+                  )}
+                  {savingQuestionId === item.idCauHoiBaiKiemTra && (
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      Đang lưu...
+                    </Typography>
+                  )}
+                  
+                  {/* Nút cắm cờ */}
+                  <Box sx={{ ml: "auto" }}>
+                    <Tooltip title={flaggedQuestions.has(item.idCauHoiBaiKiemTra) ? "Bỏ cắm cờ" : "Cắm cờ"}>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => handleToggleFlag(item.idCauHoiBaiKiemTra, e)}
+                        sx={{
+                          color: flaggedQuestions.has(item.idCauHoiBaiKiemTra) ? "#ff9800" : "text.secondary",
+                        }}
+                      >
+                        {flaggedQuestions.has(item.idCauHoiBaiKiemTra) ? (
+                          <FlagIcon />
+                        ) : (
+                          <FlagOutlinedIcon />
+                        )}
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                 </Box>
-              </Box>
 
-              <Typography
-                variant="body1"
-                sx={{ fontWeight: 500, mb: 2 }}
-                dangerouslySetInnerHTML={{ __html: item.cauHoi.noiDung || "" }}
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 500, mb: 2 }}
+                  dangerouslySetInnerHTML={{ __html: item.cauHoi.noiDung || "" }}
+                />
+
+                {item.cauHoi.loai === "MotDung" ? (
+                  <RadioGroup
+                    value={dapAnDaChon[item.idCauHoiBaiKiemTra]?.[0] || ""}
+                    onChange={(e) =>
+                      handleChonDapAn(item.idCauHoiBaiKiemTra, Number(e.target.value), "MotDung")
+                    }
+                  >
+                    {item.dapAn.map((dapAn, idx) => (
+                      <FormControlLabel
+                        key={dapAn.id}
+                        value={dapAn.id}
+                        control={<Radio disabled={isLocked} />}
+                        label={
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Typography component="span" sx={{ fontWeight: 600, minWidth: "24px" }}>
+                              {String.fromCharCode(65 + idx)}.
+                            </Typography>
+                            <span dangerouslySetInnerHTML={{ __html: dapAn.noiDung }} />
+                          </Box>
+                        }
+                        sx={{
+                          border: "1px solid #e0e0e0",
+                          borderRadius: 1,
+                          px: 2,
+                          py: 0.5,
+                          mb: 1,
+                          alignItems: "center",
+                          "&:hover": { backgroundColor: isLocked ? "transparent" : "#f5f5f5" },
+                          opacity: isLocked ? 0.6 : 1,
+                        }}
+                      />
+                    ))}
+                  </RadioGroup>
+                ) : (
+                  <FormGroup>
+                    {item.dapAn.map((dapAn, idx) => (
+                      <FormControlLabel
+                        key={dapAn.id}
+                        control={
+                          <Checkbox
+                            checked={dapAnDaChon[item.idCauHoiBaiKiemTra]?.includes(dapAn.id) || false}
+                            onChange={() =>
+                              handleChonDapAn(item.idCauHoiBaiKiemTra, dapAn.id, "NhieuDung")
+                            }
+                            disabled={isLocked}
+                          />
+                        }
+                        label={
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Typography component="span" sx={{ fontWeight: 600, minWidth: "24px" }}>
+                              {String.fromCharCode(97 + idx)}.
+                            </Typography>
+                            <span dangerouslySetInnerHTML={{ __html: dapAn.noiDung }} />
+                          </Box>
+                        }
+                        sx={{
+                          border: "1px solid #e0e0e0",
+                          borderRadius: 1,
+                          px: 2,
+                          py: 0.5,
+                          mb: 1,
+                          alignItems: "center",
+                          "&:hover": { backgroundColor: isLocked ? "transparent" : "#f5f5f5" },
+                          opacity: isLocked ? 0.6 : 1,
+                        }}
+                      />
+                    ))}
+                  </FormGroup>
+                )}
+              </Paper>
+            );
+          })}
+
+          {/* Phân trang ở dưới */}
+          {totalPages > 1 && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 3, mb: 2 }}>
+              <Pagination 
+                count={totalPages} 
+                page={currentPage} 
+                onChange={handlePageChange}
+                color="primary"
+                size="large"
+                
               />
-
-              {item.cauHoi.loai === "MotDung" ? (
-                <RadioGroup
-                  value={dapAnDaChon[item.idCauHoiBaiKiemTra]?.[0] || ""}
-                  onChange={(e) =>
-                    handleChonDapAn(item.idCauHoiBaiKiemTra, Number(e.target.value), "MotDung")
-                  }
-                >
-                  {item.dapAn.map((dapAn) => (
-                    <FormControlLabel
-                      key={dapAn.id}
-                      value={dapAn.id}
-                      control={<Radio disabled={isLocked} />}
-                      label={<span dangerouslySetInnerHTML={{ __html: dapAn.noiDung }} />}
-                      sx={{
-                        border: "1px solid #e0e0e0",
-                        borderRadius: 1,
-                        px: 2,
-                        py: 0.5,
-                        mb: 1,
-                        "&:hover": { backgroundColor: isLocked ? "transparent" : "#f5f5f5" },
-                        opacity: isLocked ? 0.6 : 1,
-                      }}
-                    />
-                  ))}
-                </RadioGroup>
-              ) : (
-                <FormGroup>
-                  {item.dapAn.map((dapAn) => (
-                    <FormControlLabel
-                      key={dapAn.id}
-                      control={
-                        <Checkbox
-                          checked={dapAnDaChon[item.idCauHoiBaiKiemTra]?.includes(dapAn.id) || false}
-                          onChange={() =>
-                            handleChonDapAn(item.idCauHoiBaiKiemTra, dapAn.id, "NhieuDung")
-                          }
-                          disabled={isLocked}
-                        />
-                      }
-                      label={<span dangerouslySetInnerHTML={{ __html: dapAn.noiDung }} />}
-                      sx={{
-                        border: "1px solid #e0e0e0",
-                        borderRadius: 1,
-                        px: 2,
-                        py: 0.5,
-                        mb: 1,
-                        "&:hover": { backgroundColor: isLocked ? "transparent" : "#f5f5f5" },
-                        opacity: isLocked ? 0.6 : 1,
-                      }}
-                    />
-                  ))}
-                </FormGroup>
-              )}
-            </Paper>
-          ))}
+            </Box>
+          )}
         </Box>
 
         {/* Phải: timer + danh sách câu + hành động */}
@@ -373,17 +441,15 @@ const DoTestPage: React.FC = () => {
                         minWidth: 50,
                         minHeight: 50,
                         fontWeight: 600,
-                        // Nếu có cờ thì border màu cam
                         ...(isFlagged && {
                           border: "2px solid #ff9800",
                           backgroundColor: isDone ? undefined : "#fff3e0",
                         }),
                       }}
-                      onClick={() => document.getElementById(`cau-${index}`)?.scrollIntoView({ behavior: "smooth" })}
+                      onClick={() => navigateToQuestion(index)}
                     >
                       {index + 1}
                     </Button>
-                    {/* Icon cờ nhỏ góc trên bên phải */}
                     {isFlagged && (
                       <FlagIcon
                         sx={{
