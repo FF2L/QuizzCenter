@@ -232,10 +232,10 @@ useEffect(() => {
                 open={open}
                 onClose={handleClose}
               >
-                <MenuItem
+                {/* <MenuItem
                   onClick={() => {
                     if (!idBaiKiemTra) return;
-                    navigate(`/bai-kiem-tra/${idBaiKiemTra}/create-question-test`, {
+                    navigate(`/lecturer/bai-kiem-tra/${idBaiKiemTra}/create-question-test`, {
                       state: {
                         idBaiKiemTra: Number(idBaiKiemTra),
                         // idMonHoc: bai?.idMonHoc,          // nếu có
@@ -246,7 +246,7 @@ useEffect(() => {
                   }}
                 >
                   Tạo thủ công
-                </MenuItem>
+                </MenuItem> */}
                <MenuItem
   onClick={async () => {
     handleClose();

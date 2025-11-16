@@ -144,6 +144,46 @@ export class BaiLamSinhVienService {
         try {
           chiTietBaiLam.mangIdDapAn = mangIdDapAn;
           await manager.save(chiTietBaiLam);
+          const baiLam = await manager.findOne(BaiLamSinhVien, {
+            where: { id: chiTietBaiLam.idBaiLamSinhVien },
+          });
+          if (baiLam) {
+            const dsChiTiet = await manager.find(ChiTietBaiLam, {
+          where: { idBaiLamSinhVien: baiLam.id },
+        });
+
+        let tongDapAnDung = 0;
+        let tongDapAnToanBo = 0;
+
+        for (const ct of dsChiTiet) {
+          const ctch = await manager.findOne(ChiTietCauHoiBaiKiemTra, {
+            where: { id: ct.idCauHoiBaiKiemTra },
+            relations: ['cauHoi', 'cauHoi.dapAn'],
+          });
+
+          const cauHoi = await ctch?.cauHoi;
+          if (!cauHoi) continue;
+
+          const dsDapAn = await cauHoi.dapAn;
+          const dapAnDung = dsDapAn.filter(d => d.dapAnDung).map(d => d.id);
+
+          tongDapAnToanBo += dapAnDung.length;
+
+          const daChon = ct.mangIdDapAn ?? [];
+          const soDung = daChon.filter(id => dapAnDung.includes(id)).length;
+          tongDapAnDung += soDung;
+        }
+
+        const tongDiem = tongDapAnToanBo === 0 
+          ? 0 
+          : Number(((tongDapAnDung / tongDapAnToanBo) * 10).toFixed(1));
+
+        baiLam.tongDiem = tongDiem;
+        console.log('Cập nhật điểm tạm thời:', tongDiem);
+
+        await manager.save(baiLam);
+
+          }
           return { message: 'Lưu tạm thành công' };
         } catch (error) {
           throw new InternalServerErrorException('Lưu đáp án tạm thời thất bại');
