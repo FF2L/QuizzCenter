@@ -3,6 +3,10 @@ import {
   Avatar,
   Box,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   MenuItem,
   Stack,
@@ -26,7 +30,7 @@ type RowSV = {
   masinhvien: string;
   hotensinhvien: string;
   emailsinhvien: string;
-  anhDaiDienSinhVien?: string | null;
+  anhdaidiensinhvien?: string | null;
   gioitinhsinhvien: string;
   
 
@@ -40,11 +44,15 @@ const ThemSinhVienVaoLopHocPhan = () => {
   const [maSV, setMaSV] = useState("");
   const [rows, setRows] = useState<RowSV[]>([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1); // 1-based để khớp backend
+  const [page, setPage] = useState(1);
   const rowsPerPage = 10;
   const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedSV, setSelectedSV] = useState<RowSV | null>(null);
+      const [openImport, setOpenImport] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [errorRows, setErrorRows] = useState<any[]>([]);
+  const [thanhCong, setThanhCong] = useState('');
 
   const tenLopHoc = state?.tenLopHoc;
   const tenMonHoc = state?.tenMonHoc;
@@ -73,7 +81,7 @@ const ThemSinhVienVaoLopHocPhan = () => {
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idLopHocPhan, page, search]);
+  }, [idLopHocPhan, page, search, openImport]);
 
   const handleAdd = async () => {
     if (!maSV.trim()) {
@@ -123,6 +131,62 @@ const ThemSinhVienVaoLopHocPhan = () => {
       toast.error(String(msg));
     }
   };
+
+  //Xuất danh sách lớp học phần
+  const handleExport = async () => {
+    if (!idLopHocPhan) return;
+    const res = await AdminApi.xuatDanhSachSinhVienExcel(+idLopHocPhan);
+    if (res?.ok) {
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `DanhSachSinhVien_LopHocPhan_${tenLopHoc}_${tenMonHoc}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+    } else {
+      toast.error("Xuất danh sách thất bại");
+    }
+  };
+
+  //Nhập từ file excel
+    const handleOpenImport = () => {
+    setFile(null);
+    setThanhCong('');
+    setErrorRows([]);
+    setOpenImport(true);
+    };
+
+    const handleCloseImport = () => {
+    if (loading) return;
+    setOpenImport(false);
+    };
+
+    const handleSubmitImport = async () => {
+    if (!file) return;
+    if(!idLopHocPhan) return;
+    setLoading(true);
+    const res:any = await AdminApi.nhapDanhSachSinhVienExcel(+idLopHocPhan,file);
+    setLoading(false);
+    if (res?.ok !== false) {
+        const {thanhCong, thatBai} = res.data;
+        console.log('thanhCong', thanhCong);
+        console.log('thatBai', thatBai);
+        if(thatBai.length >0){
+            setThanhCong(`Số sinh viên được thêm thành công: ${thanhCong}`);
+            setErrorRows(thatBai);
+        }
+        if(thatBai.length === 0){
+             setOpenImport(false);
+        }
+    } else {
+        const err: any = res.error;
+        const mess = err.response?.data?.message
+        toast.error(mess);
+    }
+    };
+
+
 
   return (
     <Box
@@ -188,7 +252,12 @@ const ThemSinhVienVaoLopHocPhan = () => {
         </Stack>
 
         {/* Hàng thêm sinh viên */}
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={3} alignItems="center" justifyContent= "space-between">
+          {rows.length > 0 ?
+          (<Button variant="contained" onClick={handleExport}>Xuất danh sách lớp</Button>) :
+          (<Button variant="contained" disabled>Xuất danh sách lớp</Button>) }
+          
+          <Stack direction="row" spacing={2} alignItems="center">
           <TextField
             label="Nhập mã sinh viên"
             variant="outlined"
@@ -200,6 +269,8 @@ const ThemSinhVienVaoLopHocPhan = () => {
           <Button variant="contained" onClick={handleAdd}>
             Thêm
           </Button>
+          <Button variant="contained" onClick={handleOpenImport}>Nhập file excel </Button>
+          </Stack>
         </Stack>
 
         {/* Bảng danh sách */}
@@ -227,7 +298,7 @@ const ThemSinhVienVaoLopHocPhan = () => {
                 <TableRow key={`${sv.nd_id}-${sv.masinhvien}`}>
                   <TableCell>
                     <Avatar
-                      src={sv.anhDaiDienSinhVien ?? undefined}
+                      src={sv.anhdaidiensinhvien ?? undefined}
                       alt={sv.hotensinhvien}
                       sx={{ width: 36, height: 36 }}
                     />
@@ -270,6 +341,78 @@ const ThemSinhVienVaoLopHocPhan = () => {
             onClose={handleCloseConfirm}
             onConfirm={handleConfirmDelete}
             />
+
+            <Dialog
+            open={openImport}
+            onClose={handleCloseImport}
+            fullWidth
+            maxWidth="sm"
+            >
+            <DialogTitle>Nhập sinh viên từ file Excel</DialogTitle>
+
+            <DialogContent>
+
+                {/* Upload file */}
+                <Box mt={2}>
+                <Button
+                    variant="outlined"
+                    component="label"
+                    fullWidth
+                >
+                    {file ? file.name : "Chọn file Excel"}
+                    <input
+                    type="file"
+                    hidden
+                    accept=".xlsx,.xls"
+                    onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) setFile(f);
+                    }}
+                    />
+                </Button>
+                </Box>
+
+                {/* link tải file mẫu */}
+                <Box mt={1}>
+                <Button
+                    variant="text"
+                    size="small"
+                    href="/template/NhapDanhSachLop.xlsx"
+                    download
+                >
+                    📥 Tải về định dạng mẫu
+                </Button>
+                </Box>
+
+                {/* Hiển thị dòng lỗi nếu có */}
+                {errorRows.length > 0 && (
+                <Box mt={2}>
+                    <Typography> {thanhCong}</Typography>
+                    <Typography fontWeight="bold" mb={1}>
+                    Các dòng bị lỗi:
+                    </Typography>
+                    {errorRows.map((err, idx) => (
+                    <Typography key={idx} variant="body2" color="error">
+                        Dòng {err.row}: {err.message}
+                    </Typography>
+                    ))}
+                </Box>
+                )}
+            </DialogContent>
+
+            <DialogActions>
+                <Button onClick={handleCloseImport} disabled={loading}>
+                Hủy
+                </Button>
+                <Button
+                variant="contained"
+                onClick={handleSubmitImport}
+                disabled={!file || loading}
+                >
+                {loading ? "Đang xử lý..." : "Thêm vào hệ thống"}
+                </Button>
+            </DialogActions>
+            </Dialog>
     </Box>
   );
 };

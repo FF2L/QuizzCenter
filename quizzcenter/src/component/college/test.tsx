@@ -294,7 +294,7 @@ const CollegeTest: React.FC = () => {
         >
           <Tab label="Bài kiểm tra" />
           <Tab label="Bài luyện tập" />
-          <Tab label="Điểm số" />
+          {/* <Tab label="Điểm số" /> */}
         </Tabs>
       </Box>
 
@@ -405,13 +405,13 @@ const CollegeTest: React.FC = () => {
       )}
 
       {/* Tab điểm số */}
-      {tabValue === 2 && (
+      {/* {tabValue === 2 && (
         <Box sx={{ p: 3, textAlign: "center" }}>
           <Typography variant="h6" color="text.secondary">
             Chức năng Điểm số đang được phát triển
           </Typography>
         </Box>
-      )}
+      )} */}
     </Box>
   );
 };

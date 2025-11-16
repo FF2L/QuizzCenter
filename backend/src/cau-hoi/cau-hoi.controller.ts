@@ -33,7 +33,6 @@ export class CauHoiController {
   @Patch(':id')
   async update(@Param('id',ParseIntPipe) id: number, @Body() updateCauHoiDto: UpdateCauHoiDto,) {
 
-
     return await this.cauHoiService.capNhatCauHoi(id, updateCauHoiDto);
   }
 

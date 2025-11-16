@@ -55,8 +55,9 @@ export default function MenuBar({ role }: { role: string }) {
       if (path.includes('/lecturer/course') || path.includes('/lecturer/page/')) return 2;
       if (path.includes('/lecturer/class')) return 3;
     } else if (role === "SinhVien") {
-      if (path.includes('/quizzcenter/my/course')) return 1;
-      if (path === '/' || path.includes('/quizzcenter/my')) return 0;
+      if (path.includes('/quizzcenter/my/course')) return 2;
+      if ( path.includes('/quizzcenter/my/userProfile')) return 1;
+      if ( path.includes('/quizzcenter/my')) return 0;
     } else if (role === "Admin") {
       if (path.includes('/admin/qlnd')) return 2;
       if (path.includes('/admin/pllh')) return 3;
@@ -97,8 +98,8 @@ export default function MenuBar({ role }: { role: string }) {
     } else if( role === "SinhVien") {
       setMenuItems([
         { id: 0, title: "Trang chủ", icon: <Home />, path: "/quizzcenter/my" },
-        { id: 2, title: "Người dùng", icon: <Person />, path: "/quizzcenter/my/userProfile" },
-        { id: 1, title: "Lớp học", icon: <MenuBook />, path: "/quizzcenter/my/course" },
+        { id: 1, title: "Người dùng", icon: <Person />, path: "/quizzcenter/my/userProfile" },
+        { id: 2, title: "Lớp học", icon: <MenuBook />, path: "/quizzcenter/my/course" },
       ]);
     } else if( role === "Admin") {
       setMenuItems([

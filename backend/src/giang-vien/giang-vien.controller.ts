@@ -23,6 +23,7 @@ export class GiangVienController {
 
   @Get('all/admin')
   layTatCaGianVien(){
+    console.log("Fetching all lecturers with pagination");
     return this.giangVienService.layTatCaGiangVien();
   }
 

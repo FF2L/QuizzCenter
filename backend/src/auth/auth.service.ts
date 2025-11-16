@@ -139,6 +139,7 @@ export class AuthService {
         const hashRefeshToken = await argon2.hash(refeshToken)
         await this.nguoiDungService.timVaUpdateRefeshToken(idNguoiDUng, hashRefeshToken);
         const nguoiDung = await this.nguoiDungService.timMotNguoiDungTheoId(idNguoiDUng)
+        console.log(accessToken)
         return {accessToken, refeshToken, vaiTro: nguoiDung.vaiTro}
     }
 
