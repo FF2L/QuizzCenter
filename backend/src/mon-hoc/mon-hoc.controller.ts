@@ -74,6 +74,7 @@ export class MonHocController {
   @Get()
   async findAll(@Req() req, @Query('skip') skip: number, @Query('limit') limit: number, @Query('maMon') maMon: string, @Query('tenMon') tenMon: string) {
     console.log("User making request:", req.user);
+    console.log("Query parameters - skip:", skip, "limit:", limit, "maMon:", maMon, "tenMon:", tenMon);
      return await this.monHocService.layTatCaMonHocCuaGiangVien({ skip, limit, maMon, tenMon }, req.user.id);
   }
 

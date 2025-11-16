@@ -3,6 +3,19 @@ import { API_URL } from "./gobal.api";
 import { data } from "react-router-dom";
 
 export class LoginService {
+    static getAccessToken(path?: string): string {
+    const currentPath = path || window.location.pathname;
+  
+    if (currentPath.includes('/lecturer/')) {
+      return localStorage.getItem('accessTokenGV') || '';
+    } else if (currentPath.includes('/quizzcenter/')) {
+      return localStorage.getItem('accessTokenSV') || '';
+    } else if (currentPath.includes('/admin/')) {
+      return localStorage.getItem('accessTokenAD') || '';
+    }
+  
+    return '';
+  }
     static login = async (username: string, password: string) => {
         try {
             const res = await axios.post(`${API_URL}/auth/login`, {
@@ -49,11 +62,17 @@ export class LoginService {
             return {ok: false, error}
         }
     }
-    static logout = async (accessToken: string) =>{
+    static logout = async () =>{
+        const accessToken = this.getAccessToken();
+        console.log('Logging out with token:', accessToken);
+        if (!accessToken) {
+            return {ok: true, data: null};
+        }
         try{
             const res = await axios.post(`${API_URL}/auth/logout`, {}, {
                 headers: { Authorization: `Bearer ${accessToken}` }
             });
+            console.log('Logout Response:', res.data);
             return {ok: true, data: res.data}
         }catch(error){
             throw error;

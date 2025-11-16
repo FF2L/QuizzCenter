@@ -76,7 +76,7 @@ const Login: FC = () => {
       const { accessToken, refeshToken, vaiTro } = res.data;
       if (vaiTro === 'GiaoVien'){
         localStorage.setItem('accessTokenGV', accessToken);
-        localStorage.setItem('refreshTokenV', refeshToken);
+        localStorage.setItem('refreshTokenGV', refeshToken);
          setLoading(false);
         setNextPath('/lecturer/home');
     
