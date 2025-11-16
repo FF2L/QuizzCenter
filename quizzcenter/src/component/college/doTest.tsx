@@ -1,40 +1,16 @@
-import React, {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useCallback,
-} from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
-  Box,
-  Typography,
-  Button,
-  Paper,
-  Radio,
-  Checkbox,
-  RadioGroup,
-  FormControlLabel,
-  FormGroup,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  CircularProgress,
-  Alert,
-  Chip,
-  IconButton,
-  Tooltip,
-  Pagination,
+  Box, Typography, Button, Paper, Radio, Checkbox, RadioGroup,
+  FormControlLabel, FormGroup, Dialog, DialogTitle, DialogContent,
+  DialogActions, CircularProgress, Alert, Chip, IconButton, Tooltip,
+  Pagination
 } from "@mui/material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import FlagIcon from "@mui/icons-material/Flag";
 import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
-import {
-  BaiLamSinhVienApi,
-  BaiLamResponse,
-} from "../../services/bai-lam-sinh-vien.api";
+import { BaiLamSinhVienApi, BaiLamResponse } from "../../services/bai-lam-sinh-vien.api";
 
 type DapAnDaChon = Record<number, number[]>;
 
@@ -56,32 +32,25 @@ const DoTestPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const state = location.state as
-    | { baiKiemTra?: BaiKiemTraInfo; baiLamMoi?: BaiLamResponse }
-    | undefined;
+  const state = location.state as { baiKiemTra?: BaiKiemTraInfo; baiLamMoi?: BaiLamResponse } | undefined;
   const baiKiemTraInfo = state?.baiKiemTra;
   const baiLamResponseInit = state?.baiLamMoi;
 
   const [loading, setLoading] = useState(true);
   const [baiLamData, setBaiLamData] = useState<BaiLamResponse | null>(null);
   const [dapAnDaChon, setDapAnDaChon] = useState<DapAnDaChon>({});
-  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(
-    new Set()
-  );
+  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const [timeLeft, setTimeLeft] = useState(0);
-  const [timerKey, setTimerKey] = useState<string | null>(null);
-
   const [showNopBaiDialog, setShowNopBaiDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [savingQuestionId, setSavingQuestionId] = useState<number | null>(null);
   const [isLocked, setIsLocked] = useState(false);
 
   const autosubmitted = useRef(false);
+  const deadlineRef = useRef<number>(0);
   const baiLamDataRef = useRef<BaiLamResponse | null>(null);
-  useEffect(() => {
-    baiLamDataRef.current = baiLamData;
-  }, [baiLamData]);
+  useEffect(() => { baiLamDataRef.current = baiLamData; }, [baiLamData]);
 
   const isLuyenTap = baiKiemTraInfo?.loaiKiemTra === "LuyenTap";
   const DETAIL_PATH = `/quizzcenter/bai-kiem-tra-chi-tiet/${idBaiKiemTra}`;
@@ -99,12 +68,9 @@ const DoTestPage: React.FC = () => {
     return baiLamData.cauHoi.slice(startIndex, endIndex);
   }, [baiLamData, currentPage]);
 
-  const handlePageChange = (
-    _event: React.ChangeEvent<unknown>,
-    page: number
-  ) => {
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // ------------------- INIT BÀI LÀM -------------------
@@ -118,12 +84,8 @@ const DoTestPage: React.FC = () => {
         if (baiLamResponseInit) {
           response = baiLamResponseInit;
         } else {
-          const all = await BaiLamSinhVienApi.layBaiLamSinhVien(
-            Number(idBaiKiemTra)
-          );
-          const dangLam = (Array.isArray(all) ? all : []).find(
-            (x: any) => x.trangThaiBaiLam === "DangLam"
-          );
+          const all = await BaiLamSinhVienApi.layBaiLamSinhVien(Number(idBaiKiemTra));
+          const dangLam = (Array.isArray(all) ? all : []).find((x: any) => x.trangThaiBaiLam === "DangLam");
           if (dangLam) {
             response = await BaiLamSinhVienApi.tiepTucLamBai(dangLam.id);
           } else {
@@ -133,7 +95,6 @@ const DoTestPage: React.FC = () => {
 
         setBaiLamData(response);
 
-        // Khôi phục đáp án đã chọn
         const saved: DapAnDaChon = {};
         response.cauHoi.forEach((item) => {
           if (item.luaChon?.mangIdDapAn?.length) {
@@ -142,28 +103,13 @@ const DoTestPage: React.FC = () => {
         });
         setDapAnDaChon(saved);
 
-        // Khởi tạo timer kiểu A (đếm giảm & lưu localStorage)
-        // Cho bài kiểm tra (hoặc bất kỳ bài có thoiGianLam)
-        if (baiKiemTraInfo?.thoiGianLam) {
-          const key = `exam_timeLeft_${response.baiLam.id}`;
-          setTimerKey(key);
-
-          let initial = baiKiemTraInfo.thoiGianLam ?? 3600;
-
-          const raw = localStorage.getItem(key);
-          if (raw) {
-            try {
-              const parsed = JSON.parse(raw);
-              if (typeof parsed.timeLeft === "number") {
-                initial = parsed.timeLeft;
-              }
-            } catch {
-              // ignore parse error, dùng default
-            }
-          }
-
-          setTimeLeft(initial);
-          localStorage.setItem(key, JSON.stringify({ timeLeft: initial }));
+        if (!isLuyenTap) {
+          const startMs = new Date(response.baiLam.thoiGianBatDau).getTime();
+          const byDuration = startMs + ((baiKiemTraInfo?.thoiGianLam ?? 3600) * 1000);
+          const byWindow = baiKiemTraInfo?.thoiGianKetThuc
+            ? new Date(baiKiemTraInfo.thoiGianKetThuc).getTime()
+            : Number.POSITIVE_INFINITY;
+          deadlineRef.current = Math.min(byDuration, byWindow);
         }
       } catch (e: any) {
         console.error("init error:", e);
@@ -175,9 +121,9 @@ const DoTestPage: React.FC = () => {
     };
 
     void init();
-  }, [idBaiKiemTra, baiLamResponseInit, baiKiemTraInfo, navigate, DETAIL_PATH]);
+  }, [idBaiKiemTra]);
 
-  // ------------------- AUTO SUBMIT (khi timeLeft = 0) -------------------
+  // ------------------- AUTO SUBMIT -------------------
   const handleAutoSubmit = useCallback(async () => {
     if (autosubmitted.current) return;
     const data = baiLamDataRef.current;
@@ -186,90 +132,59 @@ const DoTestPage: React.FC = () => {
     autosubmitted.current = true;
     setIsLocked(true);
 
-    // Xoá timer trong localStorage
-    if (timerKey) {
-      localStorage.removeItem(timerKey);
-    }
-
     try {
+      console.log("⏰ Hết giờ! Auto submit...");
       await BaiLamSinhVienApi.nopBai(data.baiLam.id);
+      console.log("✅ Auto submit thành công");
       navigate(DETAIL_PATH, { state: baiKiemTraInfo });
     } catch (e) {
-      console.error("Auto submit failed:", e);
+      console.error("❌ Auto submit failed:", e);
       navigate(DETAIL_PATH, { state: baiKiemTraInfo });
     }
-  }, [navigate, DETAIL_PATH, baiKiemTraInfo, timerKey]);
+  }, [navigate, DETAIL_PATH, baiKiemTraInfo]);
 
-  // ------------------- TIMER KIỂU A (chỉ chạy khi đang ở trang) -------------------
+  // ------------------- TIMER -------------------
   useEffect(() => {
-    // Không có bài làm hoặc không có thời gian => không timer
-    if (!baiLamData || !timerKey || !baiKiemTraInfo?.thoiGianLam) return;
+    if (!baiLamData || isLuyenTap) return;
 
     const tick = () => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          // Hết giờ
-          localStorage.removeItem(timerKey);
-          void handleAutoSubmit();
-          return 0;
-        }
-        const next = prev - 1;
-        localStorage.setItem(timerKey, JSON.stringify({ timeLeft: next }));
-        return next;
-      });
+      const remain = Math.max(0, Math.floor((deadlineRef.current - Date.now()) / 1000));
+      setTimeLeft(remain);
+      if (remain <= 0) handleAutoSubmit();
     };
 
+    tick();
     const id = setInterval(tick, 1000);
-
-    const handleBeforeUnload = () => {
-      // Lưu lại timeLeft hiện tại trước khi reload/đóng tab
-      localStorage.setItem(timerKey, JSON.stringify({ timeLeft }));
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("visibilitychange", tick);
 
     return () => {
       clearInterval(id);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("visibilitychange", tick);
     };
-  }, [baiLamData, timerKey, baiKiemTraInfo, handleAutoSubmit, timeLeft]);
+  }, [baiLamData, isLuyenTap, handleAutoSubmit]);
 
   // ------------------- FORMAT TIME -------------------
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = seconds % 60;
-    return `${h.toString().padStart(2, "0")}:${m
-      .toString()
-      .padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+    return `${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")}`;
   };
 
   // ------------------- SAVE 1 CÂU -------------------
-  const saveOneQuestion = async (
-    idChiTietBaiLam: number,
-    mangIdDapAn: number[]
-  ) => {
+  const saveOneQuestion = async (idChiTietBaiLam: number, mangIdDapAn: number[]) => {
     if (!baiLamData) return;
     try {
       setSavingQuestionId(idChiTietBaiLam);
-      await BaiLamSinhVienApi.luuTamDapAn(
-        baiLamData.baiLam.id,
-        [{ idChiTietBaiLam, mangIdDapAn }]
-      );
+      await BaiLamSinhVienApi.luuTamDapAn(baiLamData.baiLam.id, [{ idChiTietBaiLam, mangIdDapAn }]);
     } catch (e) {
       console.error("Lưu đáp án thất bại:", e);
     } finally {
-      setSavingQuestionId((curr) =>
-        curr === idChiTietBaiLam ? null : curr
-      );
+      setSavingQuestionId((curr) => (curr === idChiTietBaiLam ? null : curr));
     }
   };
 
-  const handleChonDapAn = (
-    idChiTietBaiLam: number,
-    idDapAn: number,
-    loaiCauHoi: string
-  ) => {
+  const handleChonDapAn = (idChiTietBaiLam: number, idDapAn: number, loaiCauHoi: string) => {
     if (isLocked) return;
     setDapAnDaChon((prev) => {
       let newArr: number[];
@@ -277,9 +192,7 @@ const DoTestPage: React.FC = () => {
         newArr = [idDapAn];
       } else {
         const current = prev[idChiTietBaiLam] || [];
-        newArr = current.includes(idDapAn)
-          ? current.filter((x) => x !== idDapAn)
-          : [...current, idDapAn];
+        newArr = current.includes(idDapAn) ? current.filter((x) => x !== idDapAn) : [...current, idDapAn];
       }
       void saveOneQuestion(idChiTietBaiLam, newArr);
       return { ...prev, [idChiTietBaiLam]: newArr };
@@ -287,10 +200,7 @@ const DoTestPage: React.FC = () => {
   };
 
   // ------------------- CẮM CỜ -------------------
-  const handleToggleFlag = (
-    idChiTietBaiLam: number,
-    event: React.MouseEvent
-  ) => {
+  const handleToggleFlag = (idChiTietBaiLam: number, event: React.MouseEvent) => {
     event.stopPropagation();
     setFlaggedQuestions((prev) => {
       const newSet = new Set(prev);
@@ -309,12 +219,6 @@ const DoTestPage: React.FC = () => {
     try {
       setIsSubmitting(true);
       const result = await BaiLamSinhVienApi.nopBai(baiLamData.baiLam.id);
-
-      // Xoá timer khi nộp bài thủ công
-      if (timerKey) {
-        localStorage.removeItem(timerKey);
-      }
-
       alert(`Nộp bài thành công! Điểm: ${result.tongDiem}/10`);
       navigate(DETAIL_PATH, { state: baiKiemTraInfo });
     } catch (e: any) {
@@ -343,23 +247,14 @@ const DoTestPage: React.FC = () => {
     setCurrentPage(page);
     setTimeout(() => {
       const localIndex = globalIndex % QUESTIONS_PER_PAGE;
-      document
-        .getElementById(`cau-${localIndex}`)
-        ?.scrollIntoView({ behavior: "smooth" });
+      document.getElementById(`cau-${localIndex}`)?.scrollIntoView({ behavior: "smooth" });
     }, 100);
   };
 
   // ------------------- RENDER -------------------
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-        }}
-      >
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
         <CircularProgress />
       </Box>
     );
@@ -374,89 +269,44 @@ const DoTestPage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: "100vh", backgroundColor: "#f5f5f5", py: 3 }}>
-      <Box
-        sx={{
-          maxWidth: 1400,
-          mx: "auto",
-          px: 2,
-          display: "flex",
-          gap: 3,
-          flexWrap: "wrap",
-        }}
-      >
+      <Box sx={{ maxWidth: 1400, mx: "auto", px: 2, display: "flex", gap: 3, flexWrap: "wrap" }}>
         {/* Trái: câu hỏi */}
         <Box sx={{ flex: "1 1 65%", minWidth: 300 }}>
           <Paper sx={{ p: 3, mb: 2 }}>
-            <Typography
-              variant="h5"
-              sx={{ fontWeight: 700, color: "#e91e63", mb: 1 }}
-            >
+            <Typography variant="h5" sx={{ fontWeight: 700, color: "#e91e63", mb: 1 }}>
               {baiKiemTraInfo?.tenBaiKiemTra || "Bài kiểm tra"}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Tổng số câu: {baiLamData.cauHoi.length} | Đã làm: {soCauDaLam}/
-              {baiLamData.cauHoi.length} | Đã cắm cờ: {soCauDaCamCo}
+              Tổng số câu: {baiLamData.cauHoi.length} | Đã làm: {soCauDaLam}/{baiLamData.cauHoi.length} | Đã cắm cờ: {soCauDaCamCo}
             </Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mt: 0.5 }}
-            >
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               Trang {currentPage}/{totalPages}
             </Typography>
           </Paper>
 
           {currentQuestions.map((item, localIndex) => {
-            const globalIndex =
-              (currentPage - 1) * QUESTIONS_PER_PAGE + localIndex;
+            const globalIndex = (currentPage - 1) * QUESTIONS_PER_PAGE + localIndex;
             return (
-              <Paper
-                key={item.idChiTietBaiLam}
-                sx={{ p: 3, mb: 2 }}
-                id={`cau-${localIndex}`}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    mb: 2,
-                    gap: 1,
-                  }}
-                >
-                  <Chip
-                    label={`Câu ${globalIndex + 1}`}
-                    color="primary"
-                    size="small"
-                    sx={{ fontWeight: 600 }}
-                  />
+              <Paper key={item.idChiTietBaiLam} sx={{ p: 3, mb: 2 }} id={`cau-${localIndex}`}>
+                <Box sx={{ display: "flex", alignItems: "flex-start", mb: 2, gap: 1 }}>
+                  <Chip label={`Câu ${globalIndex + 1}`} color="primary" size="small" sx={{ fontWeight: 600 }} />
                   {isCauHoiDaTraLoi(item.idChiTietBaiLam) && (
                     <CheckCircleIcon sx={{ color: "#4caf50", fontSize: 20 }} />
                   )}
                   {savingQuestionId === item.idChiTietBaiLam && (
-                    <Typography
-                      variant="caption"
-                      sx={{ color: "text.secondary" }}
-                    >
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
                       Đang lưu...
                     </Typography>
                   )}
-
+                  
                   {/* Nút cắm cờ */}
                   <Box sx={{ ml: "auto" }}>
-                    <Tooltip
-                      title={
-                        flaggedQuestions.has(item.idChiTietBaiLam)
-                          ? "Bỏ cắm cờ"
-                          : "Cắm cờ"
-                      }
-                    >
+                    <Tooltip title={flaggedQuestions.has(item.idChiTietBaiLam) ? "Bỏ cắm cờ" : "Cắm cờ"}>
                       <IconButton
                         size="small"
                         onClick={(e) => handleToggleFlag(item.idChiTietBaiLam, e)}
                         sx={{
-                          color: flaggedQuestions.has(item.idChiTietBaiLam)
-                            ? "#ff9800"
-                            : "text.secondary",
+                          color: flaggedQuestions.has(item.idChiTietBaiLam) ? "#ff9800" : "text.secondary",
                         }}
                       >
                         {flaggedQuestions.has(item.idChiTietBaiLam) ? (
@@ -472,20 +322,14 @@ const DoTestPage: React.FC = () => {
                 <Typography
                   variant="body1"
                   sx={{ fontWeight: 500, mb: 2 }}
-                  dangerouslySetInnerHTML={{
-                    __html: item.cauHoi.noiDung || "",
-                  }}
+                  dangerouslySetInnerHTML={{ __html: item.cauHoi.noiDung || "" }}
                 />
 
                 {item.cauHoi.loai === "MotDung" ? (
                   <RadioGroup
                     value={dapAnDaChon[item.idChiTietBaiLam]?.[0] || ""}
                     onChange={(e) =>
-                      handleChonDapAn(
-                        item.idChiTietBaiLam,
-                        Number(e.target.value),
-                        "MotDung"
-                      )
+                      handleChonDapAn(item.idChiTietBaiLam, Number(e.target.value), "MotDung")
                     }
                   >
                     {item.dapAn.map((dapAn, idx) => (
@@ -494,24 +338,11 @@ const DoTestPage: React.FC = () => {
                         value={dapAn.id}
                         control={<Radio disabled={isLocked} />}
                         label={
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                            }}
-                          >
-                            <Typography
-                              component="span"
-                              sx={{ fontWeight: 600, minWidth: "24px" }}
-                            >
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Typography component="span" sx={{ fontWeight: 600, minWidth: "24px" }}>
                               {String.fromCharCode(65 + idx)}.
                             </Typography>
-                            <span
-                              dangerouslySetInnerHTML={{
-                                __html: dapAn.noiDung,
-                              }}
-                            />
+                            <span dangerouslySetInnerHTML={{ __html: dapAn.noiDung }} />
                           </Box>
                         }
                         sx={{
@@ -521,11 +352,7 @@ const DoTestPage: React.FC = () => {
                           py: 0.5,
                           mb: 1,
                           alignItems: "center",
-                          "&:hover": {
-                            backgroundColor: isLocked
-                              ? "transparent"
-                              : "#f5f5f5",
-                          },
+                          "&:hover": { backgroundColor: isLocked ? "transparent" : "#f5f5f5" },
                           opacity: isLocked ? 0.6 : 1,
                         }}
                       />
@@ -538,40 +365,19 @@ const DoTestPage: React.FC = () => {
                         key={dapAn.id}
                         control={
                           <Checkbox
-                            checked={
-                              dapAnDaChon[item.idChiTietBaiLam]?.includes(
-                                dapAn.id
-                              ) || false
-                            }
+                            checked={dapAnDaChon[item.idChiTietBaiLam]?.includes(dapAn.id) || false}
                             onChange={() =>
-                              handleChonDapAn(
-                                item.idChiTietBaiLam,
-                                dapAn.id,
-                                "NhieuDung"
-                              )
+                              handleChonDapAn(item.idChiTietBaiLam, dapAn.id, "NhieuDung")
                             }
                             disabled={isLocked}
                           />
                         }
                         label={
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                            }}
-                          >
-                            <Typography
-                              component="span"
-                              sx={{ fontWeight: 600, minWidth: "24px" }}
-                            >
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Typography component="span" sx={{ fontWeight: 600, minWidth: "24px" }}>
                               {String.fromCharCode(97 + idx)}.
                             </Typography>
-                            <span
-                              dangerouslySetInnerHTML={{
-                                __html: dapAn.noiDung,
-                              }}
-                            />
+                            <span dangerouslySetInnerHTML={{ __html: dapAn.noiDung }} />
                           </Box>
                         }
                         sx={{
@@ -581,11 +387,7 @@ const DoTestPage: React.FC = () => {
                           py: 0.5,
                           mb: 1,
                           alignItems: "center",
-                          "&:hover": {
-                            backgroundColor: isLocked
-                              ? "transparent"
-                              : "#f5f5f5",
-                          },
+                          "&:hover": { backgroundColor: isLocked ? "transparent" : "#f5f5f5" },
                           opacity: isLocked ? 0.6 : 1,
                         }}
                       />
@@ -598,87 +400,40 @@ const DoTestPage: React.FC = () => {
 
           {/* Phân trang ở dưới */}
           {totalPages > 1 && (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                mt: 3,
-                mb: 2,
-              }}
-            >
-              <Pagination
-                count={totalPages}
-                page={currentPage}
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 3, mb: 2 }}>
+              <Pagination 
+                count={totalPages} 
+                page={currentPage} 
                 onChange={handlePageChange}
                 color="primary"
                 size="large"
+                
               />
             </Box>
           )}
         </Box>
 
         {/* Phải: timer + danh sách câu + hành động */}
-        <Box
-          sx={{
-            flex: "1 1 30%",
-            minWidth: 250,
-            position: "sticky",
-            top: 20,
-            height: "fit-content",
-          }}
-        >
+        <Box sx={{ flex: "1 1 30%", minWidth: 250, position: "sticky", top: 20, height: "fit-content" }}>
           <Paper sx={{ p: 3 }}>
-            {baiKiemTraInfo?.thoiGianLam && (
-              <Box
-                sx={{
-                  textAlign: "center",
-                  mb: 3,
-                  p: 2,
-                  backgroundColor:
-                    timeLeft < 300 ? "#ffebee" : "#e3f2fd",
-                  borderRadius: 2,
-                }}
-              >
-                <AccessTimeIcon
-                  sx={{
-                    fontSize: 40,
-                    color: timeLeft < 300 ? "#f44336" : "#2196f3",
-                    mb: 1,
-                  }}
-                />
-                <Typography
-                  variant="h4"
-                  sx={{
-                    fontWeight: 700,
-                    color: timeLeft < 300 ? "#f44336" : "#2196f3",
-                  }}
-                >
+            {!isLuyenTap && (
+              <Box sx={{ textAlign: "center", mb: 3, p: 2, backgroundColor: timeLeft < 300 ? "#ffebee" : "#e3f2fd", borderRadius: 2 }}>
+                <AccessTimeIcon sx={{ fontSize: 40, color: timeLeft < 300 ? "#f44336" : "#2196f3", mb: 1 }} />
+                <Typography variant="h4" sx={{ fontWeight: 700, color: timeLeft < 300 ? "#f44336" : "#2196f3" }}>
                   {formatTime(timeLeft)}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Thời gian còn lại
-                </Typography>
+                <Typography variant="body2" color="text.secondary">Thời gian còn lại</Typography>
               </Box>
             )}
 
-            <Typography
-              variant="subtitle1"
-              sx={{ fontWeight: 600, mb: 2 }}
-            >
-              Danh sách câu hỏi
-            </Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Danh sách câu hỏi</Typography>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
               {baiLamData.cauHoi.map((item, index) => {
-                const isFlagged = flaggedQuestions.has(
-                  item.idChiTietBaiLam
-                );
+                const isFlagged = flaggedQuestions.has(item.idChiTietBaiLam);
                 const isDone = isCauHoiDaTraLoi(item.idChiTietBaiLam);
-
+                
                 return (
-                  <Box
-                    key={item.idChiTietBaiLam}
-                    sx={{ position: "relative" }}
-                  >
+                  <Box key={item.idChiTietBaiLam} sx={{ position: "relative" }}>
                     <Button
                       variant={isDone ? "contained" : "outlined"}
                       color={isDone ? "success" : "inherit"}
@@ -688,9 +443,7 @@ const DoTestPage: React.FC = () => {
                         fontWeight: 600,
                         ...(isFlagged && {
                           border: "2px solid #ff9800",
-                          backgroundColor: isDone
-                            ? undefined
-                            : "#fff3e0",
+                          backgroundColor: isDone ? undefined : "#fff3e0",
                         }),
                       }}
                       onClick={() => navigateToQuestion(index)}
@@ -718,12 +471,7 @@ const DoTestPage: React.FC = () => {
               color="error"
               fullWidth
               size="large"
-              sx={{
-                mt: 3,
-                py: 1.5,
-                fontWeight: 600,
-                fontSize: "1.1rem",
-              }}
+              sx={{ mt: 3, py: 1.5, fontWeight: 600, fontSize: "1.1rem" }}
               onClick={() => setShowNopBaiDialog(true)}
               disabled={isLocked}
             >
@@ -733,42 +481,21 @@ const DoTestPage: React.FC = () => {
         </Box>
       </Box>
 
-      <Dialog
-        open={showNopBaiDialog}
-        onClose={() => setShowNopBaiDialog(false)}
-      >
+      <Dialog open={showNopBaiDialog} onClose={() => setShowNopBaiDialog(false)}>
         <DialogTitle>Xác nhận nộp bài</DialogTitle>
         <DialogContent>
-          <Typography>
-            Bạn đã làm {soCauDaLam}/{baiLamData.cauHoi.length} câu.
-          </Typography>
+          <Typography>Bạn đã làm {soCauDaLam}/{baiLamData.cauHoi.length} câu.</Typography>
           {soCauDaCamCo > 0 && (
             <Typography sx={{ mt: 1, color: "#ff9800" }}>
               ⚠️ Bạn còn {soCauDaCamCo} câu đã cắm cờ chưa xem lại.
             </Typography>
           )}
-          <Typography sx={{ mt: 1 }}>
-            Bạn có chắc chắn muốn nộp bài không?
-          </Typography>
+          <Typography sx={{ mt: 1 }}>Bạn có chắc chắn muốn nộp bài không?</Typography>
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={() => setShowNopBaiDialog(false)}
-            disabled={isSubmitting}
-          >
-            Hủy
-          </Button>
-          <Button
-            onClick={handleNopBai}
-            variant="contained"
-            color="error"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <CircularProgress size={24} />
-            ) : (
-              "Nộp bài"
-            )}
+          <Button onClick={() => setShowNopBaiDialog(false)} disabled={isSubmitting}>Hủy</Button>
+          <Button onClick={handleNopBai} variant="contained" color="error" disabled={isSubmitting}>
+            {isSubmitting ? <CircularProgress size={24} /> : "Nộp bài"}
           </Button>
         </DialogActions>
       </Dialog>

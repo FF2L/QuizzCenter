@@ -225,6 +225,7 @@ export default function CreateQuestionForTest() {
       });
 
       if (!res.ok) {
+        console.log("formData", formData);
         const text = await res.text();
         throw new Error(`HTTP ${res.status}: ${text}`);
       }

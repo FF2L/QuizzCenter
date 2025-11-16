@@ -517,9 +517,11 @@ async thongKe(idLopHocPhan: number, idBaiKiemTra:number) {
       if (sv.diem < 5) soSVCoDiemBeHon5++;
       if (sv.diem === 10) soSVCoDiemBang10++;
 
-      const diemBHB = Math.ceil(sv.diem);
+      let diemBHB = Math.ceil(sv.diem);
+      if (diemBHB === 0) diemBHB = 1;
         soSVCoDiemBHB[diemBHB]++;
     }
+    console.log( soSVCoDiemBHB[1]);
 
     return {
       diemCaoNhat,

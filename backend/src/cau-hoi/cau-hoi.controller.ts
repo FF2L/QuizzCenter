@@ -19,6 +19,7 @@ export class CauHoiController {
 
   @Post()
   async taoCauHoi(@Body() creaCauHoiDto: CreateCauHoiDto){
+    console.log(creaCauHoiDto);
     return await this.cauHoiService.taoMotCauHoi(creaCauHoiDto);
   }
 
