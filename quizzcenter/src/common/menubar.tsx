@@ -45,13 +45,13 @@ export default function MenuBar({ role }: { role: string }) {
   const [collapsed, setCollapsed] = useState(false);
   const [userName, setUserName] = useState("");
   const [avatar, setAvatar] = useState("");
+  const [vaiTro, setVaiTro] = useState('');
 
   const handleToggle = (id: number) => setOpenParent(openParent === id ? null : id);
 
   // Xác định item được chọn dựa vào URL hiện tại
   const getSelectedItem = () => {
     const path = location.pathname;
-    
     if (role === "GiaoVien") {
       if (path.includes('/lecturer/home')) return 0;
       if (path.includes('/lecturer/user')) return 1;
@@ -72,7 +72,9 @@ export default function MenuBar({ role }: { role: string }) {
   };
   useEffect(() => {
     async function fetchUser() {
+      setVaiTro(checkRole());
       const res = await UserService.getUserInfo();
+
   
       if (res.ok && res.data) {
         setUserName(res.data.hoTen);
@@ -82,6 +84,20 @@ export default function MenuBar({ role }: { role: string }) {
   
     fetchUser();
   }, []);
+
+  const checkRole = () => {
+   const currentPath = window.location.pathname;
+  
+    if (currentPath.includes('/lecturer/')) {
+      return "Giảng viên";
+    } else if (currentPath.includes('/quizzcenter/')) {
+      return "Sinh viên";
+    } else if (currentPath.includes('/admin/')) {
+      return "Admin";
+    }
+
+    return '';
+  }
   
   const handleLogout = async () => {
     let accessToken = ''
@@ -98,7 +114,7 @@ export default function MenuBar({ role }: { role: string }) {
       localStorage.removeItem("accessTokenAD");
       localStorage.removeItem("refreshTokenAD");
     }
-    const res = await LoginService.logout(accessToken);
+    const res = await LoginService.logout();
     navigate("/login");
   };
 
@@ -155,6 +171,14 @@ export default function MenuBar({ role }: { role: string }) {
           gap: collapsed ? 1 : 0,
         }}
       >
+          {!collapsed && (
+          <Typography
+            sx={{ mt: 2, fontWeight: 600, fontSize: 18, color: "#fff" ,pb:3 }}
+          >
+           {vaiTro}
+          </Typography>
+        )}
+          {!collapsed && (
         <Box
           sx={{
             width: 80,
@@ -172,6 +196,7 @@ export default function MenuBar({ role }: { role: string }) {
             alt="avatar"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
         </Box>
+        )}
         {!collapsed && (
           <Typography
             sx={{ mt: 2, fontWeight: 600, fontSize: 18, color: "#fff" }}
