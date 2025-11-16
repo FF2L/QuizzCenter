@@ -56,6 +56,23 @@ const BaiKiemTraDetail: React.FC = () => {
     setAnchorEl(null);
   };
 
+  // ⭐ THÊM: Kiểm tra xem bài kiểm tra đã bắt đầu chưa
+  const isBaiKiemTraStarted = () => {
+    if (!bai) return false;
+    const now = new Date();
+    const startTime = new Date(bai.thoiGianBatDau);
+    return now >= startTime; // Trả về true nếu đã đến hoặc qua thời gian bắt đầu
+  };
+
+  // ⭐ THÊM: Kiểm tra xem có thể chỉnh sửa không (chưa bắt đầu VÀ chưa kết thúc)
+  const canEdit = () => {
+    if (!bai) return false;
+    const now = new Date();
+    const startTime = new Date(bai.thoiGianBatDau);
+    const endTime = new Date(bai.thoiGianKetThuc);
+    return now < startTime && now < endTime;
+  };
+
   // fetch chi tiết bài kiểm tra
   useEffect(() => {
     const fetchDetail = async () => {
@@ -126,7 +143,6 @@ const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null
 };
 
   // fetch câu hỏi
-  // fetch câu hỏi
 useEffect(() => {
   const fetchCauHoi = async () => {
     if (!idBaiKiemTra || !bai) return;
@@ -137,7 +153,7 @@ useEffect(() => {
         `http://localhost:3000/bai-kiem-tra/${idBaiKiemTra}/chi-tiet-cau-hoi?skip=${skip}&limit=${limit}`,
         {
           headers: {
-            "Authorization": `Bearer ${accessToken}`, // thêm token
+            "Authorization": `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
         }
@@ -217,14 +233,29 @@ useEffect(() => {
             <Typography variant="h3" sx={{ fontWeight: "medium", fontSize: "30px", color: "black"}}>{bai.tenBaiKiemTra}</Typography>
             </Box>
             <div>
-              {(new Date(bai.thoiGianKetThuc) > new Date()) && (
+              {/* ⭐ THAY ĐỔI: Sử dụng canEdit() thay vì chỉ kiểm tra thoiGianKetThuc */}
+              {canEdit() && (
                 <Button
-                variant="contained"
-                color="primary"
-                onClick={handleClick}
-              >
-                Thêm câu hỏi
-              </Button>
+                  variant="contained"
+                  color="primary"
+                  onClick={handleClick}
+                >
+                  Thêm câu hỏi
+                </Button>
+              )}
+              
+              {/* ⭐ THÊM: Thông báo nếu đã bắt đầu */}
+              {isBaiKiemTraStarted() && !canEdit() && (
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: "#d32f2f", 
+                    fontStyle: "italic",
+                    mt: 1
+                  }}
+                >
+                  ⚠️ Bài kiểm tra đã bắt đầu, không thể chỉnh sửa
+                </Typography>
               )}
               
               <Menu
@@ -232,48 +263,29 @@ useEffect(() => {
                 open={open}
                 onClose={handleClose}
               >
-                {/* <MenuItem
-                  onClick={() => {
+               <MenuItem
+                  onClick={async () => {
+                    handleClose();
                     if (!idBaiKiemTra) return;
-                    navigate(`/lecturer/bai-kiem-tra/${idBaiKiemTra}/create-question-test`, {
+
+                    const mh = await fetchidMonHoc();
+                    if (!mh) {
+                      alert("Không lấy được môn học!");
+                      return;
+                    }
+
+                    navigate(`/lecturer/select-from-bank`, {
                       state: {
                         idBaiKiemTra: Number(idBaiKiemTra),
-                        // idMonHoc: bai?.idMonHoc,          // nếu có
-                        // tenMonHoc: bai?.tenMonHoc,        // nếu có
-                        tenBaiKiemTra: bai?.tenBaiKiemTra // nếu có
-                      }
+                        idMonHoc,                   
+                        tenMonHoc: mh.tenMonHoc,
+                        tenBaiKiemTra: bai?.tenBaiKiemTra,
+                      },
                     });
                   }}
                 >
-                  Tạo thủ công
-                </MenuItem> */}
-               <MenuItem
-  onClick={async () => {
-    handleClose();
-    if (!idBaiKiemTra) return;
-
-    const mh = await fetchidMonHoc();       // 🔴 chờ fetch xong
-    if (!mh) {
-      alert("Không lấy được môn học!");
-      return;
-    }
-
-    navigate(`/lecturer/select-from-bank`, {
-      state: {
-        idBaiKiemTra: Number(idBaiKiemTra),
-        idMonHoc,                   
-        tenMonHoc: mh.tenMonHoc,
-        tenBaiKiemTra: bai?.tenBaiKiemTra,
-      },
-    });
-  }}
->
-  Ngân hàng câu hỏi
-</MenuItem>
-
-                {/* <MenuItem onClick={() => { handleClose(); alert("Excel"); }}>
-                  Excel
-                </MenuItem> */}
+                  Ngân hàng câu hỏi
+                </MenuItem>
               </Menu>
             </div>
           </Stack>
@@ -299,14 +311,6 @@ useEffect(() => {
       <strong>Loại:</strong>&nbsp;{bai.loaiKiemTra}
     </Typography>
   </Box>
-
-  {/* Số lần làm */}
-  {/* <Box sx={{ display: "flex", alignItems: "center" }}>
-    <AssignmentIcon sx={{ color: "#00796b", mr: 1 }} />
-    <Typography variant="body1">
-      <strong>Số lần làm:</strong>&nbsp;{bai.soLanLam}
-    </Typography>
-  </Box> */}
 
   {/* Thời gian làm */}
   <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -378,18 +382,17 @@ useEffect(() => {
 
                   <Stack direction="row" spacing={1}  sx={{ flexShrink: 0 }}>
                     
-                    {/* Cập nhật */}
-                    {(new Date(bai.thoiGianKetThuc) > new Date()) && (
+                    {/* ⭐ THAY ĐỔI: Sử dụng canEdit() */}
+                    {canEdit() && (
                       <IconButton
                         sx={{ color: "#0DC913" }}
-                    
                         onClick={() => {
-                          setUpdateQuestionId(item.__cauHoi__.id);   // lưu id câu hỏi
-                          setOpenUpdateDialog(true);          // mở dialog update
+                          setUpdateQuestionId(item.__cauHoi__.id);
+                          setOpenUpdateDialog(true);
                         }}
-                    >
-                      <Edit />
-                    </IconButton>
+                      >
+                        <Edit />
+                      </IconButton>
                     )}
                     
                   <IconButton
@@ -404,8 +407,8 @@ useEffect(() => {
                   >
                     <Visibility />
                   </IconButton>
-                  {/* Xóa */}
-                  {(new Date(bai.thoiGianKetThuc) > new Date()) && (
+                  {/* ⭐ THAY ĐỔI: Sử dụng canEdit() */}
+                  {canEdit() && (
                     <IconButton
                       sx={{
                         color: "#d32f2f" 
@@ -437,24 +440,6 @@ useEffect(() => {
                 onConfirm={handleDeleteQuestion}
                 questionName={questionToDelete?.name}
                 />
-
-                {/* <UpdateQuestionDialog
-                  open={openUpdateDialog}
-                  onClose={() => setOpenUpdateDialog(false)}
-                  cauHoiId={updateQuestionId ?? 0}
-                  onUpdated={(payload) => {
-                    const fullPayload: CauHoiPayload = {
-                      ...payload,
-                      mangFileDinhKem: (payload as CauHoiPayload).mangFileDinhKem ?? []
-                    };
-                  
-                    setCauHoiList((prev) =>
-                      prev.map((q) =>
-                        q.__cauHoi__.id === fullPayload.cauHoi.id ? fullPayload : q
-                      )
-                    );
-                  }}
-                /> */}
 
           {/* Phân trang */}
           <Box mt={3}>

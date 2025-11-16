@@ -33,13 +33,20 @@ export interface ApiResponse<T> {
 
 export class UserService {
   // Lấy access token dựa vào role
-  private static getAccessToken(): string {
-    const tokenGV = localStorage.getItem('accessTokenGV');
-    const tokenSV = localStorage.getItem('accessTokenSV');
-    const tokenAD = localStorage.getItem('accessTokenAD');
-    
-    return tokenGV || tokenSV || tokenAD || '';
+  private static getAccessToken(path?: string): string {
+    const currentPath = path || window.location.pathname;
+  
+    if (currentPath.includes('/lecturer/')) {
+      return localStorage.getItem('accessTokenGV') || '';
+    } else if (currentPath.includes('/quizzcenter/')) {
+      return localStorage.getItem('accessTokenSV') || '';
+    } else if (currentPath.includes('/admin/')) {
+      return localStorage.getItem('accessTokenAD') || '';
+    }
+  
+    return '';
   }
+  
 
   // Lấy thông tin người dùng
   static async getUserInfo(): Promise<ApiResponse<UserInfo>> {

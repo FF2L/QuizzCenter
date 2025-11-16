@@ -27,6 +27,7 @@ import {
 } from "@mui/icons-material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { LoginService } from "../services/login.api";
+import { UserService } from "../services/user.api";
 
 type MenuItemType = {
   id: number;
@@ -42,7 +43,9 @@ export default function MenuBar({ role }: { role: string }) {
   const [openParent, setOpenParent] = useState<number | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItemType[]>([]);
   const [collapsed, setCollapsed] = useState(false);
-  
+  const [userName, setUserName] = useState("");
+  const [avatar, setAvatar] = useState("");
+
   const handleToggle = (id: number) => setOpenParent(openParent === id ? null : id);
 
   // Xác định item được chọn dựa vào URL hiện tại
@@ -67,7 +70,19 @@ export default function MenuBar({ role }: { role: string }) {
     
     return null;
   };
-
+  useEffect(() => {
+    async function fetchUser() {
+      const res = await UserService.getUserInfo();
+  
+      if (res.ok && res.data) {
+        setUserName(res.data.hoTen);
+        setAvatar(res.data.anhDaiDien);
+      }
+    }
+  
+    fetchUser();
+  }, []);
+  
   const handleLogout = async () => {
     let accessToken = ''
     if(role === 'GiaoVien'){
@@ -153,16 +168,17 @@ export default function MenuBar({ role }: { role: string }) {
           }}
         >
           <img
-            src={"/assets/teacherAvatar.png"}
+            src={avatar || "/assets/defaultAvatar.png"}
             alt="avatar"
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
         </Box>
         {!collapsed && (
           <Typography
             sx={{ mt: 2, fontWeight: 600, fontSize: 18, color: "#fff" }}
           >
-            {role === "GiaoVien" ? "Giảng viên" : role === "SinhVien" ? "Sinh viên" : "Quản trị viên" }
+           {userName || "Đang tải..."}
+
+
           </Typography>
         )}
       </Box>

@@ -128,18 +128,25 @@ const DoTestPage: React.FC = () => {
     if (autosubmitted.current) return;
     const data = baiLamDataRef.current;
     if (!data) return;
-
+  
     autosubmitted.current = true;
     setIsLocked(true);
-
+  
     try {
       console.log("⏰ Hết giờ! Auto submit...");
       await BaiLamSinhVienApi.nopBai(data.baiLam.id);
       console.log("✅ Auto submit thành công");
-      navigate(DETAIL_PATH, { state: baiKiemTraInfo });
+      // THAY ĐỔI: Sử dụng replace: true
+      navigate(DETAIL_PATH, { 
+        state: baiKiemTraInfo,
+        replace: true  // ← THÊM DÒNG NÀY
+      });
     } catch (e) {
       console.error("❌ Auto submit failed:", e);
-      navigate(DETAIL_PATH, { state: baiKiemTraInfo });
+      navigate(DETAIL_PATH, { 
+        state: baiKiemTraInfo,
+        replace: true  // ← THÊM DÒNG NÀY
+      });
     }
   }, [navigate, DETAIL_PATH, baiKiemTraInfo]);
 
@@ -220,7 +227,11 @@ const DoTestPage: React.FC = () => {
       setIsSubmitting(true);
       const result = await BaiLamSinhVienApi.nopBai(baiLamData.baiLam.id);
       alert(`Nộp bài thành công! Điểm: ${result.tongDiem}/10`);
-      navigate(DETAIL_PATH, { state: baiKiemTraInfo });
+      // THAY ĐỔI: Sử dụng replace: true để thay thế history entry
+      navigate(DETAIL_PATH, { 
+        state: baiKiemTraInfo,
+        replace: true  // ← THÊM DÒNG NÀY
+      });
     } catch (e: any) {
       console.error("Error submitting:", e);
       alert(e?.response?.data?.message || "Có lỗi xảy ra khi nộp bài!");

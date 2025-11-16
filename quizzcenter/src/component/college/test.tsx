@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import {
   Box,
   Typography,
@@ -128,7 +129,10 @@ const CollegeTest: React.FC = () => {
       setLoading(false);
     }
   };
-
+  const handleBack = () => {
+    // Lấy idLopHocPhan từ baiKiemTra state hoặc từ URL params
+      navigate(-1);
+  };
   // Fetch data khi component mount hoặc dependencies thay đổi
   useEffect(() => {
     if (accessToken && tabValue < 2) {
@@ -171,7 +175,6 @@ const CollegeTest: React.FC = () => {
     setExpandedBaiKiemTra(newState);
     setExpandedLuyenTap(newState);
   };
-
   // Nhóm dữ liệu theo loại
   const groupedData: GroupedData = {
     baiKiemTra: baiKiemTraList.filter((item) => item.loaiKiemTra === "BaiKiemTra"),
@@ -258,18 +261,26 @@ const CollegeTest: React.FC = () => {
 
   return (
     <Box sx={{ flex: 1, pt: "40px", px: { xs: 2, md: 8 }, pb: 4 }}>
+      <Box sx={{display:'flex', flexDirection:'row'}}>
+      <Button
+        startIcon={<ArrowBackIcon />}
+        onClick={handleBack}
+        sx={{ fontWeight: 600, height:"40px" }}
+        variant="text"
+        color="primary"
+      >
+      </Button>
       {/* Header với tên môn */}
       <Typography
         variant="h5"
         sx={{
           color: "#ff6a00",
           fontWeight: 700,
-          mb: 3,
         }}
       >
         {tenMonHoc} ({maMonHoc})
       </Typography>
-
+      </Box>
       {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
         <Tabs
