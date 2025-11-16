@@ -215,7 +215,6 @@ const QuanLyLopHoc = () => {
 
   const cancelEdit = () => {
     setEditRowId(null);
-    // giữ danhSachGiangVien/MonHoc cũng được
   };
 
   const handleUpdateSave = async () => {
@@ -433,13 +432,13 @@ const QuanLyLopHoc = () => {
               <TableRow key={lopHoc.lhp_id}>
                 {editRowId === lopHoc.lhp_id ? (
                   <>
-                    <TableCell>{lopHoc.malhp}</TableCell>
+                    <TableCell sx={{width: 100}}>{lopHoc.malhp}</TableCell>
 
                     <TableCell padding="none">
                       <TextField
                         size="small"
                         variant="standard"
-                        sx={{ width: 160, height: 40 }}
+                        sx={{ width: 100, height: 40 }}
                         value={editForm.tenLopHoc}
                         onChange={(e) => onEditChange("tenLopHoc", e.target.value)}
                       />

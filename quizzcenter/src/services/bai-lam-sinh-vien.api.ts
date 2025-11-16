@@ -32,7 +32,7 @@ export interface BaiLamResponse {
 }
 
 export interface UpdateDapAnDto {
-  idCauHoiBaiKiemTra: number;
+  idChiTietBaiLam: number;
   mangIdDapAn: number[];
 }
 
@@ -68,7 +68,9 @@ export class BaiLamSinhVienApi {
 static async layBaiLamSinhVien(idBaiKiemTra: number): Promise<any[]> {
   const response = await this.axiosInstance.get(
     `/bai-lam-sinh-vien/${idBaiKiemTra}`,  // Sửa từ /bai-kiem-tra/${idBaiKiemTra}
+      { headers: this.getAuthHeader() },
   );
+  console.log('Lay bai lam sinh vien response:', response.data);
   return response.data;
 }
 

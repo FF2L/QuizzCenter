@@ -1,10 +1,12 @@
-import { Box, Button, colors, MenuItem, Stack, Table, TableBody, TableCell, TableHead, TablePagination, TableRow, TextField, Typography } from "@mui/material";
+import { Box, Button, colors, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, Table, TableBody, TableCell, TableHead, TablePagination, TableRow, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { AdminApi } from "../../../services/admin.api";
 import ConfirmDialog from "../../../common/dialog";
 import { VaiTro } from "../../../common/gobal/gobal.type";
 import { emailRe, phone10, toDateDisplay, toDateInput } from "../../../common/gobal/gobal.const";
 import { toast } from "react-toastify";
+
+
 
 
 const QuanLyNguoiDung = () => {
@@ -16,6 +18,11 @@ const QuanLyNguoiDung = () => {
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [showCreateRow, setShowCreateRow] = useState(false);
     const [editRowId, setEditRowId] = useState<number | null>(null);
+    const [openImport, setOpenImport] = useState(false);
+    const [file, setFile] = useState<File | null>(null);
+    const [errorRows, setErrorRows] = useState<any[]>([]);
+    const [thanhCong, setThanhCong] = useState('');
+    const [loading, setLoading] = useState(false);
     const [editForm, setEditForm] = useState({
     hoTen: "",
     maNguoiDung: "",
@@ -194,6 +201,47 @@ const QuanLyNguoiDung = () => {
         setSelectedUser(null);
     };
 
+    //Phần uploadFile
+    const handleOpenImport = () => {
+    setFile(null);
+    setThanhCong('');
+    setErrorRows([]);
+    setOpenImport(true);
+    };
+
+    const handleCloseImport = () => {
+    if (loading) return;
+    setOpenImport(false);
+    };
+
+    const handleSubmitImport = async () => {
+    if (!file) return;
+    setLoading(true);
+    const res:any = await AdminApi.uploadFileNguoiDung(file);
+    setLoading(false);
+    if (res?.ok !== false) {
+        const {thanhCong, thatBai} = res.data;
+        console.log('thanhCong', thanhCong);
+        console.log('thatBai', thatBai);
+        if(thanhCong.length >0){
+            setDanhSachNd((prev) => [...thanhCong, ...prev]);
+        }
+        if(thatBai.length >0){
+            setThanhCong(`Số người dùng thêm thành công: ${thanhCong.length} người dùng`);
+            setErrorRows(thatBai);
+        }
+        if(thatBai.length === 0){
+             setOpenImport(false);
+        }
+
+        setTotal(total + thanhCong.length);
+        setCurrentPage(currentPage)
+    } else {
+        const err: any = res.error;
+        const mess = err.response?.data?.message
+        toast.error(mess);
+    }
+    };
 
     useEffect(() =>{
         const fetchData = async () => {
@@ -227,6 +275,9 @@ const QuanLyNguoiDung = () => {
                     <TextField label="Tìm kiếm tên người dùng" variant="outlined" size="small" value={search} onChange={(e) => setSearch(e.target.value)}/>
                     <Button variant="contained" color="primary"  onClick={openCreateRow}>Tạo mới người dùng</Button>
                 </Stack>
+            </Stack>
+            <Stack direction="row" justifyContent="flex-end">
+                <Button  variant="contained" color="primary" onClick={handleOpenImport} >Nhập file Excel</Button>
             </Stack>
 
             <Table>
@@ -472,6 +523,7 @@ const QuanLyNguoiDung = () => {
                 />
             </Table>
         </Stack>
+
         <ConfirmDialog
             open={confirmOpen}
             title="Xóa người dùng"
@@ -480,7 +532,80 @@ const QuanLyNguoiDung = () => {
             cancelText="Hủy"
             onClose={handleCloseConfirm}
             onConfirm={handleConfirmDelete}
-            />
+        />
+
+        <Dialog
+            open={openImport}
+            onClose={handleCloseImport}
+            fullWidth
+            maxWidth="sm"
+            >
+            <DialogTitle>Nhập người dùng từ file Excel</DialogTitle>
+
+            <DialogContent>
+
+                {/* Upload file */}
+                <Box mt={2}>
+                <Button
+                    variant="outlined"
+                    component="label"
+                    fullWidth
+                >
+                    {file ? file.name : "Chọn file Excel"}
+                    <input
+                    type="file"
+                    hidden
+                    accept=".xlsx,.xls"
+                    onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) setFile(f);
+                    }}
+                    />
+                </Button>
+                </Box>
+
+                {/* link tải file mẫu */}
+                <Box mt={1}>
+                <Button
+                    variant="text"
+                    size="small"
+                    href="/template/NhapNguoiDung.xlsx"
+                    download
+                >
+                    📥 Tải về định dạng mẫu
+                </Button>
+                </Box>
+
+                {/* Hiển thị dòng lỗi nếu có */}
+                {errorRows.length > 0 && (
+                <Box mt={2}>
+                    <Typography> {thanhCong}</Typography>
+                    <Typography fontWeight="bold" mb={1}>
+                    Các dòng bị lỗi:
+                    </Typography>
+                    {errorRows.map((err, idx) => (
+                    <Typography key={idx} variant="body2" color="error">
+                        Dòng {err.row}: {err.message}
+                    </Typography>
+                    ))}
+                </Box>
+                )}
+            </DialogContent>
+
+            <DialogActions>
+                <Button onClick={handleCloseImport} disabled={loading}>
+                Hủy
+                </Button>
+                <Button
+                variant="contained"
+                onClick={handleSubmitImport}
+                disabled={!file || loading}
+                >
+                {loading ? "Đang xử lý..." : "Thêm vào hệ thống"}
+                </Button>
+            </DialogActions>
+            </Dialog>
+
 
 
         </Box>

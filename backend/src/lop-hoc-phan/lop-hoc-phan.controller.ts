@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, UseGuards, Req, Res, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, UseGuards, Req, Res, Put, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { LopHocPhanService } from './lop-hoc-phan.service';
 import { CreateLopHocPhanDto } from './dto/create-lop-hoc-phan.dto';
 import { UpdateLopHocPhanDto } from './dto/update-lop-hoc-phan.dto';
@@ -9,6 +9,8 @@ import { RolesGuard } from 'src/auth/guards/roles/roles.guard';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth/jwt-auth.guard';
 import { skip } from 'node:test';
 import { Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { excelFileFilter } from 'src/common/utiils/const.globals';
 
 @Controller('lop-hoc-phan')
 export class LopHocPhanController {
@@ -59,6 +61,31 @@ export class LopHocPhanController {
     return await this.lopHocPhanService.xoaSinhVienKhoiLopHocPhan(idLopHocPhan, maSinhVien);
   }
 
+  @Get(':id/admin/xuat-danh-sach-sinh-vien')
+  async xuatDanhSachSinhVien(@Param('id') id: number, @Res() res: Response) {
+    const buffer = await this.lopHocPhanService.exportDanhSachSinhVienExcel(id);
+    const tenLop = await this.lopHocPhanService.tenLopHocPhanById(id);
+    const filename = `DanhSachSinhVien_LopHocPhan_${tenLop}.xlsx`;
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } 
+
+  @Post(':id/admin/nhap-danh-sach-sinh-vien')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      fileFilter: excelFileFilter,
+      limits: {
+        fileSize: 10 * 1024 * 1024, 
+      },
+    }),
+  )
+  uploadFile(@Param('id') id: number, @UploadedFile() file: Express.Multer.File) {
+    return this.lopHocPhanService.uploadFileDanhSachSinhVien(id, file);
+  }
   //End CRUD Lớp học phần Admin
 
   //Lấy tất cả lớp học phần của giảng viên lọc theo 
@@ -72,6 +99,7 @@ export class LopHocPhanController {
     @Query ('ten-mon-hoc') tenMonHoc?: string
   ){
     console.log('tenMonHoc', tenMonHoc)
+    console.log('req.user.id', req.user.id)
     return await this.lopHocPhanService.layTatCaLopHocPhanTheoIdGiaoVien(req.user.id, {
       skip,
       limit,

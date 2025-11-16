@@ -131,12 +131,14 @@ export class BaiLamSinhVienService {
     body: any,
     
   ) {
-    const {idCauHoiBaiKiemTra, mangIdDapAn} = body;
+    const {idChiTietBaiLam, mangIdDapAn} = body;
+    console.log('Lưu tạm đáp án:', idChiTietBaiLam, mangIdDapAn);
     
     return this.dataSource.transaction(async (manager) => {
       const chiTietBaiLam = await manager.findOne(ChiTietBaiLam, {
-        where: { idCauHoiBaiKiemTra },
+        where: { id: idChiTietBaiLam },
       });
+      console.log('Chi tiết bài làm tìm được:', chiTietBaiLam);
 
       if (chiTietBaiLam) {
         try {
@@ -152,6 +154,7 @@ export class BaiLamSinhVienService {
 
     async nopbai(idBaiLamSinhVien: number) {
       return this.dataSource.transaction(async (manager) => {
+        console.log('Nộp bài cho bài làm sinh viên ID:', idBaiLamSinhVien);
         const baiLam = await manager.findOne(BaiLamSinhVien, {
           where: { id: idBaiLamSinhVien },
         });
@@ -347,12 +350,13 @@ export class BaiLamSinhVienService {
     }
 
 
-async layBaiLamSinhVien(idBaiKiemTra: number) {
+async layBaiLamSinhVien(idnguoiDung:number,idBaiKiemTra: number) {
   return this.baiLamSinhVienRepo
     .createQueryBuilder('bl')
     .leftJoin('bl.baiKiemTra', 'bk')
     .leftJoin('bl.sinhVien', 'sv')
     .where('"bk"."id" = :idBaiKiemTra', { idBaiKiemTra })
+    .andWhere('"sv"."idNguoiDung" = :idnguoiDung', { idnguoiDung })
     .orderBy('"bl"."update_at"', 'DESC') 
     .getMany();
 }

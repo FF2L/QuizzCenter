@@ -49,6 +49,22 @@ export class AdminApi {
         }
     }
 
+    static uploadFileNguoiDung = async (file: File) =>{
+        const formData = new FormData();
+        formData.append('file', file);
+        try{
+            const res = await axios.post(`${API_URL}/nguoi-dung/upload-file`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            return {ok: true, data: res.data}
+        }catch(err){
+            console.error("Error uploading user file:", err);
+            return {ok: false, error: err}
+        }
+    }
+
     /* Quản lý môn học */
     static layTatCaMonHoc = async (page: number = 1, limit: number = 10, tenMonHoc?: string) => {
         try{
@@ -164,6 +180,42 @@ export class AdminApi {
             return {ok: false, error: err}
         }
     }
+    static xuatDanhSachSinhVienExcel = async (idLopHocPhan: number) =>{
+        try{
+            const res = await axios.get(`${API_URL}/lop-hoc-phan/${idLopHocPhan}/admin/xuat-danh-sach-sinh-vien`, {
+                responseType: 'blob' // Quan trọng để nhận file dưới dạng blob
+            });
+            return {ok: true, data: res.data}
+        }
+        catch(err){
+            console.error("Error exporting student list to Excel:", err);
+            return {ok: false, error: err}
+        }
+    }
+    static layTenLopHocPhan = async (idLopHocPhan: number) =>{
+        try{
+            const res = await axios.get(`${API_URL}/lop-hoc-phan/${idLopHocPhan}/admin/ten-lop-hoc-phan`);
+            return {ok: true, data: res.data}
+        }catch(err){
+            console.error("Error fetching class name:", err);
+            return {ok: false, error: err}
+        }
+    }
+    static nhapDanhSachSinhVienExcel = async (idLopHocPhan: number, file: File) =>{
+        const formData = new FormData();
+        formData.append('file', file);
+        try{
+            const res = await axios.post(`${API_URL}/lop-hoc-phan/${idLopHocPhan}/admin/nhap-danh-sach-sinh-vien`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            return {ok: true, data: res.data}
+        }catch(err){
+            console.error("Error importing student list from Excel:", err);
+            return {ok: false, error: err}
+        }
+    }
 
     /*Phân công giảng viên vào câu hỏi */
     static layTatCaPhanCongGiangVienVaoCauHoi = async (page: number = 1, limit: number = 10, tenGiangVien?: string) =>{
@@ -222,6 +274,7 @@ export class AdminApi {
     static layTatCaGiangVienKhongPhanTrang = async () => {
         try{
             const res = await axios.get(`${API_URL}/giang-vien/all`);
+            console.log("Fetched all lecturers without pagination:", res.data);
             return {ok: true, data: res.data}
         }catch(err){
             console.error("Error fetching all lecturers:", err);
@@ -259,10 +312,10 @@ export class AdminApi {
         params: {
             skip: (page - 1) * limit,
             limit,
-            // ⚠️ trùng với @Query('ten-sinh-vien')
             'ten-sinh-vien': tenSinhVien
         }
         });
+        console.log("Fetched students of class:", res.data);
         return { ok: true, data: res.data };
     } catch (err) {
         console.error("Error fetching students of class:", err);

@@ -1,16 +1,32 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Put, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Put, Query, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { NguoiDungService } from './nguoi-dung.service';
 import { CreateNguoiDungDto } from './dto/create-nguoi-dung.dto';
 import { UpdateNguoiDungDto } from './dto/update-nguoi-dung.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth/jwt-auth.guard';
 import { UpdateMatKhauDto } from './dto/update-mat-khau.dto';
 import { UpdateNguoiDungAdminDto } from './dto/update-nguoi-dung-admin';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { excelFileFilter } from 'src/common/utiils/const.globals';
 
 @Controller('nguoi-dung')
 export class NguoiDungController {
   constructor(private readonly nguoiDungService: NguoiDungService) {}
 
 //CRUD người dùng Admin
+@Post('upload-file')
+@UseInterceptors(
+  FileInterceptor('file', {
+    fileFilter: excelFileFilter,
+    limits: {
+      fileSize: 10 * 1024 * 1024, 
+    },
+  }),
+)
+uploadFile(@UploadedFile() file: Express.Multer.File) {
+  return this.nguoiDungService.uploadFile(file);
+}
+
+
   @Post('admin')
   taoNguoiDungAdmin(@Body() createNguoiDungDto: CreateNguoiDungDto) {
     return this.nguoiDungService.taoNguoiDung(createNguoiDungDto);

@@ -13,9 +13,11 @@ export class BaiLamSinhVienController {
   constructor(private readonly baiLamSinhVienService: BaiLamSinhVienService) {}
 
   //lấy tát cả bài làm sinh viên có trong đề
+  @UseGuards(JwtAuthGuard)
   @Get(':idBaiKiemTra')
-  findAll(@Param('idBaiKiemTra', ParseIntPipe) idBaiKiemTra: number) {
-    return this.baiLamSinhVienService.layBaiLamSinhVien(idBaiKiemTra);
+  findAll(@Req() req,
+    @Param('idBaiKiemTra', ParseIntPipe) idBaiKiemTra: number) {
+    return this.baiLamSinhVienService.layBaiLamSinhVien(req.user.id, idBaiKiemTra);
   }
 
   //tạo bài làm cho sinh viên
@@ -27,9 +29,9 @@ export class BaiLamSinhVienController {
   // sinh viên trả lời đáp án
   @Put('/chi-tiet-bai-lam/')
   update(
-   @Body('idCauHoiBaiKiemTra') idCauHoiBaiKiemTra: number,
+   @Body('idChiTietBaiLam') idChiTietBaiLam: number,
   @Body('mangIdDapAn') mangIdDapAn: number[], @Req() req) {
-    return this.baiLamSinhVienService.luuTamDapAn( {idCauHoiBaiKiemTra, mangIdDapAn});
+    return this.baiLamSinhVienService.luuTamDapAn( {idChiTietBaiLam, mangIdDapAn});
   }
   //nộp bài
   @Post('/nop-bai/:idBaiLamSinhVien')
