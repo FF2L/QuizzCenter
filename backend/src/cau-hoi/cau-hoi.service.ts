@@ -89,7 +89,7 @@ async layTatCaCauHoiTheoIdChuong(idChuong:number, query:any){
   }
 
 
-  qb.addOrderBy('qh.create_at', 'ASC');
+  qb.addOrderBy('qh.create_at', 'DESC');
 
   const [data, total] = await qb
     .skip(skip ?? 0)
