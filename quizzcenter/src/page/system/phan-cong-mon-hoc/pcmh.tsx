@@ -162,7 +162,7 @@ const PhanCongMonHoc = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Người dùng (Giảng viên)</TableCell>
+              <TableCell>Giảng viên</TableCell>
               <TableCell>Môn học được phân công</TableCell>
               <TableCell>Hành động</TableCell>
             </TableRow>

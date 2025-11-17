@@ -9,9 +9,6 @@ export class ChiTietBaiLam {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column({ default: 0 })
-    diemDat: number
-
     @ManyToOne(() => ChiTietCauHoiBaiKiemTra, (chiTietCauHoiBaiKiemTra) => chiTietCauHoiBaiKiemTra.chiTietBaiLam, {lazy: true, onDelete: 'CASCADE'})
     @JoinColumn({name: 'idCauHoiBaiKiemTra'})
     cauHoiBaiKiemTra: Promise<ChiTietCauHoiBaiKiemTra>
