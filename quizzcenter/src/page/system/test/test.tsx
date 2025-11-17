@@ -544,7 +544,7 @@ const BaiKiemTraList = () => {
                       <DeleteIcon fontSize="small" />
                     </IconButton>
 
-                    {(new Date(bai.thoiGianKetThuc) <= new Date()) && (
+                    {(new Date(bai.thoiGianKetThuc) <= new Date()) && bai.loaiKiemTra === "BaiKiemTra" && (
                       <IconButton
                         size="small"
                         sx={{
