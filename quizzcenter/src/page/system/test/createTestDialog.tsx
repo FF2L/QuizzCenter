@@ -68,83 +68,43 @@ const CreateBaiKiemTraDialog: React.FC<CreateBaiKiemTraDialogProps> = ({
   // Handler cho thời gian bắt đầu với validation
   const handleStartTimeChange = (value: string) => {
     setErrorMessage("");
+    setThoiGianBatDau(value);
     
     if (value) {
       const selectedDate = new Date(value);
       const minTime = new Date(Date.now() + 5 * 60 * 1000);
       
+      // Validate đơn giản: chỉ check theo đúng giá trị user chọn
       if (selectedDate < minTime) {
-        setErrorMessage("⚠️ Thời gian bắt đầu phải sau thời gian hiện tại ít nhất 5 phút!");
+        setErrorMessage(
+          `⚠️ Thời gian bắt đầu (${selectedDate.toLocaleString('vi-VN')}) phải sau thời gian hiện tại (${new Date().toLocaleString('vi-VN')}) ít nhất 5 phút!`
+        );
         return;
       }
-    }
-    
-    setThoiGianBatDau(value);
-    
-    // Reset thời gian kết thúc nếu nó nhỏ hơn thời gian bắt đầu mới
-    if (value && thoiGianKetThuc) {
-      const start = new Date(value);
-      const end = new Date(thoiGianKetThuc);
-      if (end <= start) {
-        setThoiGianKetThuc("");
-        setThoiGianLam(0);
+      
+      // Reset thời gian kết thúc nếu nó nhỏ hơn thời gian bắt đầu mới
+      if (thoiGianKetThuc) {
+        const end = new Date(thoiGianKetThuc);
+        if (end <= selectedDate) {
+          setThoiGianKetThuc("");
+          setThoiGianLam(0);
+        }
       }
     }
-  };
-
-  // Helper: Convert Date object sang datetime-local string (YYYY-MM-DDTHH:mm) mà KHÔNG đổi timezone
-  const toDatetimeLocalString = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   // Handler cho thời gian kết thúc với validation
   const handleEndTimeChange = (value: string) => {
     setErrorMessage("");
+    setThoiGianKetThuc(value);
     
     if (value && thoiGianBatDau) {
       const startDate = new Date(thoiGianBatDau);
-      let endDate = new Date(value);
+      const endDate = new Date(value);
       
-      // WORKAROUND: Nếu giờ kết thúc là 00-06 giờ sáng và nhỏ hơn giờ bắt đầu
-      // → Có thể user muốn chọn giờ trưa nhưng browser parse sai
+      // Validate đơn giản: chỉ check theo đúng giá trị user chọn
       const diffMs = endDate.getTime() - startDate.getTime();
-      const endHour = endDate.getHours();
       
-      if (diffMs < 0 && endHour >= 0 && endHour < 7) {
-        // Tự động cộng 12 giờ
-        endDate = new Date(endDate.getTime() + 12 * 60 * 60 * 1000);
-        
-        // QUAN TRỌNG: Format đúng cách cho datetime-local, KHÔNG dùng toISOString()
-        const fixedValue = toDatetimeLocalString(endDate);
-        
-        console.log("⚠️ Auto-fixed: Chuyển", value, "→", fixedValue);
-        
-        setThoiGianKetThuc(fixedValue);
-        
-        // Validate lại với giá trị đã fix
-        const newDiff = endDate.getTime() - startDate.getTime();
-        if (newDiff < 60000) {
-          setErrorMessage(
-            `⚠️ Thời gian kết thúc phải sau thời gian bắt đầu ít nhất 1 phút!`
-          );
-          return;
-        }
-        
-        return; // Đã fix xong
-      }
-      
-      // Debug logging
-      console.log("=== TIME VALIDATION ===");
-      console.log("Start:", startDate.toLocaleString('vi-VN'));
-      console.log("End:", endDate.toLocaleString('vi-VN'));
-      console.log("Diff (minutes):", Math.floor(diffMs / 60000));
-      
-      // Validate bình thường
       if (diffMs < 60000) {
         setErrorMessage(
           `⚠️ Thời gian kết thúc (${endDate.toLocaleString('vi-VN')}) phải sau thời gian bắt đầu (${startDate.toLocaleString('vi-VN')}) ít nhất 1 phút!`
@@ -161,8 +121,6 @@ const CreateBaiKiemTraDialog: React.FC<CreateBaiKiemTraDialogProps> = ({
         }
       }
     }
-    
-    setThoiGianKetThuc(value);
   };
 
   // Handler cho thời gian làm với validation
