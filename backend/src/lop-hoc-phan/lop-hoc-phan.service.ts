@@ -296,6 +296,7 @@ async layTatCaLopHocPhanTheoIdGiaoVien( idGiangVien: number, query: any) {
     const total = await qb.getCount();
 
     const now = new Date();
+    console.log('giangDay', giangDay)
 
     if (giangDay === 1) { // ĐAng giảng dạy
       qb.andWhere('lhp.thoiGianBatDau <= :now AND lhp.thoiGianKetThuc >= :now', { now });
@@ -326,11 +327,12 @@ async layTatCaLopHocPhanTheoIdGiaoVien( idGiangVien: number, query: any) {
       'mh.tenMonHoc AS tenMonHoc',
       'COUNT(sv.idNguoiDung) AS siSo'
     ])
-    .offset(skip ?? 0)
-    .limit(limit ?? DEFAULT_PAGE_LIMIT)
+    // .offset(skip ?? 0)
+    // .limit(limit ?? DEFAULT_PAGE_LIMIT)
     .orderBy('lhp.thoiGianKetThuc', 'ASC')
     .getRawMany();
     // console.log(qb.getSql())
+    console.log(data)
     
 
     return {data , total, currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1, totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT))}
