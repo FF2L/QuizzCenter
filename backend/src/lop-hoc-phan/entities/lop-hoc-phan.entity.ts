@@ -23,20 +23,20 @@ export class LopHocPhan extends BaseEntity{
     @Column()
     thoiGianKetThuc: Date
 
-    @ManyToOne(() => MonHoc, (monHoc) => monHoc.lopHocPhan, {lazy: true})
+    @ManyToOne(() => MonHoc, (monHoc) => monHoc.lopHocPhan, {lazy: true,  onDelete: 'CASCADE'})
     @JoinColumn({name: 'idMonHoc'})
     monHoc: Promise<MonHoc>
     @Column() idMonHoc: number
 
-    @ManyToOne(() => GiangVien, (giangVien) => giangVien.lopHocPhan, {lazy: true})
+    @ManyToOne(() => GiangVien, (giangVien) => giangVien.lopHocPhan, {lazy: true,  onDelete: 'CASCADE'})
     @JoinColumn({name: 'idGiangVien'})
     giangVien: Promise<GiangVien>
     @Column() idGiangVien: number
 
-    @ManyToMany(() => SinhVien, (sinhVien) => sinhVien.lopHocPhan, {cascade:true, lazy: true})
+    @ManyToMany(() => SinhVien, (sinhVien) => sinhVien.lopHocPhan, {cascade:true, lazy: true, onDelete: 'CASCADE'})
     @JoinTable({name: 'chiTietLopHoc'})
     sinhVien: Promise<SinhVien[]>
 
-    @OneToMany(() => BaiKiemTra, (baiKiemTra) => baiKiemTra.lopHocPhan, {cascade: true, lazy:true})
+    @OneToMany(() => BaiKiemTra, (baiKiemTra) => baiKiemTra.lopHocPhan, {cascade: true, lazy:true, onDelete: 'CASCADE'})
     baiKiemTra: Promise<BaiKiemTra[]>
 }

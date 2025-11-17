@@ -58,18 +58,13 @@ export class GiangVienService {
         nguoiDung: {
           id: true,
           hoTen: true,
-          delete_at: true,
         },
       },
-      withDeleted: true,
     });
    const dsLoc : any = [];
 
   for (const gv of ds) {
     const nd = await gv.nguoiDung;
-
-    if (!nd || nd.delete_at !== null) continue;
-    delete (nd as any).delete_at;
 
     dsLoc.push(gv);
   }

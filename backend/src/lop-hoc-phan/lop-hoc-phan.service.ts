@@ -111,7 +111,7 @@ export class LopHocPhanService {
   async xoaLopHocPhan(id: number) {
     const lopHocPhan = await this.lopHocPhanRep.findOne({ where: { id } });
     if (!lopHocPhan) throw new NotFoundException(`Không tìm thấy lớp học phần với id ${id}`);
-    await this.lopHocPhanRep.softDelete(id);
+    await this.lopHocPhanRep.delete(id);
   }
 
   async layTatCaSinhVienCuaLopHocPhan(id: number, query: any) {

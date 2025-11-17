@@ -9,14 +9,14 @@ export class SinhVien {
     @PrimaryColumn({ name: 'idNguoiDung', type: 'int' })
     idNguoiDung: number;
 
-    @OneToOne(() => NguoiDung, (nd) => nd.giangVien, { lazy: true })
+    @OneToOne(() => NguoiDung, (nd) => nd.giangVien, { lazy: true, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'idNguoiDung', referencedColumnName: 'id' })
     nguoiDung: Promise<NguoiDung>;
 
-    @ManyToMany(() => LopHocPhan, (lopHocPhan) => lopHocPhan.sinhVien, {lazy: true})
+    @ManyToMany(() => LopHocPhan, (lopHocPhan) => lopHocPhan.sinhVien, {lazy: true, onDelete: 'CASCADE'})
     lopHocPhan: Promise<LopHocPhan[]>
 
-    @OneToMany(() => BaiLamSinhVien, (baiLamSV) => baiLamSV.sinhVien, {lazy:true})
+    @OneToMany(() => BaiLamSinhVien, (baiLamSV) => baiLamSV.sinhVien, {lazy:true, onDelete: 'CASCADE'})
     baiLamSInhVien: Promise<BaiLamSinhVien[]>
 
 }

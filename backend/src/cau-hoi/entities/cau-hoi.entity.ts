@@ -33,18 +33,21 @@ export class CauHoi extends BaseEntity{
     })
     doKho: DoKho
 
-    @ManyToOne(() => Chuong, (chuong) => chuong.cauHoi, {lazy: true})
+    @ManyToOne(() => Chuong, (chuong) => chuong.cauHoi, {lazy: true, onDelete: 'CASCADE'
+})
     @JoinColumn({name: 'idChuong'})
     chuong: Promise<Chuong>
     @Column({nullable: true}) idChuong: number
 
-    @OneToMany(() => DapAn, (da) => da.cauHoi, { cascade: true, lazy: true })
+    @OneToMany(() => DapAn, (da) => da.cauHoi, { cascade: true, lazy: true, onDelete: 'CASCADE'
+})
     dapAn: Promise<DapAn[]>; 
 
     // @OneToMany(() => FileDinhKem, (fileDinhKem) => fileDinhKem.idCauHoi, {cascade: true, lazy:true})
     // fileDinhKem: Promise<FileDinhKem[]>
 
-    @OneToMany(() => ChiTietCauHoiBaiKiemTra, (chiTietCauHoiBaiKiemTra) => chiTietCauHoiBaiKiemTra.cauHoi, {cascade: true, lazy:true})
+    @OneToMany(() => ChiTietCauHoiBaiKiemTra, (chiTietCauHoiBaiKiemTra) => chiTietCauHoiBaiKiemTra.cauHoi, {cascade: true, lazy:true, onDelete: 'CASCADE'
+})
     chiTietCauHoiBaiKiemTra: Promise<ChiTietCauHoiBaiKiemTra[]>
 
 }

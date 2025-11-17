@@ -27,7 +27,8 @@ export class BaiKiemTra extends BaseEntity {
     @Column()
     thoiGianLam: number
 
-    @ManyToOne(() => LopHocPhan, (lopHocPhan) => lopHocPhan.baiKiemTra, {lazy: true})
+    @ManyToOne(() => LopHocPhan, (lopHocPhan) => lopHocPhan.baiKiemTra, {lazy: true, onDelete: 'CASCADE'
+})
     @JoinColumn({name: 'idLopHocPhan'})
     lopHocPhan: Promise<LopHocPhan>
     @Column() idLopHocPhan:number
@@ -35,7 +36,8 @@ export class BaiKiemTra extends BaseEntity {
     @OneToMany(() => ChiTietCauHoiBaiKiemTra, (chiTietCauHoiBaiKiem) => chiTietCauHoiBaiKiem.baiKiemTra, {cascade: true, lazy:true})
     chiTietCauHoiBaiKiemTra: Promise<ChiTietCauHoiBaiKiemTra[]>
 
-    @OneToMany(() => BaiLamSinhVien, (baiLamSinhVien) => baiLamSinhVien.baiKiemTra, {cascade:true,lazy: true})
+    @OneToMany(() => BaiLamSinhVien, (baiLamSinhVien) => baiLamSinhVien.baiKiemTra, {cascade:true,lazy: true, onDelete: 'CASCADE'
+})
     baiLamSinhVien: Promise<BaiLamSinhVien[]>
 
 }

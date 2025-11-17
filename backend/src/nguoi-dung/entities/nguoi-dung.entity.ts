@@ -44,10 +44,10 @@ export class NguoiDung  extends BaseEntity{
     })
     vaiTro: Role
 
-    @OneToOne(() => GiangVien, (giangVien) => giangVien.nguoiDung, {cascade: true, lazy:true})
+    @OneToOne(() => GiangVien, (giangVien) => giangVien.nguoiDung, {cascade: true, lazy:true, onDelete: 'CASCADE'})
     giangVien: Promise<GiangVien>
 
-    @OneToOne(() => SinhVien, (sinhVien) => sinhVien.nguoiDung, {cascade: true, lazy: true})
+    @OneToOne(() => SinhVien, (sinhVien) => sinhVien.nguoiDung, {cascade: true, lazy: true, onDelete: 'CASCADE'})
     sinhVien: Promise<SinhVien>
 
 

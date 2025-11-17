@@ -10,16 +10,16 @@ export class GiangVien {
     @PrimaryColumn({ name: 'idNguoiDung', type: 'int' })
     idNguoiDung: number;
 
-    @OneToOne(() => NguoiDung, (nd) => nd.giangVien, { lazy: true })
+    @OneToOne(() => NguoiDung, (nd) => nd.giangVien, { lazy: true,  onDelete: 'CASCADE'})
     @JoinColumn({ name: 'idNguoiDung', referencedColumnName: 'id' })
     nguoiDung: Promise<NguoiDung>;
 
-    @OneToMany(() => Chuong, (chuong) => chuong.giangVien, { cascade: true, lazy:true })
+    @OneToMany(() => Chuong, (chuong) => chuong.giangVien, { cascade: true, lazy:true,  onDelete: 'CASCADE' })
     chuong: Promise<Chuong[]>;
 
-    @OneToMany(() => LopHocPhan, (lopHocPhan) => lopHocPhan.giangVien, {cascade: true, lazy: true})
+    @OneToMany(() => LopHocPhan, (lopHocPhan) => lopHocPhan.giangVien, {cascade: true, lazy: true, onDelete: 'CASCADE'})
     lopHocPhan: Promise<LopHocPhan []>
 
-    @ManyToMany(() => MonHoc, (monHoc) => monHoc.giangVien, {lazy: true})
+    @ManyToMany(() => MonHoc, (monHoc) => monHoc.giangVien, {lazy: true,  onDelete: 'CASCADE'})
     monHoc: Promise<MonHoc[]>
 }

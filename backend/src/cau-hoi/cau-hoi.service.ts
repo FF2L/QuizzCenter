@@ -138,7 +138,7 @@ async timMangCauHoiTheoMangIdCauHoi(ids: number[]){
     const cauHoi =  await this.timCauHoiTheoId(id);
   
     try{
-       await this.cauHoiRepo.softDelete(id);
+       await this.cauHoiRepo.delete(id);
        return{message: 'oke'}
     }catch(err){
       throw new InternalServerErrorException('Lỗi xóa câu hỏi')

@@ -1,5 +1,5 @@
 import { BaiKiemTra } from 'src/bai-kiem-tra/entities/bai-kiem-tra.entity';
-import { BadRequestException, ConsoleLogger, forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConsoleLogger, forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException, Delete } from '@nestjs/common';
 import { CreateBaiKiemTraDto } from './dto/create-bai-kiem-tra.dto';
 import { UpdateBaiKiemTraDto } from './dto/update-bai-kiem-tra.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -119,7 +119,7 @@ export class BaiKiemTraService {
   async xoaBaiKiemTRaTheoIdBaiKiemTRa(idBaiKiemTra: number) {
 
     try {
-      return await this.baiKiemTraRepo.softDelete(idBaiKiemTra);
+      return await this.baiKiemTraRepo.delete(idBaiKiemTra);
     } catch (err) {
       console.error(err);
       throw new InternalServerErrorException('Xóa bài kiểm tra không thành công');
