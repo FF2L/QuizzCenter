@@ -395,10 +395,12 @@ async layBangDiemChiTietTheoLopVaBaiKiemTra(idLopHocPhan: number, idBaiKiemTra: 
   const result = await Promise.all(
    dsSinhVien.map(async sv => {
     const svId = sv.nd_id;
+    console.log('svId', svId);
 
     const qbDiem = this.lopHocPhanRep.createQueryBuilder('lhp')
       .leftJoin('lhp.baiKiemTra', 'bkt')
-      .leftJoin('bkt.baiLamSinhVien', 'blsv', 'bkt.id = :idBaiKiemTra AND blsv.idSinhVien = :svId', { idBaiKiemTra, svId });
+      .leftJoin('bkt.baiLamSinhVien', 'blsv')
+      .where('bkt.id = :idBaiKiemTra AND blsv.idSinhVien = :svId', { idBaiKiemTra, svId });
 
     const diemT = await qbDiem.select([
       'blsv.tongDiem AS tongDiem',
