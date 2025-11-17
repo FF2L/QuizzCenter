@@ -13,13 +13,13 @@ export class MonHoc extends BaseEntity{
     @Column()
     tenMonHoc: string
 
-    @OneToMany(() => Chuong, (chuong) => chuong.monHoc, {lazy: true})
+    @OneToMany(() => Chuong, (chuong) => chuong.monHoc, {lazy: true,  onDelete: 'CASCADE'})
     chuong: Promise<Chuong[]>
 
     @OneToMany(() => LopHocPhan, (lopHocPhan) => lopHocPhan.monHoc, {cascade: true, lazy:true})
     lopHocPhan: Promise<LopHocPhan[]>
  
-    @ManyToMany(() => GiangVien, (giangVien) => giangVien.monHoc, {cascade: true, lazy:true})
+    @ManyToMany(() => GiangVien, (giangVien) => giangVien.monHoc, {cascade: true, lazy:true,  onDelete: 'CASCADE'})
     @JoinTable({name: 'MonHoc_GiangVien'})
     giangVien: Promise<GiangVien[]>
 }

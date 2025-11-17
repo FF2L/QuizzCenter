@@ -7,16 +7,16 @@ import { BaseEntity } from "src/common/enitty/base.entity";
 @Entity()
 export class ChiTietCauHoiBaiKiemTra extends BaseEntity{
 
-    @ManyToOne(() => CauHoi, (cauHoi) => cauHoi.chiTietCauHoiBaiKiemTra, {lazy: true})
+    @ManyToOne(() => CauHoi, (cauHoi) => cauHoi.chiTietCauHoiBaiKiemTra, {lazy: true, onDelete: 'CASCADE'})
     @JoinColumn({name: 'idCauHoi'})
     cauHoi: Promise<CauHoi>
     @Column() idCauHoi: number
 
-    @ManyToOne(()=> BaiKiemTra, (baiKiemTra) => baiKiemTra.chiTietCauHoiBaiKiemTra, {lazy:true})
+    @ManyToOne(()=> BaiKiemTra, (baiKiemTra) => baiKiemTra.chiTietCauHoiBaiKiemTra, {lazy:true, onDelete: 'CASCADE'})
     @JoinColumn({name: 'idBaiKiemTra'})
     baiKiemTra: Promise<BaiKiemTra>
     @Column() idBaiKiemTra: number
 
-    @OneToMany(()=>ChiTietBaiLam, (chiTietBaiLam) => chiTietBaiLam.cauHoiBaiKiemTra, {cascade:true, lazy: true})
+    @OneToMany(()=>ChiTietBaiLam, (chiTietBaiLam) => chiTietBaiLam.cauHoiBaiKiemTra, {cascade:true, lazy: true,  onDelete: 'CASCADE'})
     chiTietBaiLam: Promise<ChiTietBaiLam[]>
 }

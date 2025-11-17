@@ -35,16 +35,16 @@ export class BaiLamSinhVien extends BaseEntity{
     // @Column()
     // lanLamThu: number
 
-    @ManyToOne(() => SinhVien, (sv) => sv.baiLamSInhVien, {lazy: true})
+    @ManyToOne(() => SinhVien, (sv) => sv.baiLamSInhVien, {lazy: true,  onDelete: 'CASCADE'})
     @JoinColumn({name: 'idSinhVien'})
     sinhVien: Promise<SinhVien>
     @Column() idSinhVien: number
 
-    @ManyToOne(() => BaiKiemTra, (baiKiemTra) => baiKiemTra.baiLamSinhVien, {lazy: true})
+    @ManyToOne(() => BaiKiemTra, (baiKiemTra) => baiKiemTra.baiLamSinhVien, {lazy: true, onDelete: 'CASCADE'})
     @JoinColumn({name: 'idBaiKiemTra'})
     baiKiemTra: Promise<BaiKiemTra>
     @Column() idBaiKiemTra: number
 
-    @OneToMany(() => ChiTietBaiLam, (chiTietBaiLam) => chiTietBaiLam.baiLamSinhVien, {cascade: true, lazy: true})
+    @OneToMany(() => ChiTietBaiLam, (chiTietBaiLam) => chiTietBaiLam.baiLamSinhVien, {cascade: true, lazy: true, onDelete: 'CASCADE'})
     chiTietBaiLam: Promise<ChiTietBaiLam[]>
 }

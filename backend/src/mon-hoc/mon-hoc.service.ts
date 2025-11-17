@@ -92,7 +92,7 @@ const [data, total] = await qb.getManyAndCount();
  
   }
   async remove(id: number) {
-    const res = await this.monHocRepo.softDelete(id);
+    const res = await this.monHocRepo.delete(id);
     if(!res) throw new NotFoundException('Môn học không tồn tại');
     return {message: 'Xóa môn học thành công'}
   }

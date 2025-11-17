@@ -141,7 +141,7 @@ export class NguoiDungService {
     }
   }
   async xoaNguoiDung(idNguoiDung: number){
-    const res =  await this.nguoiDungRepo.softDelete({id: idNguoiDung});
+    const res =  await this.nguoiDungRepo.delete({id: idNguoiDung});
     if(res.affected ===0) throw new NotFoundException();
     return {message: 'Xóa người dùng thành công'}
   }
