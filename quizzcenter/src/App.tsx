@@ -40,6 +40,7 @@ import QuanLyLopHoc from './page/system/quan-ly-lop-hoc/qllh';
 import QuanLyMonHoc from './page/system/quan-ly-mon-hoc/plmh';
 import ThemSinhVienVaoLopHocPhan from './page/system/quan-ly-lop-hoc/tsvlh';
 import BangDiemPage from './page/system/test/result';
+
 const App: FC = () => {
   return (
     <UserProvider>
@@ -64,7 +65,9 @@ const App: FC = () => {
               <Route path="course/test/:idLopHocPhan" element={<CollegeTest />} />
               <Route path="bai-kiem-tra-chi-tiet/:idBaiKiemTra" element={<CollegeTestDetail />} />
               <Route path="xem-lai/:idBaiLam" element={<XemLaiBaiLamPage />} />
+              {/* CẬP NHẬT: Thêm idBaiLam vào route */}
               <Route path="lam-bai/:idBaiKiemTra" element={<LamBaiPage />} />
+              <Route path="lam-bai/:idBaiKiemTra/:idBaiLam" element={<LamBaiPage />} />
             </Route>
 
             {/* Các route cho giáo viên */}

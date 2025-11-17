@@ -28,7 +28,7 @@ interface BaiKiemTraInfo {
 const QUESTIONS_PER_PAGE = 8;
 
 const DoTestPage: React.FC = () => {
-  const { idBaiKiemTra } = useParams<{ idBaiKiemTra: string }>();
+  const { idBaiKiemTra, idBaiLam } = useParams<{ idBaiKiemTra: string; idBaiLam?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -81,20 +81,49 @@ const DoTestPage: React.FC = () => {
         setLoading(true);
         let response: BaiLamResponse;
 
-        if (baiLamResponseInit) {
+        // Trường hợp 1: Có idBaiLam trong URL (refresh hoặc link trực tiếp)
+        if (idBaiLam) {
+          console.log('🔄 Loading bài làm từ idBaiLam:', idBaiLam);
+          response = await BaiLamSinhVienApi.tiepTucLamBai(Number(idBaiLam));
+        }
+        // Trường hợp 2: Có baiLamResponseInit từ state
+        else if (baiLamResponseInit) {
+          console.log('📦 Sử dụng baiLamResponseInit từ state');
           response = baiLamResponseInit;
-        } else {
+          // Cập nhật URL để có idBaiLam (không reload trang)
+          navigate(`/quizzcenter/lam-bai/${idBaiKiemTra}/${response.baiLam.id}`, { 
+            replace: true, 
+            state: { baiKiemTra: baiKiemTraInfo, baiLamMoi: response } 
+          });
+        }
+        // Trường hợp 3: Tìm hoặc tạo bài làm mới
+        else {
+          console.log('🔍 Tìm hoặc tạo bài làm mới');
           const all = await BaiLamSinhVienApi.layBaiLamSinhVien(Number(idBaiKiemTra));
           const dangLam = (Array.isArray(all) ? all : []).find((x: any) => x.trangThaiBaiLam === "DangLam");
+          
           if (dangLam) {
+            console.log('✅ Tìm thấy bài làm đang làm, id:', dangLam.id);
             response = await BaiLamSinhVienApi.tiepTucLamBai(dangLam.id);
+            // Cập nhật URL
+            navigate(`/quizzcenter/lam-bai/${idBaiKiemTra}/${dangLam.id}`, { 
+              replace: true, 
+              state: { baiKiemTra: baiKiemTraInfo } 
+            });
           } else {
+            console.log('🆕 Tạo bài làm mới');
             response = await BaiLamSinhVienApi.taoBaiLam(Number(idBaiKiemTra));
+            // Cập nhật URL
+            navigate(`/quizzcenter/lam-bai/${idBaiKiemTra}/${response.baiLam.id}`, { 
+              replace: true, 
+              state: { baiKiemTra: baiKiemTraInfo } 
+            });
           }
         }
 
         setBaiLamData(response);
 
+        // Khôi phục đáp án đã chọn từ server
         const saved: DapAnDaChon = {};
         response.cauHoi.forEach((item) => {
           if (item.luaChon?.mangIdDapAn?.length) {
@@ -103,6 +132,7 @@ const DoTestPage: React.FC = () => {
         });
         setDapAnDaChon(saved);
 
+        // Tính deadline nếu không phải luyện tập
         if (!isLuyenTap) {
           const startMs = new Date(response.baiLam.thoiGianBatDau).getTime();
           const byDuration = startMs + ((baiKiemTraInfo?.thoiGianLam ?? 3600) * 1000);
@@ -112,7 +142,7 @@ const DoTestPage: React.FC = () => {
           deadlineRef.current = Math.min(byDuration, byWindow);
         }
       } catch (e: any) {
-        console.error("init error:", e);
+        console.error("❌ Init error:", e);
         alert(e?.response?.data?.message || "Có lỗi xảy ra khi tải bài kiểm tra!");
         navigate(DETAIL_PATH, { state: baiKiemTraInfo });
       } finally {
@@ -121,7 +151,7 @@ const DoTestPage: React.FC = () => {
     };
 
     void init();
-  }, [idBaiKiemTra]);
+  }, [idBaiKiemTra, idBaiLam]);
 
   // ------------------- AUTO SUBMIT -------------------
   const handleAutoSubmit = useCallback(async () => {
@@ -136,16 +166,15 @@ const DoTestPage: React.FC = () => {
       console.log("⏰ Hết giờ! Auto submit...");
       await BaiLamSinhVienApi.nopBai(data.baiLam.id);
       console.log("✅ Auto submit thành công");
-      // THAY ĐỔI: Sử dụng replace: true
       navigate(DETAIL_PATH, { 
         state: baiKiemTraInfo,
-        replace: true  // ← THÊM DÒNG NÀY
+        replace: true
       });
     } catch (e) {
       console.error("❌ Auto submit failed:", e);
       navigate(DETAIL_PATH, { 
         state: baiKiemTraInfo,
-        replace: true  // ← THÊM DÒNG NÀY
+        replace: true
       });
     }
   }, [navigate, DETAIL_PATH, baiKiemTraInfo]);
@@ -227,10 +256,9 @@ const DoTestPage: React.FC = () => {
       setIsSubmitting(true);
       const result = await BaiLamSinhVienApi.nopBai(baiLamData.baiLam.id);
       alert(`Nộp bài thành công! Điểm: ${result.tongDiem}/10`);
-      // THAY ĐỔI: Sử dụng replace: true để thay thế history entry
       navigate(DETAIL_PATH, { 
         state: baiKiemTraInfo,
-        replace: true  // ← THÊM DÒNG NÀY
+        replace: true
       });
     } catch (e: any) {
       console.error("Error submitting:", e);
@@ -252,7 +280,6 @@ const DoTestPage: React.FC = () => {
 
   const soCauDaCamCo = flaggedQuestions.size;
 
-  // Hàm chuyển đến trang chứa câu hỏi cụ thể
   const navigateToQuestion = (globalIndex: number) => {
     const page = Math.floor(globalIndex / QUESTIONS_PER_PAGE) + 1;
     setCurrentPage(page);
@@ -310,7 +337,6 @@ const DoTestPage: React.FC = () => {
                     </Typography>
                   )}
                   
-                  {/* Nút cắm cờ */}
                   <Box sx={{ ml: "auto" }}>
                     <Tooltip title={flaggedQuestions.has(item.idChiTietBaiLam) ? "Bỏ cắm cờ" : "Cắm cờ"}>
                       <IconButton
@@ -409,7 +435,6 @@ const DoTestPage: React.FC = () => {
             );
           })}
 
-          {/* Phân trang ở dưới */}
           {totalPages > 1 && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 3, mb: 2 }}>
               <Pagination 
@@ -418,7 +443,6 @@ const DoTestPage: React.FC = () => {
                 onChange={handlePageChange}
                 color="primary"
                 size="large"
-                
               />
             </Box>
           )}
