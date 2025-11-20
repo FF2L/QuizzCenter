@@ -417,7 +417,7 @@ const BankQuestion = () => {
                           label={getDoKhoLabel(q.cauHoi.doKho)} 
                           size="small"
                           color={getDoKhoColor(q.cauHoi.doKho)}
-                          sx={{ flexShrink: 0 }}
+                          sx={{ flexShrink: 0, marginLeft:"20px" }}
                         />
                       </Box>
 
@@ -464,98 +464,104 @@ const BankQuestion = () => {
                     </Box>
 
                     {/* Expanded content - Hiển thị ở dưới */}
-                    <Collapse in={isExpanded}>
-                      <Box sx={{ mt: 3, pt: 2, borderTop: "1px solid #e0e0e0" }}>
-                        {isLoadingDetail ? (
-                          <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-                            <CircularProgress size={24} />
-                          </Box>
-                        ) : detail ? (
-                          <Stack spacing={3}>
-                            {/* Nội dung câu hỏi */}
-                            <Box>
-                              <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1.5 }}>
-                                Nội dung câu hỏi:
-                              </Typography>
-                              {detail.cauHoi.noiDungCauHoiHTML ? (
-                                <Box 
-                                  dangerouslySetInnerHTML={{ __html: detail.cauHoi.noiDungCauHoiHTML }}
-                                  sx={{ pl: 2, color: "text.secondary" }}
-                                />
-                              ) : (
-                                <Typography sx={{ pl: 2, color: "text.secondary" }}>{detail.cauHoi.noiDungCauHoi}</Typography>
-                              )}
-                            </Box>
+                    <Collapse in={isExpanded} sx={{ width: '100%' }}>
+  <Box sx={{ mt: 3, pt: 2, borderTop: "1px solid #e0e0e0" }}>
+    {isLoadingDetail ? (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+        <CircularProgress size={24} />
+      </Box>
+    ) : detail ? (
+      <Stack spacing={3}>
+        {/* Nội dung câu hỏi */}
+        <Box>
+          {detail.cauHoi.noiDungCauHoiHTML ? (
+            <Box 
+              dangerouslySetInnerHTML={{ __html: detail.cauHoi.noiDungCauHoiHTML }}
+              sx={{ pl: 2, color: "text.secondary" }}
+            />
+          ) : (
+            <Typography sx={{ pl: 2, color: "text.secondary" }}>
+              {detail.cauHoi.noiDungCauHoi}
+            </Typography>
+          )}
+        </Box>
 
-                            {/* Đáp án */}
-                            <Box>
-                              <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1.5 }}>
-                                Đáp án:
-                              </Typography>
-                              {detail.dapAn && detail.dapAn.length > 0 ? (
-                                <Stack spacing={1.5} sx={{ pl: 2 }}>
-                                  {detail.dapAn.map((da, idx) => (
-                                    <Stack key={idx} direction="row" spacing={1.5} alignItems="flex-start">
-                                      {da.dapAnDung && (
-                                        <CheckCircle sx={{ fontSize: 20, color: "green", flexShrink: 0 }} />
-                                      )}
-                                   <Box sx={{display:'flex', flexDirection:'row'}}>
-                                      <Typography
-                                        sx={{
-                                          fontWeight: da.dapAnDung ? "bold" : "normal",
-                                          color: da.dapAnDung ? "green" : "text.primary",
-                                          }}>
-                                        {String.fromCharCode(65 + idx)}.
-                                      </Typography>
-                                      {da.noiDungHTML ? (
-                                        <Box 
-                                          dangerouslySetInnerHTML={{ __html: da.noiDungHTML }}
-                                          sx={{ 
-                                            fontWeight: da.dapAnDung ? "bold" : "normal",
-                                            color: da.dapAnDung ? "green" : "text.primary",
-                                          }}
-                                        />
-                                      ) : (
-                                        <Typography 
-                                          sx={{ 
-                                            fontWeight: da.dapAnDung ? "bold" : "normal",
-                                            color: da.dapAnDung ? "green" : "text.primary",
-                                          }}
-                                        >
-                                          {da.noiDung}
-                                        </Typography>
-                                    
-                                      )}
-                                      </Box>
-                                    </Stack>
-                                  ))}
-                                </Stack>
-                              ) : (
-                                <Typography variant="body2" sx={{ pl: 2, fontStyle: "italic", color: "text.secondary" }}>
-                                  Chưa có đáp án
-                                </Typography>
-                              )}
-                            </Box>
-                           
-                            {/* File đính kèm */}
-                            {detail.mangFileDinhKem && detail.mangFileDinhKem.length > 0 && (
-                              <Box>
-                                <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1.5 }}>
-                                  File đính kèm:
-                                </Typography>
-                                <Stack spacing={1} sx={{ pl: 2 }}>
-                                  {detail.mangFileDinhKem.map((file, idx) => (
-                                    <Typography key={idx} variant="body2" sx={{ color: "text.secondary" }}>
-                                      📎 {file.tenFile || `File ${idx + 1}`}
-                                    </Typography>
-                                  ))}
-                                </Stack>
-                              </Box>
-                            )}
-                          </Stack>
-                        ) : null}
-                      </Box>
-                    </Collapse>
+        {/* Đáp án */}
+     {/* Đáp án */}
+<Box>
+  {detail.dapAn && detail.dapAn.length > 0 ? (
+    <Stack spacing={1} sx={{ pl: 2 }}>
+      {detail.dapAn.map((da, idx) => (
+        <Box
+          key={idx}
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "24px 1fr", // 3 cột: A/B/C, icon, nội dung
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          {/* A/B/C */}
+          <Typography
+            sx={{
+              fontWeight: da.dapAnDung ? "bold" : "normal",
+              color: da.dapAnDung ? "green" : "text.primary",
+            }}
+          >
+            {String.fromCharCode(65 + idx)}.
+          </Typography>
+
+          {/* Nội dung đáp án */}
+          {da.noiDungHTML ? (
+            <Box
+              dangerouslySetInnerHTML={{ __html: da.noiDungHTML }}
+              sx={{
+                fontWeight: da.dapAnDung ? "bold" : "normal",
+                color: da.dapAnDung ? "green" : "text.primary",
+              }}
+            />
+          ) : (
+            <Typography
+              sx={{
+                fontWeight: da.dapAnDung ? "bold" : "normal",
+                color: da.dapAnDung ? "green" : "text.primary",
+              }}
+            >
+              {da.noiDung}
+            </Typography>
+          )}
+        </Box>
+        
+      ))}
+    </Stack>
+  ) : (
+    <Typography variant="body2" sx={{ pl: 2, fontStyle: "italic", color: "text.secondary" }}>
+      Chưa có đáp án
+    </Typography>
+  )}
+</Box>
+
+
+        {/* File đính kèm */}
+        {detail.mangFileDinhKem && detail.mangFileDinhKem.length > 0 && (
+          <Box>
+            <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1.5 }}>
+              File đính kèm:
+            </Typography>
+            <Stack spacing={1} sx={{ pl: 2 }}>
+              {detail.mangFileDinhKem.map((file, idx) => (
+                <Typography key={idx} variant="body2" sx={{ color: "text.secondary" }}>
+                  📎 {file.tenFile || `File ${idx + 1}`}
+                </Typography>
+              ))}
+            </Stack>
+          </Box>
+        )}
+      </Stack>
+    ) : null}
+  </Box>
+</Collapse>
+
                   </CardContent>
                 </Card>
               );

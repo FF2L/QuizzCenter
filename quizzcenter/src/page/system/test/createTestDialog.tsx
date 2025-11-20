@@ -37,7 +37,7 @@ const CreateBaiKiemTraDialog: React.FC<CreateBaiKiemTraDialogProps> = ({
   // Tính toán min datetime cho các input
   const getMinStartTime = () => {
     const now = new Date();
-    const minTime = new Date(now.getTime() + 5 * 60 * 1000); // Thêm 5 phút
+    const minTime = new Date(now.getTime() + 1 * 60 * 1000); // Thêm 1 phút
     const tzOffset = minTime.getTimezoneOffset() * 60000;
     const localISOTime = new Date(minTime.getTime() - tzOffset)
       .toISOString()
@@ -72,12 +72,12 @@ const CreateBaiKiemTraDialog: React.FC<CreateBaiKiemTraDialogProps> = ({
     
     if (value) {
       const selectedDate = new Date(value);
-      const minTime = new Date(Date.now() + 5 * 60 * 1000);
+      const minTime = new Date(); // không cộng thêm phút nào
       
       // Validate đơn giản: chỉ check theo đúng giá trị user chọn
       if (selectedDate < minTime) {
         setErrorMessage(
-          `⚠️ Thời gian bắt đầu (${selectedDate.toLocaleString('vi-VN')}) phải sau thời gian hiện tại (${new Date().toLocaleString('vi-VN')}) ít nhất 5 phút!`
+          `⚠️ Thời gian bắt đầu (${selectedDate.toLocaleString('vi-VN')}) phải sau thời gian hiện tại (${new Date().toLocaleString('vi-VN')})`
         );
         return;
       }
@@ -306,7 +306,7 @@ const CreateBaiKiemTraDialog: React.FC<CreateBaiKiemTraDialogProps> = ({
           inputProps={{ 
             min: getMinStartTime()
           }}
-          helperText="Phải sau thời gian hiện tại ít nhất 5 phút"
+          helperText="Phải sau thời gian hiện tại"
         />
 
         <TextField

@@ -310,14 +310,14 @@ const DoTestPage: React.FC = () => {
       <Box sx={{ maxWidth: 1400, mx: "auto", px: 2, display: "flex", gap: 3, flexWrap: "wrap" }}>
         {/* Trái: câu hỏi */}
         <Box sx={{ flex: "1 1 65%", minWidth: 300 }}>
-          <Paper sx={{ p: 3, mb: 2 }}>
-            <Typography variant="h5" sx={{ fontWeight: 700, color: "#e91e63", mb: 1 }}>
+          <Paper sx={{ p: 3, mb: 2, boxShadow:"none" }}>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
               {baiKiemTraInfo?.tenBaiKiemTra || "Bài kiểm tra"}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" >
               Tổng số câu: {baiLamData.cauHoi.length} | Đã làm: {soCauDaLam}/{baiLamData.cauHoi.length} | Đã cắm cờ: {soCauDaCamCo}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            <Typography variant="body2"  sx={{ mt: 0.5 }}>
               Trang {currentPage}/{totalPages}
             </Typography>
           </Paper>
@@ -325,7 +325,7 @@ const DoTestPage: React.FC = () => {
           {currentQuestions.map((item, localIndex) => {
             const globalIndex = (currentPage - 1) * QUESTIONS_PER_PAGE + localIndex;
             return (
-              <Paper key={item.idChiTietBaiLam} sx={{ p: 3, mb: 2 }} id={`cau-${localIndex}`}>
+              <Paper key={item.idChiTietBaiLam} sx={{ p: 3, mb: 2, boxShadow:"none" }} id={`cau-${localIndex}`}>
                 <Box sx={{ display: "flex", alignItems: "flex-start", mb: 2, gap: 1 }}>
                   <Chip label={`Câu ${globalIndex + 1}`} color="primary" size="small" sx={{ fontWeight: 600 }} />
                   {isCauHoiDaTraLoi(item.idChiTietBaiLam) && (
@@ -383,7 +383,6 @@ const DoTestPage: React.FC = () => {
                           </Box>
                         }
                         sx={{
-                          border: "1px solid #e0e0e0",
                           borderRadius: 1,
                           px: 2,
                           py: 0.5,
@@ -418,7 +417,6 @@ const DoTestPage: React.FC = () => {
                           </Box>
                         }
                         sx={{
-                          border: "1px solid #e0e0e0",
                           borderRadius: 1,
                           px: 2,
                           py: 0.5,
@@ -473,8 +471,8 @@ const DoTestPage: React.FC = () => {
                       variant={isDone ? "contained" : "outlined"}
                       color={isDone ? "success" : "inherit"}
                       sx={{
-                        minWidth: 50,
-                        minHeight: 50,
+                        width: 50,
+                        height: 50,
                         fontWeight: 600,
                         ...(isFlagged && {
                           border: "2px solid #ff9800",
@@ -506,7 +504,7 @@ const DoTestPage: React.FC = () => {
               color="error"
               fullWidth
               size="large"
-              sx={{ mt: 3, py: 1.5, fontWeight: 600, fontSize: "1.1rem" }}
+              sx={{ backgroundColor:'#245D51', mt: 3, py: 1.5, fontWeight: 600, fontSize: "1.1rem" }}
               onClick={() => setShowNopBaiDialog(true)}
               disabled={isLocked}
             >

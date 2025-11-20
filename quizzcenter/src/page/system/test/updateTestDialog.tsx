@@ -282,19 +282,6 @@ const UpdateBaiKiemTraDialog: React.FC<UpdateBaiKiemTraDialogProps> = ({
           <MenuItem value="BaiKiemTra">Bài kiểm tra</MenuItem>
           <MenuItem value="LuyenTap">Bài luyện tập</MenuItem>
         </TextField>
-
-        {loaiKiemTra === "LuyenTap" && (
-          <TextField
-            type="number"
-            label="Số lần làm"
-            value={soLanLam}
-            onChange={(e) => setSoLanLam(Math.max(1, Number(e.target.value)))}
-            fullWidth
-            inputProps={{ min: 1 }}
-            helperText="Sinh viên có thể làm bài luyện tập nhiều lần"
-          />
-        )}
-
         {loaiKiemTra === "BaiKiemTra" && (
           <Box sx={{ p: 2, backgroundColor: "#f5f5f5", borderRadius: 1, fontSize: 14, color: "#666" }}>
             ℹ️ Bài kiểm tra chỉ cho phép sinh viên làm 1 lần

@@ -28,6 +28,7 @@ import Breadcrumbs from "@mui/material/Breadcrumbs";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 
 interface ApiResponse {
   data: BaiKiemTra[];
@@ -381,8 +382,9 @@ const BaiKiemTraList = () => {
                 }
                 sx={{
                   cursor: "pointer",
+                  boxShadow: "none", 
                   "&:hover": { 
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)", 
+                    boxShadow: "none", 
                     transform: "translateY(-2px)" 
                   },
                   transition: "all 0.2s ease",
@@ -476,12 +478,16 @@ const BaiKiemTraList = () => {
                       </Box>
 
                       <Box>
-                        <Typography sx={{ fontSize: 18, color: "#757575", fontWeight: 500, mb: 0.3 }}>
-                          Thời gian làm bài:
-                        </Typography>
-                        <Typography sx={{ fontSize: 18, color: "#424242", fontWeight: 600 }}>
-                          {bai.thoiGianLam / 60} phút
-                        </Typography>
+                      {bai.loaiKiemTra === "BaiKiemTra" && (
+                        <Box>
+                          <Typography sx={{ fontSize: 18, color: "#757575", fontWeight: 500, mb: 0.3 }}>
+                            Thời gian làm bài:
+                          </Typography>
+                          <Typography sx={{ fontSize: 18, color: "#424242", fontWeight: 600 }}>
+                            {bai.thoiGianLam / 60} phút
+                          </Typography>
+                        </Box>
+                      )}
                       </Box>
                     </Stack>
                   </Box>
@@ -497,6 +503,20 @@ const BaiKiemTraList = () => {
                       mt: "auto"
                     }}
                   >
+                     <IconButton
+                   size="small"
+                    sx={{ 
+                      color: "#1976d2",
+                      "&:hover": { backgroundColor: "#e3f2fd" }
+                     }}
+                     onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                     title="Triển khai bài làm"
+                         >
+                       <AssignmentTurnedInIcon fontSize="small" />
+                        </IconButton>
+
                     <IconButton
                       size="small"
                       sx={{ 
@@ -544,7 +564,7 @@ const BaiKiemTraList = () => {
                       <DeleteIcon fontSize="small" />
                     </IconButton>
 
-                    {(new Date(bai.thoiGianKetThuc) <= new Date()) && bai.loaiKiemTra === "BaiKiemTra" && (
+                    {(new Date(bai.thoiGianBatDau) <= new Date()) && bai.loaiKiemTra === "BaiKiemTra" && (
                       <IconButton
                         size="small"
                         sx={{
@@ -556,7 +576,9 @@ const BaiKiemTraList = () => {
                       >
                         <MoreVertIcon fontSize="small" />
                       </IconButton>
+                      
                     )}
+
                   </Stack>
                 </CardContent>
               </Card>
