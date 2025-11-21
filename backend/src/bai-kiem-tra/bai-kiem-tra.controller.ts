@@ -23,7 +23,7 @@ export class BaiKiemTraController {
   async create(@Body() createBaiKiemTraDto: CreateBaiKiemTraDto) {
     return await this.baiKiemTraService.taoBaiKiemTra(createBaiKiemTraDto);
   }
-
+  //Giảng viên
   @Get(':idLopHocPhan')
   async findAll(@Param('idLopHocPhan',ParseIntPipe) idlopHocPHan: number ,
    @Query('loaiKiemTra') loaiKiemTra?: LoaiKiemTra,
@@ -31,6 +31,21 @@ export class BaiKiemTraController {
    @Query('limit') limit?: number){
     return await this.baiKiemTraService.timTatCaBaiKiemTraTheoIdLopHocPhan(idlopHocPHan, {loaiKiemTra, skip, limit});
   }
+
+  //Phát Hành Bài kiểm tra
+  @Put('/phat-hanh/:idBaiKiemTra')
+  async phatHanhBaiKiemTra(@Param('idBaiKiemTra',ParseIntPipe) idBaiKiemTra: number, @Body() body: {phatHanh: boolean}) {
+    return await this.baiKiemTraService.phatHanhBaiKiemTra(idBaiKiemTra, body.phatHanh);
+  }
+  //Sinh viên
+    @Get('/sinh-vien/:idLopHocPhan')
+  async findAllBaiKiemTraSinhVien(@Param('idLopHocPhan',ParseIntPipe) idlopHocPHan: number ,
+   @Query('loaiKiemTra') loaiKiemTra?: LoaiKiemTra,
+   @Query('skip') skip?: number,
+   @Query('limit') limit?: number){
+    return await this.baiKiemTraService.timTatCaBaiKiemTraTheoIdLopHocPhanSinhVien(idlopHocPHan, {loaiKiemTra, skip, limit});
+  }
+
   @Get('/findone/:idBaiKiemTra')
   async findOne(@Param('idBaiKiemTra',ParseIntPipe) idBaiKiemTra: number) {
     return await this.baiKiemTraService.timMotBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra);

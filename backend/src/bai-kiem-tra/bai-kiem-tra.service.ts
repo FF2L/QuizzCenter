@@ -74,6 +74,38 @@ export class BaiKiemTraService {
     return { data, total, currentPage, totalPages };
   }
 
+  async phatHanhBaiKiemTra(idBaiKiemTra: number, phatHanh: boolean) {
+    const baiKiemTra = await this.timMotBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra);
+    baiKiemTra.phatHanh = phatHanh;
+    try {
+      return await this.baiKiemTraRepo.save(baiKiemTra);
+    } catch (err) {
+      throw new InternalServerErrorException('Phát hành bài kiểm tra không thành công');
+    }
+  }
+
+  async timTatCaBaiKiemTraTheoIdLopHocPhanSinhVien(idLopHocPhan: number, query: any) {
+
+    await this.lopHocPhanService.timMotLopHocPhanTheoId(idLopHocPhan);
+    const {loaiKiemTra, skip, limit} = query;
+    const qb = this.baiKiemTraRepo.createQueryBuilder('bkt')
+      .where('bkt.idLopHocPhan = :idLopHocPhan', { idLopHocPhan })
+      .andWhere('bkt.phatHanh = :phatHanh', { phatHanh: true });
+    if (loaiKiemTra) {
+      qb.andWhere('bkt.loaiKiemTra = :loaiKiemTra', { loaiKiemTra });
+    }
+    
+    const [data,total] = await qb
+      .orderBy('bkt.create_at', 'DESC')
+      .skip(skip ?? 0)
+      .take(limit ?? DEFAULT_PAGE_LIMIT)
+      .getManyAndCount();
+    const currentPage = Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1;
+    const totalPages = Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT));
+
+    return { data, total, currentPage, totalPages };
+  }
+
   async timMonHocTheoIdBaikiemTradOne(idBaiKiemTra: number) {
     const bkt = await this.baiKiemTraRepo.findOne({
       where: { id: idBaiKiemTra },
