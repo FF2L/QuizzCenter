@@ -248,6 +248,44 @@ const BaiKiemTraList = () => {
     }
   };
 
+  const handlePhatHanh = async (bai: BaiKiemTra) => {
+    // Kiểm tra nếu bài đã đóng thì không cho phép phát hành
+    if (new Date(bai.thoiGianKetThuc) <= new Date()) {
+      alert("Không thể phát hành bài kiểm tra đã kết thúc!");
+      return;
+    }
+
+    const newPhatHanhStatus = !bai.phatHanh;
+    const confirmMessage = newPhatHanhStatus 
+      ? "Bạn có chắc chắn muốn phát hành bài kiểm tra này?"
+      : "Bạn có chắc chắn muốn hủy phát hành bài kiểm tra này?";
+
+    if (!window.confirm(confirmMessage)) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/bai-kiem-tra/phat-hanh/${bai.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ phatHanh: newPhatHanhStatus }),
+      });
+
+      if (res.ok) {
+        fetchBaiKiemTra();
+        alert(newPhatHanhStatus ? "Phát hành thành công!" : "Hủy phát hành thành công!");
+      } else {
+        const errorText = await res.text();
+        console.error("Phát hành thất bại:", errorText);
+        alert("Thao tác thất bại!");
+      }
+    } catch (error) {
+      console.error("Lỗi khi phát hành:", error);
+      alert("Có lỗi xảy ra khi phát hành.");
+    }
+  };
+
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
     setCurrentPage(1);
@@ -447,6 +485,20 @@ const BaiKiemTraList = () => {
                           }}
                         />
                       )}
+
+                      {bai.phatHanh && (new Date(bai.thoiGianKetThuc) > new Date()) && (
+                        <Chip
+                          label="Đã phát hành"
+                          size="small"
+                          sx={{
+                            backgroundColor: "#e8f5e9",
+                            color: "#2e7d32",
+                            fontWeight: 600,
+                            fontSize: "11px",
+                            height: "22px"
+                          }}
+                        />
+                      )}
                     </Stack>
                   </Box>
 
@@ -504,18 +556,35 @@ const BaiKiemTraList = () => {
                     }}
                   >
                      <IconButton
-                   size="small"
-                    sx={{ 
-                      color: "#1976d2",
-                      "&:hover": { backgroundColor: "#e3f2fd" }
-                     }}
-                     onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                     title="Triển khai bài làm"
-                         >
-                       <AssignmentTurnedInIcon fontSize="small" />
-                        </IconButton>
+                      size="small"
+                      sx={{ 
+                        color: new Date(bai.thoiGianKetThuc) <= new Date() 
+                          ? "#bdbdbd" 
+                          : (bai.phatHanh ? "#43A047" : "#1976d2"),
+                        "&:hover": { 
+                          backgroundColor: new Date(bai.thoiGianKetThuc) <= new Date() 
+                            ? "transparent" 
+                            : (bai.phatHanh ? "#e8f5e9" : "#e3f2fd") 
+                        },
+                        cursor: new Date(bai.thoiGianKetThuc) <= new Date() 
+                          ? "not-allowed" 
+                          : "pointer"
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (new Date(bai.thoiGianKetThuc) > new Date()) {
+                          handlePhatHanh(bai);
+                        }
+                      }}
+                      title={
+                        new Date(bai.thoiGianKetThuc) <= new Date() 
+                          ? "Bài kiểm tra đã kết thúc" 
+                          : (bai.phatHanh ? "Hủy phát hành" : "Phát hành bài")
+                      }
+                      disabled={new Date(bai.thoiGianKetThuc) <= new Date()}
+                    >
+                      <AssignmentTurnedInIcon fontSize="small" />
+                    </IconButton>
 
                     <IconButton
                       size="small"
