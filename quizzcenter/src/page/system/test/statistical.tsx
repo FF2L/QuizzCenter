@@ -257,56 +257,90 @@ const ThongKeBangDiemContent = () => {
       {/* Thông tin chi tiết */}
       <Grid container spacing={3}>
         {/* Biểu đồ */}
-        <Grid item xs={12} md={8}>
-          <Paper
-            sx={{
-              p: 3,
-              borderRadius: 2,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            }}
-          >
-            <Typography variant="h6" fontWeight={600} mb={3}>
-              Phân bố điểm
-            </Typography>
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                <XAxis
-                  dataKey="diem"
-                  tick={{ fill: "#666", fontSize: 14 }}
-                  label={{
-                    value: "Khoảng điểm",
-                    position: "insideBottom",
-                    offset: -5,
-                    style: { fill: "#666", fontWeight: 600 },
-                  }}
-                />
-                <YAxis
-                  tick={{ fill: "#666", fontSize: 14 }}
-                  label={{
-                    value: "Số sinh viên",
-                    angle: -90,
-                    position: "insideLeft",
-                    style: { fill: "#666", fontWeight: 600 },
-                  }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#fff",
-                    border: "1px solid #ccc",
-                    borderRadius: 8,
-                  }}
-                  formatter={(value) => [`${value} sinh viên`, "Số lượng"]}
-                />
-                <Bar dataKey="soLuong" radius={[8, 8, 0, 0]}>
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={getBarColor(entry.diem)} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </Paper>
-        </Grid>
+        {/* Biểu đồ với chú thích màu */}
+<Grid item xs={12} md={8} sx={{ position: "relative" }}>
+  <Paper
+    sx={{
+      p: 3,
+      borderRadius: 2,
+      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+      position: "relative",
+    }}
+  >
+    <Typography variant="h6" fontWeight={600} mb={3}>
+      Phân bố điểm
+    </Typography>
+    <ResponsiveContainer width="100%" height={400}>
+      <BarChart data={chartData}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+        <XAxis
+          dataKey="diem"
+          tick={{ fill: "#666", fontSize: 14 }}
+          label={{
+            value: "Khoảng điểm",
+            position: "insideBottom",
+            offset: -5,
+            style: { fill: "#666", fontWeight: 600 },
+          }}
+        />
+        <YAxis
+          tick={{ fill: "#666", fontSize: 14 }}
+          label={{
+            value: "Số sinh viên",
+            angle: -90,
+            position: "insideLeft",
+            style: { fill: "#666", fontWeight: 600 },
+          }}
+        />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: "#fff",
+            border: "1px solid #ccc",
+            borderRadius: 8,
+          }}
+          formatter={(value) => [`${value} sinh viên`, "Số lượng"]}
+        />
+        <Bar dataKey="soLuong" radius={[8, 8, 0, 0]}>
+          {chartData.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={getBarColor(entry.diem)} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+
+    {/* Chú thích màu */}
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "flex-end",
+        gap: 2,
+        mt: 2,
+        flexWrap: "wrap",
+      }}
+    >
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ width: 16, height: 16, backgroundColor: "#f44336", borderRadius: 1 }} />
+        <Typography variant="body2">Điểm thấp (&lt;5)</Typography>
+      </Box>
+
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ width: 16, height: 16, backgroundColor: "#ff9800", borderRadius: 1 }} />
+        <Typography variant="body2">Trung bình (5-7)</Typography>
+      </Box>
+
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ width: 16, height: 16, backgroundColor: "#2196f3", borderRadius: 1 }} />
+        <Typography variant="body2">Khá (7-8.5)</Typography>
+      </Box>
+
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ width: 16, height: 16, backgroundColor: "#4caf50", borderRadius: 1 }} />
+        <Typography variant="body2">Cao (&gt;8.5)</Typography>
+      </Box>
+    </Box>
+  </Paper>
+</Grid>
+
 
         {/* Thống kê bổ sung */}
         <Grid item xs={12} md={4}>
