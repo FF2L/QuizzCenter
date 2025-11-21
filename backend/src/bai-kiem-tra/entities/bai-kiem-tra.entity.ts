@@ -18,6 +18,9 @@ export class BaiKiemTra extends BaseEntity {
     })
     loaiKiemTra: LoaiKiemTra
 
+    @Column({default:null})
+    phatHanh: boolean
+
     @Column({type: 'timestamp'})
     thoiGianBatDau: Date
 
