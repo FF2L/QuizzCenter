@@ -113,12 +113,13 @@ export interface BaiKiemTra {
   update_at: string;
   delete_at: string | null;
   tenBaiKiemTra: string;
-  loaiKiemTra: "LuyenTap" | "BaiKiemTra"; // Enum dạng string
+  loaiKiemTra: "LuyenTap" | "BaiKiemTra";
   soLanLam: number;
   xemBaiLam: boolean;
   hienThiKetQua: boolean;
-  thoiGianBatDau: string; // ISO string
-  thoiGianKetThuc: string; // ISO string
-  thoiGianLam: number; // thời gian làm bài tính theo giây
+  thoiGianBatDau: string;
+  thoiGianKetThuc: string;
+  thoiGianLam: number;
   idLopHocPhan: number;
+  phatHanh: boolean;
 }

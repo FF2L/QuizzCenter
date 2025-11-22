@@ -101,7 +101,7 @@ const CollegeTest: React.FC = () => {
         params.append("tenBaiKiemTra", searchValue.trim());
       }
 
-      const url = `http://localhost:3000/bai-kiem-tra/${idLopHocPhan}?${params.toString()}`;
+      const url = `http://localhost:3000/bai-kiem-tra/sinh-vien/${idLopHocPhan}?${params.toString()}`;
 
       const res = await fetch(url, {
         headers: {
