@@ -42,6 +42,11 @@ interface PreviewQuestion {
   mangDapAn: DapAn[];
 }
 
+interface faildQuestiom{
+  rowNumber: number;
+  error: string;
+}
+
 interface ImportQuestionDialogProps {
   open: boolean;
   onClose: () => void;
@@ -122,7 +127,7 @@ const ImportQuestionDialog = ({
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch(`http://localhost:3000/gui-file/import/${selectedChuong}`, {
+      const res: any= await fetch(`http://localhost:3000/gui-file/import/${selectedChuong}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -133,10 +138,20 @@ const ImportQuestionDialog = ({
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
+      console.log(res)
 
-      const data: PreviewQuestion[] = await res.json();
+      const dataPre: any = (await res.json());
+      const {thanhCong, thatBai} = dataPre;
+      const data: PreviewQuestion[] = thanhCong;
+      console.log("Preview data:", data);
+      const failed: faildQuestiom[] = thatBai;
+      if(failed.length>0){
+        const errorMessages = failed.map(f => `Dòng ${f.rowNumber}: ${f.error}`).join("\n");
+        setError(`Một số câu hỏi không được nhập do lỗi sau:\n${errorMessages}`);
+      }
       setPreviewQuestions(data);
     } catch (err) {
+      console.log(err)
       console.error("Lỗi khi preview file:", err);
       setError("Không thể đọc file. Vui lòng kiểm tra định dạng file!");
       setSelectedFile(null);
@@ -383,7 +398,7 @@ const ImportQuestionDialog = ({
           <Box>
             <Typography variant="body2" color="primary" sx={{ cursor: "pointer" }}>
               <a 
-                href="https://docs.google.com/spreadsheets/d/1RdNLfXVQtNW-H_p8QfI3tZXJdwhkHSeg/export?format=xlsx" 
+                href="/template/NhapCauHoi.xlsx" 
                 download="Mau_Cau_Hoi.xlsx"
                 style={{ textDecoration: "none", color: "inherit" }}
               >
@@ -393,7 +408,14 @@ const ImportQuestionDialog = ({
           </Box>
 
           {/* Error message */}
-          {error && <Alert severity="error">{error}</Alert>}
+          {error && (
+              <Alert severity="error">
+                <Box sx={{ whiteSpace: "pre-line" }}>
+                  {error}
+                </Box>
+              </Alert>
+            )}
+
 
           {/* Duplicate warning */}
           {duplicateIndices.size > 0 && (

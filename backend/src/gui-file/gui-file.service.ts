@@ -44,7 +44,7 @@ async uploadMotAnh(file: Express.Multer.File): Promise<{ public_id: string; url:
 }
 
 
-    async xoaAnhTheoId(publicId: string){
+  async xoaAnhTheoId(publicId: string){
       try{
         return await this.cloudianry.uploader.destroy(publicId)
       }catch(error){
@@ -81,48 +81,156 @@ parseFileFormat(buffer: Buffer, fileName: string, idChuong: number) {
   }
 
   // ============== Normalize to required output ==============
-  private normalize(rows: Array<Record<string, any>>, idChuong: number) {
-    const letters = ['A','B','C','D','E','F','G','H'];
+// ============== Normalize to required output ==============
+private normalize(rows: Array<Record<string, any>>, idChuong: number) {
+  const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
-    return rows.map((r) => {
-      const tenHienThi = (r['Tên hiển thị'] ?? '').toString().trim() || 'abc';
-      const noiDungCauHoi = (r['Nội dung câu hỏi'] ?? '').toString().trim();
+  const thanhCong: any[] = [];
+  const thatBai: any[] = [];
 
-      const loaiCauHoi = this.mapLoai((r['Loại câu hỏi'] ?? '').toString());
-      const doKho = this.mapDoKho((r['Độ khó'] ?? '').toString());
+  rows.forEach((r, index) => {
+    try {
+      // ====== VALIDATION CƠ BẢN ======
 
-      // danh sách đáp án A..H (bỏ trống)
-      const mangDapAn = letters
-        .map(L => (r[`Đáp án ${L}`] ?? '').toString().trim())
-        .filter(s => s.length > 0)
-        .map(s => ({ noiDung: s, noiDungHTML: null as string | null, dapAnDung: false }));
-
-      // đánh dấu đáp án đúng: "A,B" | "1;3" | theo nội dung
-      const rawCorrect = (r['Đáp án đúng'] ?? '').toString().trim();
-      const tokens = rawCorrect ? rawCorrect.split(/[,\;\|\/]/).map(x => x.trim()).filter(Boolean) : [];
-
-      for (const tk of tokens) {
-        const li = this.letterIndex(tk);
-        if (li !== null && mangDapAn[li]) { mangDapAn[li].dapAnDung = true; continue; }
-
-        const n = Number(tk);
-        if (!Number.isNaN(n) && mangDapAn[n - 1]) { mangDapAn[n - 1].dapAnDung = true; continue; }
-
-        const f = mangDapAn.find(m => m.noiDung.toLowerCase() === tk.toLowerCase());
-        if (f) f.dapAnDung = true;
+      // Tên hiển thị
+      const tenHienThi = (r['Tên hiển thị'] ?? '').toString().trim();
+      if (!tenHienThi) {
+        throw new Error('Tên hiển thị không được để trống.');
       }
 
-      return {
+      // Nội dung câu hỏi
+      const noiDungCauHoi = (r['Nội dung câu hỏi'] ?? '').toString().trim();
+      if (!noiDungCauHoi) {
+        throw new Error('Nội dung câu hỏi không được để trống.');
+      }
+
+      // Loại câu hỏi
+      const rawLoai = (r['Loại câu hỏi'] ?? '').toString().trim();
+      if (!rawLoai) {
+        throw new Error('Loại câu hỏi không được để trống.');
+      }
+      const loaiCauHoi = this.mapLoai(rawLoai); 
+
+      // Độ khó
+      const rawDoKho = (r['Độ khó'] ?? '').toString().trim();
+      if (!rawDoKho) {
+        throw new Error('Độ khó không được để trống.');
+      }
+      const doKho = this.mapDoKho(rawDoKho); 
+
+      // ====== ĐÁP ÁN A, B, C, ... ======
+
+      // Lấy toàn bộ text trong các cột Đáp án A..H
+      const answerStrings = letters.map(L =>
+        (r[`Đáp án ${L}`] ?? '').toString().trim()
+      );
+
+      // Ít nhất phải có 1 đáp án có nội dung
+      const mangDapAn = answerStrings
+        .filter(s => s.length > 0)
+        .map(s => ({
+          noiDung: s,
+          noiDungHTML: null as string | null,
+          dapAnDung: false,
+        }));
+
+      if (mangDapAn.length === 0) {
+        throw new Error('Nội dung đáp án không được để trống. Phải có ít nhất 1 đáp án.');
+      }
+
+      // Nếu là "Một đúng" thì bắt buộc có đúng 4 đáp án (A, B, C, D)
+      if (loaiCauHoi === LoaiCauHoi.MotDung) {
+        const first4 = answerStrings.slice(0, 4); // A, B, C, D
+        const nonEmptyFirst4 = first4.filter(s => s.length > 0);
+
+        if (nonEmptyFirst4.length !== 4) {
+          throw new Error('Câu hỏi loại "Một đúng" phải có đủ 4 đáp án A, B, C, D và không được để trống.');
+        }
+      }
+
+      // ====== CỘT "Đáp án đúng" ======
+
+      const rawCorrect = (r['Đáp án đúng'] ?? '').toString().trim();
+      if (!rawCorrect) {
+        throw new Error('Đáp án đúng không được để trống.');
+      }
+
+      // Tách theo các dấu , ; | / (ví dụ: "A,B" hoặc "A;B")
+      const tokens = rawCorrect
+        .split(/[,\;\|\/]/)
+        .map(x => x.trim())
+        .filter(Boolean);
+
+      if (tokens.length === 0) {
+        throw new Error('Đáp án đúng không hợp lệ. Chỉ chấp nhận A,B,C,D,E,F,G,H.');
+      }
+
+      let soDapAnDung = 0;
+
+      for (const tkRaw of tokens) {
+        const up = tkRaw.toUpperCase();
+
+        // Chỉ chấp nhận chữ cái A..H
+        if (!letters.includes(up)) {
+          throw new Error('Đáp án đúng không hợp lệ. Chỉ chấp nhận A,B,C,D,E,F,G,H.');
+        }
+
+        const idx = letters.indexOf(up);
+
+        // Nếu chọn E/F/G/H nhưng không có nội dung đáp án tương ứng thì cũng lỗi
+        if (!answerStrings[idx] || answerStrings[idx].trim().length === 0) {
+          throw new Error(
+            `Đáp án đúng "${up}" không hợp lệ vì không có nội dung ở cột "Đáp án ${up}".`
+          );
+        }
+
+        const found = mangDapAn.find(
+          a => a.noiDung.trim().toLowerCase() === answerStrings[idx].trim().toLowerCase()
+        );
+
+        if (!found) {
+          throw new Error(
+            `Không tìm thấy đáp án tương ứng với "${up}".`
+          );
+        }
+
+        found.dapAnDung = true;
+        soDapAnDung++;
+      }
+
+      if (soDapAnDung === 0) {
+        throw new Error('Chưa có đáp án nào được đánh dấu đúng.');
+      }
+
+      // Ràng buộc theo loại câu hỏi
+      if (loaiCauHoi === LoaiCauHoi.MotDung && soDapAnDung !== 1) {
+        throw new Error('Câu hỏi loại "Một đúng" phải có đúng 1 đáp án đúng.');
+      }
+
+      // ====== Nếu mọi thứ OK → push vào thanhCong ======
+      thanhCong.push({
         tenHienThi,
         noiDungCauHoi,
         noiDungCauHoiHTML: noiDungCauHoi,
-        loaiCauHoi,                 // "MotDung" | "NhieuDung"
-        doKho,                      // "De" | "TrungBinh" | "Kho"
+        loaiCauHoi,
+        doKho,
         idChuong,
-        mangDapAn,                  // [{noiDung, noiDungHTML:null, dapAnDung}]
-      };
-    });
-  }
+        mangDapAn,
+      });
+
+    } catch (err: any) {
+      // ====== Lỗi → push vào thatBai ======
+      thatBai.push({
+        rowNumber: index + 2, // +2 vì thường header là dòng 1
+        error: err.message || 'Lỗi không xác định',
+      });
+    }
+  });
+
+  return { thanhCong, thatBai };
+}
+
+
 
   // ================= Helpers =================
   private letterIndex(s: string): number | null {
@@ -134,19 +242,19 @@ parseFileFormat(buffer: Buffer, fileName: string, idChuong: number) {
 
   private mapDoKho(raw: string): DoKho {
     const s = raw.trim().toLowerCase();
-    if (['dễ','de','easy','1','low'].includes(s)) return DoKho.De;
-    if (['trung bình','trungbinh','tb','2','medium'].includes(s)) return DoKho.TrungBinh;
-    if (['khó','kho','hard','3','high'].includes(s)) return DoKho.Kho;
-    return DoKho.TrungBinh;
+    if (['dễ','de'].includes(s)) return DoKho.De;
+    if (['trung bình','trungbinh'].includes(s)) return DoKho.TrungBinh;
+    if (['khó','kho'].includes(s)) return DoKho.Kho;
+    throw new Error('Độ khó không hợp lệ. Chỉ chấp nhận "Dễ", "Trung bình" hoặc "Khó"');
   }
 
   private mapLoai(raw: string): LoaiCauHoi {
     const s = raw.trim().toLowerCase();
-    if (s.includes('một đúng') || s.includes('mot dung') || ['1','m','single','one'].includes(s))
+    if (s.includes('một đúng') || s.includes('mot dung') )
       return LoaiCauHoi.MotDung;
-    if (s.includes('nhiều đúng') || s.includes('nhieu dung') || ['2','n','multi','multiple'].includes(s))
+    if (s.includes('nhiều đúng') || s.includes('nhieu dung') )
       return LoaiCauHoi.NhieuDung;
-    return LoaiCauHoi.MotDung;
+    throw new Error('Loại câu hỏi không hợp lệ. Chỉ chấp nhận "Một đúng" hoặc "Nhiều đúng"');
   }
 
 }

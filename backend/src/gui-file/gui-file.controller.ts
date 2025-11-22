@@ -11,7 +11,7 @@ export class GuiFileController {
   constructor(private readonly guiFileService: GuiFileService) {}
 
 @Post('import/:idChuong')
-@UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } }))
+@UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } }))
 async import(
   @UploadedFile() file: Express.Multer.File,
   @Param('idChuong') idChuong: number,
