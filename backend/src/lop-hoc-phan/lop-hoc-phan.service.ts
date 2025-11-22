@@ -155,25 +155,19 @@ export class LopHocPhanService {
   }
 
   async themSinhVienVaoLopHocPhan(idLopHocPhan:number, maSinhVien: string) {
-      const svex = await this.svRepo.createQueryBuilder('sv')
-      .leftJoin('sv.nguoiDung', 'nd')
-      .where('nd.maNguoiDung = :maSinhVien', { maSinhVien })
-      .getOne();
-      if(!svex) throw new NotFoundException('Không tìm thấy sinh viên với mã sinh viên đã cho');
-      
+    try {
+      const nguoiDung = await this.ndRepo.findOne({
+        where: { maNguoiDung: maSinhVien }
+      });
+      if(!nguoiDung) throw new NotFoundException('Không tìm thấy sinh viên với mã sinh viên đã cho');
+
       const sinhVien = await this.lopHocPhanRep.createQueryBuilder('lhp')
         .leftJoin('lhp.sinhVien', 'sv')
         .leftJoin('sv.nguoiDung', 'nd')
         .where('nd.maNguoiDung = :maSinhVien', { maSinhVien })
         .andWhere('lhp.id = :idLopHocPhan', { idLopHocPhan })
-         .getOne();
-            if(sinhVien) throw new NotFoundException('Sinh viên đã được thêm vào lớp học phần');
-    try {
-
-      const nguoiDung = await this.ndRepo.findOne({
-        where: { maNguoiDung: maSinhVien }
-      });
-      if(!nguoiDung) throw new NotFoundException('Không tìm thấy sinh viên với mã sinh viên đã cho');
+       .getOne();
+      if(sinhVien) throw new BadRequestException('Sinh viên đã được thêm vào lớp học phần');
 
       await this.lopHocPhanRep.createQueryBuilder()
       .relation(LopHocPhan, 'sinhVien')

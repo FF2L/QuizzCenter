@@ -20,6 +20,8 @@ import { GuiFileModule } from './gui-file/gui-file.module';
 import { MailModule } from './mail/mail.module';
 import { RedisModule } from './redis/redis.module';
 import { OtpModule } from './otp/otp.module';
+import { HocKyModule } from './hoc-ky/hoc-ky.module';
+
 
 
 @Module({
@@ -34,7 +36,7 @@ import { OtpModule } from './otp/otp.module';
       useFactory: dbPostgresConfig, // sử dụng khi dbPostgressCOnfig file trả về một hàm trả về instance của PostgresConnectionOptions
      })
     ,
-    NguoiDungModule, MonHocModule, GiangVienModule, SinhVienModule, ChuongModule, CauHoiModule, DapAnModule, LopHocPhanModule, BaiKiemTraModule, BaiLamSinhVienModule, AuthModule, GuiFileModule, MailModule, RedisModule, OtpModule],
+    NguoiDungModule, MonHocModule, GiangVienModule, SinhVienModule, ChuongModule, CauHoiModule, DapAnModule, LopHocPhanModule, BaiKiemTraModule, BaiLamSinhVienModule, AuthModule, GuiFileModule, MailModule, RedisModule, OtpModule, HocKyModule],
   controllers: [AppController],
   providers: [AppService,
     {
