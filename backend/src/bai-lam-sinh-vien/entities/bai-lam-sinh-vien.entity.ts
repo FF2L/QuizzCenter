@@ -32,6 +32,9 @@ export class BaiLamSinhVien extends BaseEntity{
     })
     thoiGianketThuc: Date
 
+    @Column({default: 0})
+    thoiGianSuDung: number 
+
     // @Column()
     // lanLamThu: number
 
