@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { 
   Box, Typography, Button, Paper, CircularProgress, Divider, Chip,
@@ -52,16 +52,16 @@ const CollegeTestDetail: React.FC = () => {
   const [loadingAttempts, setLoadingAttempts] = useState(false);
   const [loadingView, setLoadingView] = useState<number | null>(null);
 
-  // State cho thống kê
   const [openThongKe, setOpenThongKe] = useState(false);
   const [loadingThongKe, setLoadingThongKe] = useState(false);
   const [thongKeData, setThongKeData] = useState<CauHoiThongKe[]>([]);
 
-  const [, forceTick] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => forceTick(v => v + 1), 1000);
-    return () => clearInterval(id);
-  }, []);
+  // const [, forceTick] = useState(0);
+  
+  // useEffect(() => {
+  //   const id = setInterval(() => forceTick(v => v + 1), 1000);
+  //   return () => clearInterval(id);
+  // }, []);
 
   useEffect(() => {
     if (!baiKiemTra) return;
@@ -90,7 +90,6 @@ const CollegeTestDetail: React.FC = () => {
 
   useEffect(() => {
     void fetchAttempts();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baiKiemTra?.id]);
 
   const attemptsSorted = useMemo(
@@ -119,72 +118,72 @@ const CollegeTestDetail: React.FC = () => {
   }, [attempts, isLuyenTap]);
 
   const autoSubmittedIdsRef = useRef<Set<number>>(new Set());
-  useEffect(() => {
-    if (!baiKiemTra) return;
+  
+useEffect(() => {
+  if (!baiKiemTra) return;
 
-    const checkAndSubmit = async () => {
-      const now = Date.now();
+  const checkAndSubmit = async () => {
+    const needSubmit: number[] = [];
 
-      const needSubmit: number[] = [];
-      for (const att of attempts) {
-        if (att.thoiGianketThuc) continue;
-        
-        const startMs = new Date(att.thoiGianBatDau).getTime();
-        const byDuration = startMs + (baiKiemTra.thoiGianLam * 1000);
-        const byWindow = baiKiemTra.thoiGianKetThuc
-          ? new Date(baiKiemTra.thoiGianKetThuc).getTime()
-          : Number.POSITIVE_INFINITY;
-        const deadline = Math.min(byDuration, byWindow);
+    for (const att of attempts) {
+      if (att.thoiGianketThuc) continue; // đã nộp rồi thì bỏ
 
-        if (now >= deadline && !autoSubmittedIdsRef.current.has(att.id)) {
-          needSubmit.push(att.id);
-        }
+      const used = att.thoiGianSuDung ?? 0;
+      const overDuration = used >= baiKiemTra.thoiGianLam; // hết thời gian cho phép làm
+
+      // Nếu bạn vẫn muốn giới hạn theo cửa sổ bài kiểm tra (thoiGianKetThuc), giữ thêm phần này:
+      const overWindow = baiKiemTra.thoiGianKetThuc
+        ? Date.now() >= new Date(baiKiemTra.thoiGianKetThuc).getTime()
+        : false;
+
+      if ((overDuration || overWindow) && !autoSubmittedIdsRef.current.has(att.id)) {
+        needSubmit.push(att.id);
       }
+    }
 
-      if (needSubmit.length === 0) return;
+    if (needSubmit.length === 0) return;
 
-      for (const id of needSubmit) {
-        try {
-          autoSubmittedIdsRef.current.add(id);
-          await BaiLamSinhVienApi.nopBai(id);
-        } catch (e) {
-          console.error("Auto submit failed for", id, e);
-        }
+    for (const id of needSubmit) {
+      try {
+        autoSubmittedIdsRef.current.add(id);
+        await BaiLamSinhVienApi.nopBai(id);
+      } catch (e) {
+        console.error("Auto submit failed for", id, e);
       }
+    }
 
-      await fetchAttempts();
-    };
-
-    const id = setInterval(checkAndSubmit, 1000);
-    return () => clearInterval(id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [attempts, baiKiemTra]);
-
-  const formatRemain = (start?: string) => {
-    if (!start) return "-";
-    const startMs = new Date(start).getTime();
-    const byDuration = startMs + (baiKiemTra.thoiGianLam * 1000);
-    const byWindow = baiKiemTra.thoiGianKetThuc
-      ? new Date(baiKiemTra.thoiGianKetThuc).getTime()
-      : Number.POSITIVE_INFINITY;
-    const deadline = Math.min(byDuration, byWindow);
-    const remain = Math.max(0, Math.floor((deadline - Date.now()) / 1000));
-    const h = Math.floor(remain / 3600);
-    const m = Math.floor((remain % 3600) / 60);
-    const s = remain % 60;
-    return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+    await fetchAttempts();
   };
 
-  const formatDuration = (start?: string, end?: string) => {
-    const startMs = start ? new Date(start).getTime() : NaN;
-    const endMs = end ? new Date(end).getTime() : Date.now();
-    if (!Number.isFinite(startMs)) return "-";
-    const total = Math.max(0, Math.floor((endMs - startMs) / 1000));
-    const h = Math.floor(total / 3600);
-    const m = Math.floor((total % 3600) / 60);
-    const s = total % 60;
-    return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  const id = setInterval(checkAndSubmit, 1000);
+  return () => clearInterval(id);
+}, [attempts, baiKiemTra]);
+
+
+  // Format thời gian từ giây
+  const formatTimeFromSeconds = (seconds?: number) => {
+    if (!seconds) return '00:00:00';
+    
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
+
+const getRemainByUsage = (att: any) => {
+  if(att.loaiKiemTra === "LuyenTap") {
+    console.log('remainSec', att.thoiGianSuDung)
+    return att.thoiGianSuDung
+  }
+  const used = att.thoiGianSuDung ?? 0;           // số giây đã làm
+  const total = baiKiemTra.thoiGianLam || 0;      // tổng thời gian cho phép (giây)
+  return Math.max(0, total - used);
+};
+
+const formatRemain = (att: any) => {
+  const remainSec = getRemainByUsage(att);
+  return formatTimeFromSeconds(remainSec);
+};
 
   const handleLamBai = async () => {
     if (reachedAttemptLimit || hasOngoingAttempt) return;
@@ -201,12 +200,27 @@ const CollegeTestDetail: React.FC = () => {
   };
 
   const handleQuayLaiLam = async (attId: number) => {
-    try {
-      const tiepTuc = await BaiLamSinhVienApi.tiepTucLamBai(attId);
-      navigate(`/quizzcenter/lam-bai/${baiKiemTra.id}`, {
-        state: { baiKiemTra, baiLamMoi: tiepTuc },
-      });
-    } catch (e: any) {
+   try {
+    const tiepTuc = await BaiLamSinhVienApi.tiepTucLamBai(attId);
+
+    // Lấy thời gian còn lại đang hiển thị
+    const att = attempts.find(a => a.id === attId);
+    const remainSeconds = getRemainByUsage(att); // chính là số giây còn lại
+
+    // Lưu vào localStorage
+    if (baiKiemTra.loaiKiemTra === "BaiKiemTra") {
+      localStorage.setItem(`baiLam_${attId}_remain`, String(remainSeconds));
+      } else {
+        // luyện tập → tiết kiệm elapsed (time used)
+        const usedSeconds = att.thoiGianSuDung ?? 0;
+        localStorage.setItem(`baiLam_${attId}_elapsed`, String(usedSeconds));
+      }
+
+
+    navigate(`/quizzcenter/lam-bai/${baiKiemTra.id}`, {
+      state: { baiKiemTra, baiLamMoi: tiepTuc },
+    });
+  } catch (e: any) {
       console.error("Tiếp tục làm bài thất bại:", e);
       if (e.response?.status === 404) {
         alert("Bài làm này không tồn tại hoặc đã được nộp. Không thể tiếp tục.");
@@ -229,7 +243,6 @@ const CollegeTestDetail: React.FC = () => {
     }
   };
 
-  // Xử lý thống kê
   const handleThongKe = async () => {
     setOpenThongKe(true);
     setLoadingThongKe(true);
@@ -306,9 +319,7 @@ const CollegeTestDetail: React.FC = () => {
   };
 
   const handleBack = () => {
-    // Lấy idLopHocPhan từ baiKiemTra state hoặc từ URL params
-    const idLopHocPhan = baiKiemTra?.idLopHocPhan;
-      navigate(-1);
+    navigate(-1);
   };
 
   if (!baiKiemTra) {
@@ -317,21 +328,18 @@ const CollegeTestDetail: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Nút Back */}
-
       <Paper sx={{ p: 3, mb: 3 }}>
-      <Box sx={{display:'flex', flexDirection:'row'}}>
-      <Button
-        startIcon={<ArrowBackIcon />}
-        onClick={handleBack}
-        sx={{ fontWeight: 600, height:"40px" }}
-        variant="text"
-        color="primary"
-      >
-      </Button>
-        <Typography variant="h5" sx={{ fontWeight: 700, color: "#e91e63" }}>
-          {baiKiemTra.tenBaiKiemTra}
-        </Typography>
+        <Box sx={{display:'flex', flexDirection:'row'}}>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={handleBack}
+            sx={{ fontWeight: 600, height:"40px" }}
+            variant="text"
+            color="primary"
+          />
+          <Typography variant="h5" sx={{ fontWeight: 700, color: "#e91e63" }}>
+            {baiKiemTra.tenBaiKiemTra}
+          </Typography>
         </Box>
         <Box sx={{ mt: 1.5, display: "flex", gap: 1, flexWrap: "wrap" }}>
           <Chip
@@ -348,9 +356,9 @@ const CollegeTestDetail: React.FC = () => {
           <strong>Kết thúc:</strong> {dayjs(baiKiemTra.thoiGianKetThuc).format("HH:mm DD/MM/YYYY")}
         </Typography>
         {!isLuyenTap && (
-         <Typography>
-          <strong>Thời gian làm:</strong> {Math.floor(baiKiemTra.thoiGianLam / 60)} phút
-        </Typography>
+          <Typography>
+            <strong>Thời gian làm:</strong> {Math.floor(baiKiemTra.thoiGianLam / 60)} phút
+          </Typography>
         )}
         
         {isLuyenTap && (
@@ -393,7 +401,6 @@ const CollegeTestDetail: React.FC = () => {
         </Typography>
       )}
 
-      {/* Nút Thống kê - chỉ hiện với bài luyện tập */}
       {isLuyenTap && attempts.filter(att => att.thoiGianketThuc).length > 0 && (
         <Button
           variant="outlined"
@@ -405,7 +412,6 @@ const CollegeTestDetail: React.FC = () => {
         </Button>
       )}
 
-      {/* Danh sách bài làm */}
       <Paper sx={{ p: 0, overflow: "hidden" }}>
         <Box
           sx={{
@@ -413,14 +419,14 @@ const CollegeTestDetail: React.FC = () => {
             py: 1.5,
             fontWeight: 700,
             display: "grid",
-            gridTemplateColumns: isLuyenTap ? "2fr 1.2fr 1.4fr" : "2fr 1.2fr 1.4fr 1.4fr",
+            gridTemplateColumns: "2fr 1.2fr 1.4fr 1.4fr",
             gap: 2,
             backgroundColor: "#f5f5f5",
           }}
         >
           <span>Ngày làm</span>
           <span>Kết quả</span>
-          {!isLuyenTap && <span>Thời gian làm bài</span>}
+          <span>Thời gian</span>
           <span></span>
         </Box>
 
@@ -442,9 +448,18 @@ const CollegeTestDetail: React.FC = () => {
                 : "—";
 
             const isDangLam = !att.thoiGianketThuc;
-            const duration = isDangLam
-              ? formatRemain(att.thoiGianBatDau)
-              : formatDuration(att.thoiGianBatDau, att.thoiGianketThuc);
+            
+            let thoiGianDisplay = "";
+            if (isDangLam) {
+              // còn bao nhiêu giây theo thoiGianSuDung
+                thoiGianDisplay = formatRemain(att);
+              console.log('bbb')
+            } else {
+              // tổng thời gian đã dùng
+              thoiGianDisplay = formatTimeFromSeconds(att.thoiGianSuDung);
+              console.log('aaaa')
+            }
+
 
             return (
               <Box
@@ -453,7 +468,7 @@ const CollegeTestDetail: React.FC = () => {
                   px: 2,
                   py: 1.5,
                   display: "grid",
-                  gridTemplateColumns: isLuyenTap ? "2fr 1.2fr 1.4fr" : "2fr 1.2fr 1.4fr 1.4fr",
+                  gridTemplateColumns: "2fr 1.2fr 1.4fr 1.4fr",
                   gap: 2,
                   alignItems: "center",
                   "&:not(:last-of-type)": { borderBottom: "1px solid #eee" },
@@ -472,13 +487,20 @@ const CollegeTestDetail: React.FC = () => {
                   )}
                 </Typography>
 
-                <Typography sx={{ fontWeight: 600 }}>{isDangLam? '0.0/10': diemText}</Typography>
+                <Typography sx={{ fontWeight: 600 }}>
+                  {isDangLam ? '0.0/10' : diemText}
+                </Typography>
 
-                {!isLuyenTap && (
-                  <Typography sx={{ color: isDangLam ? "error.main" : "text.primary" }}>
-                    {isDangLam ? `Còn lại: ${duration}` : duration}
-                  </Typography>
-                )}
+                <Typography sx={{ 
+                  color: isDangLam ? "error.main" : "success.main",
+                  fontWeight: 500 
+                }}>
+                  {isDangLam && !isLuyenTap ? (
+                    <> Thời gian còn {thoiGianDisplay}</>
+                  ) : (
+                    <> Thời gian làm {formatTimeFromSeconds(att.thoiGianSuDung)}</>
+                  )}
+                </Typography>
 
                 <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
                   {isDangLam ? (
@@ -498,7 +520,7 @@ const CollegeTestDetail: React.FC = () => {
                         disabled={loadingView === att.id}
                         sx={{ fontWeight: 600 }}
                       >
-                        {loadingView === att.id ? "Đang mở…" :  "Xem chi tiết"}
+                        {loadingView === att.id ? "Đang mở…" : "Xem chi tiết"}
                       </Button>
                     )
                   )}
@@ -509,7 +531,6 @@ const CollegeTestDetail: React.FC = () => {
         )}
       </Paper>
 
-      {/* Dialog Thống kê */}
       <Dialog 
         open={openThongKe} 
         onClose={() => setOpenThongKe(false)}
