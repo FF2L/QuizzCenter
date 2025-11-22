@@ -75,6 +75,7 @@ export class BaiKiemTraService {
   }
 
   async phatHanhBaiKiemTra(idBaiKiemTra: number, phatHanh: boolean) {
+    console.log('phatHanhBaiKiemTra', idBaiKiemTra, phatHanh)
     const baiKiemTra = await this.timMotBaiKiemTraTheoIdBaiKiemTra(idBaiKiemTra);
     baiKiemTra.phatHanh = phatHanh;
     try {
@@ -85,9 +86,10 @@ export class BaiKiemTraService {
   }
 
   async timTatCaBaiKiemTraTheoIdLopHocPhanSinhVien(idLopHocPhan: number, query: any) {
-
+    
     await this.lopHocPhanService.timMotLopHocPhanTheoId(idLopHocPhan);
     const {loaiKiemTra, skip, limit} = query;
+    console.log('loaiKiemTra', loaiKiemTra)
     const qb = this.baiKiemTraRepo.createQueryBuilder('bkt')
       .where('bkt.idLopHocPhan = :idLopHocPhan', { idLopHocPhan })
       .andWhere('bkt.phatHanh = :phatHanh', { phatHanh: true });
@@ -102,6 +104,7 @@ export class BaiKiemTraService {
       .getManyAndCount();
     const currentPage = Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1;
     const totalPages = Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT));
+    console.log('data', data)
 
     return { data, total, currentPage, totalPages };
   }

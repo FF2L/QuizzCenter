@@ -308,6 +308,7 @@ export class BaiLamSinhVienService {
               isCorrect: !!d.dapAnDung,
               selected: daChonSet.has(d.id),
             })),
+            thoiGianLam: baiLam.thoiGianSuDung
           };
         })
       );
@@ -380,6 +381,7 @@ export class BaiLamSinhVienService {
                   // KHÔNG trả đáp án đúng khi tiếp tục làm
                 })),
                 luaChon: { mangIdDapAn: ct.mangIdDapAn ?? [] },
+                thoiGianLam: baiLam.thoiGianSuDung
               };
             }),
           ),
