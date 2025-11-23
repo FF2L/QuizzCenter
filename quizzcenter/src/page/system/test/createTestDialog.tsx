@@ -166,10 +166,9 @@ const CreateBaiKiemTraDialog: React.FC<CreateBaiKiemTraDialogProps> = ({
     const now = new Date();
 
     // Check 1: Thời gian bắt đầu phải sau thời gian hiện tại ít nhất 5 phút
-    const minStartTime = new Date(now.getTime() + 5 * 60 * 1000);
-    if (batDauDate < minStartTime) {
+    if (batDauDate <= now) {
       setErrorMessage(
-        "Thời gian bắt đầu phải sau thời gian hiện tại ít nhất 5 phút!"
+        "Thời gian bắt đầu phải sau thời gian hiện tại!"
       );
       return;
     }
