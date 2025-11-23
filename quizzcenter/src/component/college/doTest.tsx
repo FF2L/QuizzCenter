@@ -88,17 +88,16 @@ const DoTestPage: React.FC = () => {
   const initialUsedSeconds =
     (baiLamData as any)?.baiLam?.thoiGianSuDung ?? 0;
 
-  // storageKey cho localStorage: LƯU THỜI GIAN CÒN LẠI (BaiKiemTra)
-const storageKey = useMemo(() => {
-  if (!baiLamData?.baiLam?.id) return undefined;
+  // storageKey cho localStorage
+  const storageKey = useMemo(() => {
+    if (!baiLamData?.baiLam?.id) return undefined;
 
-  if (isLuyenTap) {
-    return `baiLam_${baiLamData.baiLam.id}_elapsed`; // luyện tập dùng elapsed
-  }
+    if (isLuyenTap) {
+      return `baiLam_${baiLamData.baiLam.id}_elapsed`;
+    }
 
-  return `baiLam_${baiLamData.baiLam.id}_remain`; // bài kiểm tra dùng remain
-}, [baiLamData, isLuyenTap]);
-
+    return `baiLam_${baiLamData.baiLam.id}_remain`;
+  }, [baiLamData, isLuyenTap]);
 
   // ------------------- PHÂN TRANG -------------------
   const totalPages = useMemo(() => {
@@ -130,10 +129,8 @@ const storageKey = useMemo(() => {
         let response: BaiLamResponse;
 
         if (idBaiLam) {
-          // 1) Có idBaiLam trên URL
           response = await BaiLamSinhVienApi.tiepTucLamBai(Number(idBaiLam));
         } else if (baiLamResponseInit) {
-          // 2) Có state từ "Làm bài ngay"
           response = baiLamResponseInit;
           navigate(
             `/quizzcenter/lam-bai/${idBaiKiemTra}/${response.baiLam.id}`,
@@ -143,7 +140,6 @@ const storageKey = useMemo(() => {
             }
           );
         } else {
-          // 3) Tự tìm bài làm đang làm hoặc tạo mới
           const all = await BaiLamSinhVienApi.layBaiLamSinhVien(
             Number(idBaiKiemTra)
           );
@@ -217,7 +213,6 @@ const storageKey = useMemo(() => {
       await timeTracking.forceSave();
       await BaiLamSinhVienApi.nopBai(baiLamData.baiLam.id);
 
-      // xóa localStorage cho bài làm này
       if (storageKey) {
         localStorage.removeItem(storageKey);
       }
@@ -247,7 +242,55 @@ const storageKey = useMemo(() => {
     storageKey,
   });
 
-  // optional: vẫn giữ beforeunload để save lần cuối
+  // ------------------- SYNC WHEN TAB ACTIVE -------------------
+  useEffect(() => {
+    if (!baiLamData?.baiLam?.id) return;
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // User quay lại tab - sync từ backend
+        console.log('👁️ Tab active - Sync thời gian từ backend...');
+        
+        BaiLamSinhVienApi.tiepTucLamBai(baiLamData.baiLam.id)
+          .then(response => {
+            setBaiLamData(response);
+            console.log('✅ Đã sync thời gian:', {
+              thoiGianSuDung: (response.baiLam as any)?.thoiGianSuDung
+            });
+          })
+          .catch(e => {
+            console.error('Sync thời gian thất bại:', e);
+          });
+      } else {
+        // User out tab - ĐỒNG BỘ save ngay lập tức
+        console.log('👋 Tab inactive - Saving immediately...');
+        
+        // Tính thời gian hiện tại
+        const currentTime = isLuyenTap 
+          ? timeTracking.timeElapsed 
+          : (baiKiemTraInfo?.thoiGianLam ?? 0) - timeTracking.timeRemaining;
+        
+        console.log('⏱️ Lưu thời gian:', currentTime, 'giây');
+        
+        // Gọi forceSave ĐỒNG BỘ - không dùng await
+        timeTracking.forceSave();
+        
+        // Đợi một chút để request được gửi
+        const start = Date.now();
+        while (Date.now() - start < 100) {
+          // Busy wait 100ms
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [baiLamData?.baiLam?.id, timeTracking, isLuyenTap, baiKiemTraInfo]);
+
+  // ------------------- BEFORE UNLOAD -------------------
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (baiLamData && !isLocked) {
@@ -324,10 +367,15 @@ const storageKey = useMemo(() => {
     if (!baiLamData) return;
     try {
       setIsSubmitting(true);
+      
+      // QUAN TRỌNG: Force save trước khi nộp bài
       await timeTracking.forceSave();
+      
+      // Đợi thêm 500ms để đảm bảo backend nhận được
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const result = await BaiLamSinhVienApi.nopBai(baiLamData.baiLam.id);
 
-      // xóa localStorage cho bài làm này
       if (storageKey) {
         localStorage.removeItem(storageKey);
       }

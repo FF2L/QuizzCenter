@@ -200,27 +200,40 @@ const formatRemain = (att: any) => {
   };
 
   const handleQuayLaiLam = async (attId: number) => {
-   try {
-    const tiepTuc = await BaiLamSinhVienApi.tiepTucLamBai(attId);
-
-    // Lấy thời gian còn lại đang hiển thị
-    const att = attempts.find(a => a.id === attId);
-    const remainSeconds = getRemainByUsage(att); // chính là số giây còn lại
-
-    // Lưu vào localStorage
-    if (baiKiemTra.loaiKiemTra === "BaiKiemTra") {
-      localStorage.setItem(`baiLam_${attId}_remain`, String(remainSeconds));
+    try {
+      const tiepTuc = await BaiLamSinhVienApi.tiepTucLamBai(attId);
+  
+      // Lấy thời gian còn lại đang hiển thị
+      const att = attempts.find(a => a.id === attId);
+      
+      if (baiKiemTra.loaiKiemTra === "BaiKiemTra") {
+        // Bài kiểm tra → lưu thời gian CÒN LẠI
+        const usedSeconds = att?.thoiGianSuDung ?? 0;
+        const totalSeconds = baiKiemTra.thoiGianLam || 0;
+        const remainSeconds = Math.max(0, totalSeconds - usedSeconds);
+        
+        // LƯU REMAIN vào localStorage
+        localStorage.setItem(`baiLam_${attId}_remain`, String(remainSeconds));
+        
+        console.log('🔵 Tiếp tục bài kiểm tra:', {
+          used: usedSeconds,
+          total: totalSeconds,
+          remain: remainSeconds
+        });
       } else {
-        // luyện tập → tiết kiệm elapsed (time used)
-        const usedSeconds = att.thoiGianSuDung ?? 0;
+        // Luyện tập → lưu thời gian ĐÃ DÙNG
+        const usedSeconds = att?.thoiGianSuDung ?? 0;
         localStorage.setItem(`baiLam_${attId}_elapsed`, String(usedSeconds));
+        
+        console.log('🟢 Tiếp tục luyện tập:', {
+          elapsed: usedSeconds
+        });
       }
-
-
-    navigate(`/quizzcenter/lam-bai/${baiKiemTra.id}`, {
-      state: { baiKiemTra, baiLamMoi: tiepTuc },
-    });
-  } catch (e: any) {
+  
+      navigate(`/quizzcenter/lam-bai/${baiKiemTra.id}`, {
+        state: { baiKiemTra, baiLamMoi: tiepTuc },
+      });
+    } catch (e: any) {
       console.error("Tiếp tục làm bài thất bại:", e);
       if (e.response?.status === 404) {
         alert("Bài làm này không tồn tại hoặc đã được nộp. Không thể tiếp tục.");
@@ -229,7 +242,6 @@ const formatRemain = (att: any) => {
       }
     }
   };
-  
   const handleXemBaiLam = async (idBaiLam: number) => {
     try {
       setLoadingView(idBaiLam);
