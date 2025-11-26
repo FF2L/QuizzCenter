@@ -9,10 +9,11 @@ import { BaiKiemTra } from 'src/bai-kiem-tra/entities/bai-kiem-tra.entity';
 import { BaiLamSinhVien } from 'src/bai-lam-sinh-vien/entities/bai-lam-sinh-vien.entity';
 import { SinhVien } from 'src/sinh-vien/entities/sinh-vien.entity';
 import { NguoiDung } from 'src/nguoi-dung/entities/nguoi-dung.entity';
+import { HocKy } from 'src/hoc-ky/entities/hoc-ky.entity';
 
 
 @Module({
-  imports: [TypeOrmModule.forFeature([LopHocPhan, BaiKiemTra,BaiLamSinhVien, SinhVien,NguoiDung]), MonHocModule, GiangVienModule],
+  imports: [TypeOrmModule.forFeature([LopHocPhan, BaiKiemTra,BaiLamSinhVien, SinhVien,NguoiDung, HocKy]), MonHocModule, GiangVienModule],
   controllers: [LopHocPhanController],
   providers: [LopHocPhanService],
   exports: [LopHocPhanService]

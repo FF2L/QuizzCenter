@@ -17,6 +17,7 @@ import { SinhVien } from 'src/sinh-vien/entities/sinh-vien.entity';
 import { NguoiDung } from 'src/nguoi-dung/entities/nguoi-dung.entity';
 import * as ExcelJS from 'exceljs';
 import * as XLSX from 'xlsx';
+import { HocKy } from 'src/hoc-ky/entities/hoc-ky.entity';
 
 @Injectable()
 export class LopHocPhanService {
@@ -28,6 +29,7 @@ export class LopHocPhanService {
               @InjectRepository(BaiLamSinhVien) private readonly blsvRepo: Repository<BaiLamSinhVien>,
               @InjectRepository(SinhVien) private readonly svRepo: Repository<SinhVien>,
               @InjectRepository(NguoiDung) private readonly ndRepo: Repository<NguoiDung>,
+              @InjectRepository(HocKy) private readonly hocKyRepo: Repository<HocKy>
 ){}
 
   //CRUD Lớp học phần Admin
@@ -39,6 +41,7 @@ export class LopHocPhanService {
     .leftJoin('lhp.monHoc', 'mh')
     .leftJoin('lhp.giangVien', 'gv')
     .leftJoin('gv.nguoiDung', 'nd')
+    .leftJoin('lhp.hocKy', 'hk')
 
     const total = await qb.getCount();
 
@@ -53,9 +56,9 @@ export class LopHocPhanService {
       'lhp.id AS lhp_id',
       'lhp.maLopHoc AS maLHP',
       'lhp.tenLopHoc AS tenLHP',
-      'lhp.hocKy AS hocKy',
-      'lhp.thoiGianBatDau AS thoiGianBatDau',
-      'lhp.thoiGianKetThuc AS thoiGianKetThuc',
+      'hk.tenHocKy AS hocKy',
+      'hk.thoiGianBatDau AS thoiGianBatDau',
+      'hk.thoiGianKetThuc AS thoiGianKetThuc',
       'mh.tenMonHoc AS tenMonHoc',
       'mh.id AS mh_id',
       'nd.hoTen AS tenGiangVien',
@@ -73,21 +76,16 @@ export class LopHocPhanService {
   }
 
   async taoLopHocPhan(createLopHocPhanDto: CreateLopHocPhanDto) {
-    const {tenLopHoc, hocKy, thoiGianBatDau, thoiGianKetThuc, idMonHoc, idGiangVien } = createLopHocPhanDto;
+    const {tenLopHoc, hocKy, idMonHoc, idGiangVien } = createLopHocPhanDto;
     
 
     const lopHocSave = await this.lopHocPhanRep.save({
       tenLopHoc: tenLopHoc.trim(),
-      hocKy,
-      thoiGianBatDau,
-      thoiGianKetThuc,
+      idHocKy: hocKy,
       idMonHoc,
       idGiangVien,
     });
 
-    const maLopHoc = `LHP${lopHocSave.id.toString().padStart(6, '0')}`;
-    
-    lopHocSave.maLopHoc = maLopHoc;
     return await this.lopHocPhanRep.save(lopHocSave);
   }
 
@@ -96,12 +94,10 @@ export class LopHocPhanService {
 
     if (!lopHocPhan) throw new NotFoundException(`Không tìm thấy lớp học phần với id ${id}`); 
 
-    const { tenLopHoc, hocKy, thoiGianBatDau, thoiGianKetThuc, idMonHoc, idGiangVien } = updateLopHocPhanDto;
+    const { tenLopHoc, hocKy, idMonHoc, idGiangVien } = updateLopHocPhanDto;
 
     lopHocPhan.tenLopHoc = tenLopHoc;
-    lopHocPhan.hocKy = hocKy;
-    lopHocPhan.thoiGianBatDau = thoiGianBatDau;
-    lopHocPhan.thoiGianKetThuc = thoiGianKetThuc;
+    lopHocPhan.idHocKy = hocKy;
     lopHocPhan.idMonHoc = idMonHoc;
     lopHocPhan.idGiangVien = idGiangVien;
 
@@ -180,6 +176,7 @@ export class LopHocPhanService {
       throw new NotFoundException('Lỗi khi thêm sinh viên vào lớp học phần');
     }
   }
+
   async xoaSinhVienKhoiLopHocPhan(idLopHocPhan:number, maSinhVien: string) {
     try {
         const nguoiDung = await this.ndRepo.findOne({
@@ -285,7 +282,8 @@ async layTatCaLopHocPhanTheoIdGiaoVien( idGiangVien: number, query: any) {
     .innerJoin('lhp.giangVien', 'gv', 'gv.idNguoiDung = :idGiangVien' ,{idGiangVien})
     .leftJoin('lhp.sinhVien', 'sv')
     .leftJoin('lhp.monHoc', 'mh')
-    .groupBy('lhp.id, gv.idNguoiDung, mh.id');
+    .leftJoin('lhp.hocKy', 'hk')
+    .groupBy('lhp.id, gv.idNguoiDung, mh.id, hk.id');
 
     const total = await qb.getCount();
 
@@ -293,14 +291,14 @@ async layTatCaLopHocPhanTheoIdGiaoVien( idGiangVien: number, query: any) {
     console.log('giangDay', giangDay)
 
     if (giangDay === 1) { // ĐAng giảng dạy
-      qb.andWhere('lhp.thoiGianBatDau <= :now AND lhp.thoiGianKetThuc >= :now', { now });
+      qb.andWhere('hk.thoiGianBatDau <= :now AND hk.thoiGianKetThuc >= :now', { now });
     }
 
     if (giangDay === 2) { // Đã kết thúc
-      qb.andWhere('lhp.thoiGianKetThuc < :now', { now });
+      qb.andWhere('hk.thoiGianKetThuc < :now', { now });
     }
     if (giangDay === 3) { // Sắp dạy
-      qb.andWhere('lhp.thoiGianBatDau > :now', { now });
+      qb.andWhere('hk.thoiGianBatDau > :now', { now });
     }
     if(tenMonHoc){
       const ten = tenMonHoc.trim();
@@ -313,9 +311,9 @@ async layTatCaLopHocPhanTheoIdGiaoVien( idGiangVien: number, query: any) {
     const data = await qb.select([
       'lhp.id AS lhp_id',
       'lhp.tenLopHoc AS tenLHP',
-      'lhp.hocKy AS hocKy',
-      'lhp.thoiGianBatDau AS thoiGianBatDau',
-      'lhp.thoiGianKetThuc AS thoiGianKetThuc',
+      'hk.tenHocKy AS hocKy',
+      'hk.thoiGianBatDau AS thoiGianBatDau',
+      'hk.thoiGianKetThuc AS thoiGianKetThuc',
       'mh.id AS mh_id',
       'mh.maMonHoc AS maMonHoc',
       'mh.tenMonHoc AS tenMonHoc',
@@ -323,7 +321,7 @@ async layTatCaLopHocPhanTheoIdGiaoVien( idGiangVien: number, query: any) {
     ])
     // .offset(skip ?? 0)
     // .limit(limit ?? DEFAULT_PAGE_LIMIT)
-    .orderBy('lhp.thoiGianKetThuc', 'ASC')
+    .orderBy('hk.thoiGianKetThuc', 'ASC')
     .getRawMany();
     // console.log(qb.getSql())
     console.log(data)
@@ -338,15 +336,16 @@ async layTatCaLopHocPhanTheoIdGiaoVien( idGiangVien: number, query: any) {
     .createQueryBuilder('lhp')
     .leftJoin('lhp.giangVien', 'gv', 'gv.idNguoiDung = :idGiangVien' ,{idGiangVien})
     .leftJoin('lhp.monHoc', 'mh')
-    .where('lhp.thoiGianBatDau <= :now AND lhp.thoiGianKetThuc >= :now', { now })
+    .leftJoin('lhp.hocKy', 'hk')
+    .where('hk.thoiGianBatDau <= :now AND hk.thoiGianKetThuc >= :now', { now })
     .select([
       'lhp.id AS lhp_id',
       'lhp.tenLopHoc AS tenLHP',
-      'lhp.hocKy AS hocKy',
+      'hk.tenHocKy AS hocKy',
       'mh.maMonHoc AS maMonHoc',
       'mh.tenMonHoc AS tenMonHoc',
     ])
-    .orderBy('lhp.thoiGianKetThuc', 'ASC')
+    .orderBy('hk.thoiGianKetThuc', 'ASC')
     .getRawMany();
 
     return lopHocPhan;
@@ -547,19 +546,22 @@ async thongKe(idLopHocPhan: number, idBaiKiemTra:number) {
   async layTatCaLopHocPhanCuaSinhVien(lhpSVDto: FilterLopHocPhanSinhVienDto, idSinhVien: number) {
     const {tenMonHoc,maMonHoc,...pageDto} = lhpSVDto
     const {skip, limit} = pageDto
+    const now = new Date();
     const qb = this.lopHocPhanRep
     .createQueryBuilder('lhp')
     .innerJoin('lhp.sinhVien', 'sv', 'sv.idNguoiDung = :idSinhVien', { idSinhVien })
     .leftJoin('lhp.monHoc', 'mh')
+    .leftJoin('lhp.hocKy', 'hk')
     .select([
       'lhp.id AS lhp_id',
       'lhp.tenLopHoc AS tenLHP',
-      'lhp.hocKy AS hocKy',
-      'lhp.thoiGianBatDau AS thoiGianBatDau',
-      'lhp.thoiGianKetThuc AS thoiGianKetThuc',
+      'hk.tenHocKy AS hocKy',
+      'hk.thoiGianBatDau AS thoiGianBatDau',
+      'hk.thoiGianKetThuc AS thoiGianKetThuc',
       'mh.maMonHoc AS maMonHoc',
       'mh.tenMonHoc AS tenMonHoc',
     ])
+    .where('hk.thoiGianBatDau <= :now AND hk.thoiGianKetThuc >= :now', { now })
     const total =  await qb.getCount();
 
 
@@ -580,7 +582,7 @@ async thongKe(idLopHocPhan: number, idBaiKiemTra:number) {
     );
   }
   const data = await qb
-    .orderBy('lhp.thoiGianKetThuc', 'ASC')
+    .orderBy('hk.thoiGianKetThuc', 'ASC')
     .offset(skip ?? 0)
     .limit(limit ?? DEFAULT_PAGE_LIMIT)
     .getRawMany();
