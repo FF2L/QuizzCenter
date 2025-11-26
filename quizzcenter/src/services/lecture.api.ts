@@ -2,6 +2,54 @@ import axios from "axios";
 import { API_URL } from "./gobal.api";
 
 export class LectureService {
+    static async getAllLopHocPhan(accessToken: string) {
+        try {
+          const res = await axios.get(`${API_URL}/lop-hoc-phan/giang-vien`, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          });
+          return { ok: true, data: res.data };
+        } catch (error) {
+          console.error("Error fetching all courses:", error);
+          return { ok: false, error };
+        }
+      }
+      static async searchLopHocPhan(
+        accessToken: string,
+        searchValue: string,
+        trangThai: number,
+        page: number = 1,
+        limit: number = 10
+      ) {
+        try {
+          const skip = (page - 1) * limit;
+    
+          const res = await axios.get(`${API_URL}/lop-hoc-phan/giang-vien`, {
+            params: {
+              tenMonHoc: searchValue.trim(),
+              "giang-day": trangThai,
+              skip,
+              limit,
+            },
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          });
+    
+          // trả về object chuẩn ApiResponse
+          return {
+            ok: true,
+            data: res.data.data, // mảng lớp học phần
+            totalPages: res.data.totalPages,
+            currentPage: res.data.currentPage,
+            total: res.data.total,
+          };
+        } catch (error) {
+          console.error("Error searching courses:", error);
+          return { ok: false, error };
+        }
+      }
     static getAllCourse = async (accessToken: string, page: number = 1, limit: number = 10, maMon?: string, tenMon?: string) => {
         console.log("Fetching courses with accessToken:", accessToken);
         try {

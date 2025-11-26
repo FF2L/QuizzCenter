@@ -21,6 +21,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { Search, CalendarToday, People } from "@mui/icons-material";
+import { LectureService } from '../../services/lecture.api';
 
 // Interface cho dữ liệu trả về từ API
 interface LopHocPhanData {
@@ -89,65 +90,45 @@ const LectureClass = () => {
 
   // API 1: Fetch toàn bộ dữ liệu
   const fetchAllLopHocPhan = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("http://localhost:3000/lop-hoc-phan/giang-vien", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error("Lỗi khi tải dữ liệu");
-      }
-
-      const response: ApiResponse = await res.json();
-      setAllData(response.data);
-      filterAndGroupFromAllData(response.data);
-    } catch (error) {
-      console.error("Lỗi fetch tất cả lớp học phần:", error);
-    } finally {
-      setLoading(false);
+    setLoading(true);
+    const res = await LectureService.getAllLopHocPhan(accessToken);
+    if (res.ok) {
+      // Lấy mảng thực sự nằm trong res.data.data
+      const dataArray = res.data.data; 
+      setAllData(dataArray);
+      filterAndGroupFromAllData(dataArray);
     }
+    setLoading(false);
   };
+  
 
   // API 2: Fetch với tìm kiếm
   const fetchSearchLopHocPhan = async () => {
+    if (!accessToken) return;
     try {
       setLoading(true);
       setMonHocGroups([]);
-      
-      const skip = (currentPage - 1) * limit;
-      
-      const params = new URLSearchParams({
-        tenMonHoc: searchValue.trim(),
-        "giang-day": trangThai.toString(),
-        skip: skip.toString(),
-        limit: limit.toString(),
-      });
-
-      const url = `http://localhost:3000/lop-hoc-phan/giang-vien?${params.toString()}`;
-
-      const res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error("Lỗi khi tìm kiếm");
+  
+      const res = await LectureService.searchLopHocPhan(
+        accessToken,
+        searchValue,
+        trangThai,
+        currentPage,
+        limit
+      );
+  
+      if (res.ok) {
+        setTotalPages(res.totalPages);
+        const grouped = groupByMonHoc(res.data);
+        setMonHocGroups(grouped);
       }
-
-      const response: ApiResponse = await res.json();
-      setTotalPages(response.totalPages);
-      const grouped = groupByMonHoc(response.data);
-      setMonHocGroups(grouped);
     } catch (error) {
       console.error("Lỗi tìm kiếm lớp học phần:", error);
     } finally {
       setLoading(false);
     }
   };
+  
 
   // Filter và group từ allData
   const filterAndGroupFromAllData = (data: LopHocPhanData[]) => {
