@@ -1,8 +1,13 @@
 import { BaseEntity } from "src/common/enitty/base.entity";
-import { Column, Entity } from "typeorm";
+import { LopHocPhan } from "src/lop-hoc-phan/entities/lop-hoc-phan.entity";
+import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
 
 @Entity()
 export class HocKy extends BaseEntity{
+
+    @OneToMany( () =>  LopHocPhan, (lopHocPhan) => lopHocPhan.hocKy, {lazy: true, onDelete: 'CASCADE'})
+    lopHocPhan: Promise<any[]>
+
     @Column()
     tenHocKy: string
 

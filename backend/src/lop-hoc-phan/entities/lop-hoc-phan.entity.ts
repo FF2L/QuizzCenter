@@ -1,32 +1,26 @@
 import { BaiKiemTra } from "src/bai-kiem-tra/entities/bai-kiem-tra.entity";
 import { BaseEntity } from "src/common/enitty/base.entity";
 import { GiangVien } from "src/giang-vien/entities/giang-vien.entity";
+import { HocKy } from "src/hoc-ky/entities/hoc-ky.entity";
 import { MonHoc } from "src/mon-hoc/entities/mon-hoc.entity";
 import { SinhVien } from "src/sinh-vien/entities/sinh-vien.entity";
 import { Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany } from "typeorm";
 
 @Entity()
 export class LopHocPhan extends BaseEntity{
-    @Column({nullable: true})
-    @Index()
-    maLopHoc: string
 
     @Column()
     tenLopHoc: string
 
-    @Column({nullable: true})
-    hocKy: string
+    @ManyToOne(() => HocKy, (hocKy) => hocKy.lopHocPhan, {lazy: true,  onDelete: 'CASCADE'})
+    @JoinColumn({name: 'idHocKy'})
+    hocKy: Promise<HocKy>
+    @Column() idHocKy: number
 
-    @Column()
-    thoiGianBatDau: Date
-
-    @Column()
-    thoiGianKetThuc: Date
-
-    @ManyToOne(() => MonHoc, (monHoc) => monHoc.lopHocPhan, {lazy: true,  onDelete: 'CASCADE'})
+    @ManyToOne(() => MonHoc, (monHoc) => monHoc.lopHocPhan, {lazy: true,  onDelete: 'CASCADE', nullable: true})
     @JoinColumn({name: 'idMonHoc'})
     monHoc: Promise<MonHoc>
-    @Column() idMonHoc: number
+    @Column({ nullable: true }) idMonHoc: number
 
     @ManyToOne(() => GiangVien, (giangVien) => giangVien.lopHocPhan, {lazy: true,  onDelete: 'CASCADE'})
     @JoinColumn({name: 'idGiangVien'})

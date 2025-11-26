@@ -232,14 +232,6 @@ private normalize(rows: Array<Record<string, any>>, idChuong: number) {
 
 
 
-  // ================= Helpers =================
-  private letterIndex(s: string): number | null {
-    const up = (s || '').trim().toUpperCase();
-    const arr = ['A','B','C','D','E','F','G','H'];
-    const i = arr.indexOf(up);
-    return i === -1 ? null : i;
-  }
-
   private mapDoKho(raw: string): DoKho {
     const s = raw.trim().toLowerCase();
     if (['dễ','de'].includes(s)) return DoKho.De;

@@ -8,38 +8,64 @@ import { Repository } from 'typeorm';
 @Injectable()
 export class HocKyService {
   constructor(@InjectRepository(HocKy) private hocKyRepository: Repository<HocKy>){}
-  create(createHocKyDto: CreateHocKyDto) {
+  async create(createHocKyDto: CreateHocKyDto) {
     const {tenHocKy, thoiGianBatDau, thoiGianKetThuc, phatHanh} = createHocKyDto;
-    try {
+    try {      
       const hocKy = this.hocKyRepository.create({
         tenHocKy,
         thoiGianBatDau,
         thoiGianKetThuc,
         phatHanh
       });
-      return this.hocKyRepository.save(hocKy);
+      return await this.hocKyRepository.save(hocKy);
       
     } catch (error) {
       console.log(error);
       throw new InternalServerErrorException('Lỗi tạo học kỳ');
     }
-
-    return 'This action adds a new hocKy';
   }
 
-  findAll() {
-    return `This action returns all hocKy`;
+  async findAll() {
+    try{
+      return await this.hocKyRepository.find();
+    }catch(error){
+      console.log(error);
+      throw new InternalServerErrorException('Lỗi lấy danh sách học kỳ');
+    }
   }
 
-  findAllHocKyPhatHanh() {
-    return `This action returns all hocKy phat hanh`;
+  async findAllHocKyPhatHanh() {
+    try{
+      return await this.hocKyRepository.find({
+        where:{
+          phatHanh:true
+        }
+      });
+    }catch(error){
+      console.log(error);
+      throw new InternalServerErrorException('Lỗi lấy danh sách học kỳ phát hành');
+    }
   }
 
-  update(id: number, updateHocKyDto: UpdateHocKyDto) {
-    return `This action updates a #${id} hocKy`;
+  async update(id: number, updateHocKyDto: UpdateHocKyDto) {
+    try{
+      const hocKy = await this.hocKyRepository.findOneBy({id});
+      if(!hocKy){
+        throw new InternalServerErrorException('Học kỳ không tồn tại');
+      }
+      return await this.hocKyRepository.update(id, updateHocKyDto);  
+    }catch(error){
+      console.log(error);
+      throw new InternalServerErrorException('Lỗi cập nhật học kỳ');
+    }
   }
 
   remove(id: number) {
-    return `This action removes a #${id} hocKy`;
+    try{
+      return this.hocKyRepository.delete(id);
+    }catch(error){
+      console.log(error);
+      throw new InternalServerErrorException('Lỗi xóa học kỳ');
+    }
   }
 }
