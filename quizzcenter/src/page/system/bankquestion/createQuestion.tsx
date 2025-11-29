@@ -698,7 +698,7 @@ export default function CreateQuestionPage() {
               boxShadow: '0 4px 12px rgba(36, 93, 81, 0.3)',
             }}
           >
-            Tạo câu hỏi
+            Lưu
           </Button>
         </Stack>
       </Container>

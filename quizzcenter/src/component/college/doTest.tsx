@@ -28,6 +28,7 @@ import {
   Tooltip,
   Pagination,
 } from "@mui/material";
+import { Snackbar } from "@mui/material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import FlagIcon from "@mui/icons-material/Flag";
@@ -37,7 +38,7 @@ import {
   BaiLamResponse,
 } from "../../services/bai-lam-sinh-vien.api";
 import { useTimeTracking } from "../../hooks/useTimeTracking";
-
+import TabSwitchWarningDialog from "./TabSwitchWarningDialog";
 type DapAnDaChon = Record<number, number[]>;
 
 interface BaiKiemTraInfo {
@@ -78,9 +79,10 @@ const DoTestPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [savingQuestionId, setSavingQuestionId] = useState<number | null>(null);
   const [isLocked, setIsLocked] = useState(false);
-
+  const [tabSwitchCount, setTabSwitchCount] = useState(0);
   const autosubmitted = useRef(false);
-
+  const [showTabDialog, setShowTabDialog] = useState(false);
+  const [showTabSnackbar, setShowTabSnackbar] = useState(false);
   const isLuyenTap = baiKiemTraInfo?.loaiKiemTra === "LuyenTap";
   const DETAIL_PATH = `/quizzcenter/bai-kiem-tra-chi-tiet/${idBaiKiemTra}`;
 
@@ -200,7 +202,23 @@ const DoTestPage: React.FC = () => {
     baiKiemTraInfo,
     baiLamResponseInit,
   ]);
-
+  //không cho copy paste
+  useEffect(() => {
+    if (isLuyenTap) return; // Bài luyện tập không áp dụng
+  
+    const preventCopy = (e: ClipboardEvent | MouseEvent) => e.preventDefault();
+    document.addEventListener("copy", preventCopy);
+    document.addEventListener("cut", preventCopy);
+    document.addEventListener("paste", preventCopy);
+    document.addEventListener("contextmenu", preventCopy);
+  
+    return () => { //clean up
+      document.removeEventListener("copy", preventCopy);
+      document.removeEventListener("cut", preventCopy);
+      document.removeEventListener("paste", preventCopy);
+      document.removeEventListener("contextmenu", preventCopy);
+    };
+  }, [isLuyenTap]);
   // ------------------- AUTO SUBMIT -------------------
   const handleAutoSubmit = useCallback(async () => {
     if (autosubmitted.current || !baiLamData) return;
@@ -229,7 +247,32 @@ const DoTestPage: React.FC = () => {
       });
     }
   }, [baiLamData, navigate, DETAIL_PATH, baiKiemTraInfo, storageKey]);
+//-----------------------------Chống chuyển tab 3 lần
+useEffect(() => {
+  if (isLuyenTap) return;
 
+  const handleVisibilityChange = () => {
+    if (document.hidden) {
+      setTabSwitchCount((prev) => {
+        const next = prev + 1;
+        
+        if (next < 3) {
+          // Lần 1 và 2: Hiển thị Snackbar
+          setShowTabSnackbar(true);
+        } else {
+          // Lần 3: Hiển thị Dialog countdown
+          setShowTabDialog(true);
+        }
+        
+        return next;
+      });
+    }
+  };
+
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  return () =>
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
+}, [isLuyenTap]);
   // ------------------- TIME TRACKING -------------------
   const timeTracking = useTimeTracking({
     idBaiLamSinhVien: baiLamData?.baiLam.id || null,
@@ -558,7 +601,7 @@ const DoTestPage: React.FC = () => {
                       <FormControlLabel
                         key={dapAn.id}
                         value={dapAn.id}
-                        control={<Radio disabled={isLocked} />}
+                        control={<Radio sx={{color:"#666666"}} disabled={isLocked} />}
                         label={
                           <Box
                             sx={{
@@ -587,7 +630,6 @@ const DoTestPage: React.FC = () => {
                           borderRadius: 1,
                           px: 2,
                           py: 0.5,
-                          mb: 1,
                           alignItems: "center",
                           "&:hover": {
                             backgroundColor: isLocked
@@ -863,7 +905,31 @@ const DoTestPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <Snackbar
+  open={showTabSnackbar}
+  autoHideDuration={3000}
+  onClose={() => setShowTabSnackbar(false)}
+  anchorOrigin={{ vertical: "top", horizontal: "center" }}
+>
+  <Alert 
+    severity={tabSwitchCount === 1 ? "warning" : "error"} 
+    variant="filled"
+    sx={{ fontSize: '1rem', fontWeight: 500 }}
+  >
+    {tabSwitchCount === 1 && "⚠️ Cảnh báo: Không nên chuyển tab khi làm bài! (1/3)"}
+    {tabSwitchCount === 2 && "🚨 Cảnh báo nghiêm trọng: Chuyển tab thêm 1 lần nữa sẽ bị tự động nộp bài! (2/3)"}
+  </Alert>
+</Snackbar>
+
+  {/* Dialog cảnh báo lần thứ 3 */}
+  <TabSwitchWarningDialog
+    open={showTabDialog}
+    onClose={() => setShowTabDialog(false)}
+    onAutoSubmit={handleAutoSubmit}
+    countdownSeconds={5}
+  />
     </Box>
+    
   );
 };
 

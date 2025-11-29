@@ -8,7 +8,8 @@ import {
   Collapse, Chip, Divider
 } from "@mui/material";
 import { 
-  Delete, Edit, Visibility, Search, ExpandMore, ExpandLess, CheckCircle 
+  Delete, Edit, Visibility, Search, ExpandMore, ExpandLess, CheckCircle,
+  FilterList, SortByAlpha, Category
 } from "@mui/icons-material";
 
 import DeleteConfirmDialog from "./deleteConfirmDialog";
@@ -55,6 +56,10 @@ const BankQuestion = () => {
   // Filters
   const [difficulty, setDifficulty] = useState<DoKho | "">("");
   const [searchText, setSearchText] = useState("");
+
+  // Filter phía trên danh sách
+  const [listFilterDifficulty, setListFilterDifficulty] = useState<DoKho | "">("");
+  const [listSortBy, setListSortBy] = useState<string>("newest"); // newest, oldest, name-asc, name-desc
 
   // Pagination (server side)
   const [currentPage, setCurrentPage] = useState(1);
@@ -129,10 +134,12 @@ const BankQuestion = () => {
       setLoading(false);
     }
   };
+
   const getChuongName = (idChuong: number): string => {
     const chuong = chuongList.find((c) => c.id === idChuong);
     return chuong?.tenchuong || `Chương ${idChuong}`;
   };
+
   useEffect(() => {
     fetchQuestions();
   }, [selectedCategory, currentPage, itemsPerPage, difficulty, searchText]);
@@ -140,12 +147,12 @@ const BankQuestion = () => {
   // Khi đổi chương / filter thì về trang 1
   useEffect(() => {
     setCurrentPage(1);
-    setExpandedQuestions(new Set()); // Reset expanded state khi đổi filter
+    setExpandedQuestions(new Set());
   }, [selectedCategory, difficulty, searchText]);
 
   // Fetch question detail khi expand
   const fetchQuestionDetailForExpand = async (id: number) => {
-    if (questionDetails.has(id)) return; // Đã load rồi thì không load lại
+    if (questionDetails.has(id)) return;
     
     setLoadingDetails(prev => new Set(prev).add(id));
     try {
@@ -232,6 +239,37 @@ const BankQuestion = () => {
       default: return "default";
     }
   };
+
+  // Filter và sort questions ở client side
+  const getFilteredAndSortedQuestions = () => {
+    let filtered = [...questions];
+
+    // Filter theo độ khó (list filter)
+    if (listFilterDifficulty) {
+      filtered = filtered.filter(q => q.cauHoi.doKho === listFilterDifficulty);
+    }
+
+    // Sort
+    switch (listSortBy) {
+      case "name-asc":
+        filtered.sort((a, b) => a.cauHoi.tenHienThi.localeCompare(b.cauHoi.tenHienThi));
+        break;
+      case "name-desc":
+        filtered.sort((a, b) => b.cauHoi.tenHienThi.localeCompare(a.cauHoi.tenHienThi));
+        break;
+      case "oldest":
+        filtered.sort((a, b) => a.cauHoi.id - b.cauHoi.id);
+        break;
+      case "newest":
+      default:
+        filtered.sort((a, b) => b.cauHoi.id - a.cauHoi.id);
+        break;
+    }
+
+    return filtered;
+  };
+
+  const filteredQuestions = getFilteredAndSortedQuestions();
 
   return (
     <Box sx={{ width: "100%", minHeight: "100vh", borderRadius: "10px", p: 0 }}>
@@ -349,11 +387,76 @@ const BankQuestion = () => {
         {/* Questions list */}
         <Box>
           <Typography sx={{ mb: 2, color: "#245D51" }}>Danh sách câu hỏi</Typography>
-          <Box sx={{ border: "1px solid #ddd", borderRadius: 2, p: 2, backgroundColor: "#fafafa" }}>
-            {questions.length === 0 && !loading && (
+          
+          {/* FILTER PHÍA TRÊN DANH SÁCH */}
+          <Box sx={{ 
+            backgroundColor: "#fff", 
+            border: "1px solid #ddd", 
+            borderRadius: "8px 8px 0 0",
+            p: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 2
+          }}>
+            <Stack direction="row" spacing={2} alignItems="center" flex={1}>
+              <FilterList sx={{ color: "#245D51" }} />
+              
+              <TextField
+                select
+                label="Lọc theo độ khó"
+                value={listFilterDifficulty}
+                onChange={(e) => setListFilterDifficulty(e.target.value as DoKho | "")}
+                sx={{ minWidth: 180, backgroundColor: "white" }}
+                size="small"
+              >
+                <MenuItem value="">Tất cả độ khó</MenuItem>
+                <MenuItem value={DoKho.De}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Chip label="Dễ" size="small" color="success" />
+                  </Stack>
+                </MenuItem>
+                <MenuItem value={DoKho.TrungBinh}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Chip label="Trung bình" size="small" color="warning" />
+                  </Stack>
+                </MenuItem>
+                <MenuItem value={DoKho.Kho}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Chip label="Khó" size="small" color="error" />
+                  </Stack>
+                </MenuItem>
+              </TextField>
+
+              <Divider orientation="vertical" flexItem />
+
+       
+              
+              <TextField
+                select
+                label="Sắp xếp theo"
+                value={listSortBy}
+                onChange={(e) => setListSortBy(e.target.value)}
+                sx={{ minWidth: 180, backgroundColor: "white" }}
+                size="small"
+              >
+                <MenuItem value="newest">Mới nhất</MenuItem>
+                <MenuItem value="oldest">Cũ nhất</MenuItem>
+                <MenuItem value="name-asc">Tên A-Z</MenuItem>
+                <MenuItem value="name-desc">Tên Z-A</MenuItem>
+              </TextField>
+            </Stack>
+
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              Hiển thị <b>{filteredQuestions.length}</b> / {questions.length} câu hỏi
+            </Typography>
+          </Box>
+
+          <Box sx={{ border: "1px solid #ddd", borderTop: "none", borderRadius: "0 0 8px 8px", p: 2, backgroundColor: "#fafafa" }}>
+            {filteredQuestions.length === 0 && !loading && (
               <Typography variant="body2">Không có dữ liệu.</Typography>
             )}
-            {questions.map((q, index) => {
+            {filteredQuestions.map((q, index) => {
               const isExpanded = expandedQuestions.has(q.cauHoi.id);
               const detail = questionDetails.get(q.cauHoi.id);
               const isLoadingDetail = loadingDetails.has(q.cauHoi.id);
@@ -370,7 +473,6 @@ const BankQuestion = () => {
                   }}
                 >
                   <CardContent sx={{ minHeight: 25, display:'flex', flexDirection:"column"}}>
-                    {/* Header với 2 phần: Nội dung câu hỏi (trái) và Action buttons (phải) */}
                     <Box
                       sx={{
                         display: "flex",
@@ -380,18 +482,15 @@ const BankQuestion = () => {
                         width: "100%", 
                       }}
                     >
-                      {/* Phần trái: Nội dung câu hỏi - clickable để expand */}
                       <Box
                         sx={{
                           display: "flex",
                           alignItems: "center",
-                       
                           cursor: "pointer",
                           "&:hover": { backgroundColor: "#f5f5f5" },
                           p: 1,
                           borderRadius: 1,
-            
-                  
+                          flex: 1,
                         }}
                         onClick={() => handleToggleExpand(q.cauHoi.id)}
                       >
@@ -421,7 +520,6 @@ const BankQuestion = () => {
                         />
                       </Box>
 
-                      {/* Phần phải: Action buttons - không clickable để expand */}
                       <Box sx={{ flexShrink: 0, display:'flex',flexDirection:"row"}}>
                         <IconButton 
                           sx={{ color: "#0DC913" }}  
@@ -463,105 +561,95 @@ const BankQuestion = () => {
                       </Box>
                     </Box>
 
-                    {/* Expanded content - Hiển thị ở dưới */}
                     <Collapse in={isExpanded} sx={{ width: '100%' }}>
-  <Box sx={{ mt: 3, pt: 2, borderTop: "1px solid #e0e0e0" }}>
-    {isLoadingDetail ? (
-      <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-        <CircularProgress size={24} />
-      </Box>
-    ) : detail ? (
-      <Stack spacing={3}>
-        {/* Nội dung câu hỏi */}
-        <Box>
-          {detail.cauHoi.noiDungCauHoiHTML ? (
-            <Box 
-              dangerouslySetInnerHTML={{ __html: detail.cauHoi.noiDungCauHoiHTML }}
-              sx={{ pl: 2, color: "text.secondary" }}
-            />
-          ) : (
-            <Typography sx={{ pl: 2, color: "text.secondary" }}>
-              {detail.cauHoi.noiDungCauHoi}
-            </Typography>
-          )}
-        </Box>
+                      <Box sx={{ mt: 3, pt: 2, borderTop: "1px solid #e0e0e0" }}>
+                        {isLoadingDetail ? (
+                          <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+                            <CircularProgress size={24} />
+                          </Box>
+                        ) : detail ? (
+                          <Stack spacing={3}>
+                            <Box>
+                              {detail.cauHoi.noiDungCauHoiHTML ? (
+                                <Box 
+                                  dangerouslySetInnerHTML={{ __html: detail.cauHoi.noiDungCauHoiHTML }}
+                                  sx={{ pl: 2, color: "text.secondary" }}
+                                />
+                              ) : (
+                                <Typography sx={{ pl: 2, color: "text.secondary" }}>
+                                  {detail.cauHoi.noiDungCauHoi}
+                                </Typography>
+                              )}
+                            </Box>
 
-        {/* Đáp án */}
-     {/* Đáp án */}
-<Box>
-  {detail.dapAn && detail.dapAn.length > 0 ? (
-    <Stack spacing={1} sx={{ pl: 2 }}>
-      {detail.dapAn.map((da, idx) => (
-        <Box
-          key={idx}
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "24px 1fr", // 3 cột: A/B/C, icon, nội dung
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          {/* A/B/C */}
-          <Typography
-            sx={{
-              fontWeight: da.dapAnDung ? "bold" : "normal",
-              color: da.dapAnDung ? "green" : "text.primary",
-            }}
-          >
-            {String.fromCharCode(65 + idx)}.
-          </Typography>
+                            <Box>
+                              {detail.dapAn && detail.dapAn.length > 0 ? (
+                                <Stack spacing={1} sx={{ pl: 2 }}>
+                                  {detail.dapAn.map((da, idx) => (
+                                    <Box
+                                      key={idx}
+                                      sx={{
+                                        display: "grid",
+                                        gridTemplateColumns: "24px 1fr",
+                                        alignItems: "center",
+                                        gap: 8,
+                                      }}
+                                    >
+                                      <Typography
+                                        sx={{
+                                          fontWeight: da.dapAnDung ? "bold" : "normal",
+                                          color: da.dapAnDung ? "green" : "text.primary",
+                                        }}
+                                      >
+                                        {String.fromCharCode(65 + idx)}.
+                                      </Typography>
 
-          {/* Nội dung đáp án */}
-          {da.noiDungHTML ? (
-            <Box
-              dangerouslySetInnerHTML={{ __html: da.noiDungHTML }}
-              sx={{
-                fontWeight: da.dapAnDung ? "bold" : "normal",
-                color: da.dapAnDung ? "green" : "text.primary",
-              }}
-            />
-          ) : (
-            <Typography
-              sx={{
-                fontWeight: da.dapAnDung ? "bold" : "normal",
-                color: da.dapAnDung ? "green" : "text.primary",
-              }}
-            >
-              {da.noiDung}
-            </Typography>
-          )}
-        </Box>
-        
-      ))}
-    </Stack>
-  ) : (
-    <Typography variant="body2" sx={{ pl: 2, fontStyle: "italic", color: "text.secondary" }}>
-      Chưa có đáp án
-    </Typography>
-  )}
-</Box>
+                                      {da.noiDungHTML ? (
+                                        <Box
+                                          dangerouslySetInnerHTML={{ __html: da.noiDungHTML }}
+                                          sx={{
+                                            fontWeight: da.dapAnDung ? "bold" : "normal",
+                                            color: da.dapAnDung ? "green" : "text.primary",
+                                          }}
+                                        />
+                                      ) : (
+                                        <Typography
+                                          sx={{
+                                            fontWeight: da.dapAnDung ? "bold" : "normal",
+                                            color: da.dapAnDung ? "green" : "text.primary",
+                                          }}
+                                        >
+                                          {da.noiDung}
+                                        </Typography>
+                                      )}
+                                    </Box>
+                                  ))}
+                                </Stack>
+                              ) : (
+                                <Typography variant="body2" sx={{ pl: 2, fontStyle: "italic", color: "text.secondary" }}>
+                                  Chưa có đáp án
+                                </Typography>
+                              )}
+                            </Box>
 
-
-        {/* File đính kèm */}
-        {detail.mangFileDinhKem && detail.mangFileDinhKem.length > 0 && (
-          <Box>
-            <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1.5 }}>
-              File đính kèm:
-            </Typography>
-            <Stack spacing={1} sx={{ pl: 2 }}>
-              {detail.mangFileDinhKem.map((file, idx) => (
-                <Typography key={idx} variant="body2" sx={{ color: "text.secondary" }}>
-                  📎 {file.tenFile || `File ${idx + 1}`}
-                </Typography>
-              ))}
-            </Stack>
-          </Box>
-        )}
-      </Stack>
-    ) : null}
-  </Box>
-</Collapse>
-
+                            {detail.mangFileDinhKem && detail.mangFileDinhKem.length > 0 && (
+                              <Box>
+                                <Typography variant="subtitle2" fontWeight="bold" color="primary" sx={{ mb: 1.5 }}>
+                                  File đính kèm:
+                                </Typography>
+                                <Stack spacing={1} sx={{ pl: 2 }}>
+                                  {detail.mangFileDinhKem.map((file, idx) => (
+                                    <Typography key={idx} variant="body2" sx={{ color: "text.secondary" }}>
+                                      📎 {file.tenFile || `File ${idx + 1}`}
+                                    </Typography>
+                                  ))}
+                                </Stack>
+                              </Box>
+                            )}
+                          </Stack>
+                        ) : null}
+                      </Box>
+                    </Collapse>
                   </CardContent>
                 </Card>
               );
@@ -584,11 +672,11 @@ const BankQuestion = () => {
 
       {/* Dialogs */}
       <QuestionDetailDialog 
-  open={openDetailDialog} 
-  onClose={() => setOpenDetailDialog(false)} 
-  questionDetail={currentQuestionDetail} 
-  chuongName={currentQuestionDetail ? getChuongName(currentQuestionDetail.cauHoi.idChuong) : ""}
-/>
+        open={openDetailDialog} 
+        onClose={() => setOpenDetailDialog(false)} 
+        questionDetail={currentQuestionDetail} 
+        chuongName={currentQuestionDetail ? getChuongName(currentQuestionDetail.cauHoi.idChuong) : ""}
+      />
 
       <DeleteConfirmDialog
         open={openDeleteDialog}
