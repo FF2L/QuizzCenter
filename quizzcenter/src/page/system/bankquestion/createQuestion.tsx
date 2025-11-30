@@ -258,7 +258,7 @@ export default function CreateQuestionPage() {
         const formData = new FormData();
         formData.append("file", file);
   
-        const res = await fetch("http://localhost:3000/gui-file/anh", {
+        const res = await fetch(`${process.env.BACK_END_URL}/gui-file/anh`, {
           method: "POST",
           body: formData,
         });
@@ -349,7 +349,7 @@ export default function CreateQuestionPage() {
         mangDapAn,
       };
 
-      const res = await fetch("http://localhost:3000/cau-hoi", {
+      const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/cau-hoi`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

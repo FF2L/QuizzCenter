@@ -148,7 +148,7 @@ const [filters, setFilters] = useState({
 
       try {
         const res = await fetch(
-          `http://localhost:3000/bai-kiem-tra/${idBaiKiemTra}/chi-tiet-cau-hoi?skip=0&limit=10000`
+          `${process.env.REACT_APP_BACK_END_URL}/bai-kiem-tra/${idBaiKiemTra}/chi-tiet-cau-hoi?skip=0&limit=10000`
         );
         if (!res.ok) throw new Error("Không thể tải câu hỏi trong đề");
         const databefore = await res.json();
@@ -365,7 +365,7 @@ const getChuongName = (idChuong: number): string => {
     // Gọi API theo diff
     // 1) Thêm
     if (toAdd.length > 0) {
-      const res = await fetch("http://localhost:3000/bai-kiem-tra/chi-tiet-cau-hoi", {
+      const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/bai-kiem-tra/chi-tiet-cau-hoi`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idBaiKiemTra, mangIdCauHoi: toAdd }),
@@ -380,7 +380,7 @@ const getChuongName = (idChuong: number): string => {
     if (toRemoveChiTietIds.length > 0) {
       await Promise.all(
         toRemoveChiTietIds.map((id) =>
-          fetch(`http://localhost:3000/bai-kiem-tra/chi-tiet-cau-hoi/${id}`, {
+          fetch(`${process.env.REACT_APP_BACK_END_URL}/bai-kiem-tra/chi-tiet-cau-hoi/${id}`, {
             method: "DELETE",
           }).then(async (r) => {
             if (!r.ok) {

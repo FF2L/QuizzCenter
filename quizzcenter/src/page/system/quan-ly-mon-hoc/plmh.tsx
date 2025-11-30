@@ -172,7 +172,7 @@ const QuanLyMonHoc = () => {
                     <TableHead>
                         <TableRow>
                             <TableCell> Mã môn học</TableCell>
-                            <TableCell onClick={() => {setSxTenMonHoc(!sxTenMonHoc); fetchData()}}>{sxTenMonHoc ? "▲" : "▼"} Tên môn học</TableCell>
+                            <TableCell onClick={() => {setSxTenMonHoc(!sxTenMonHoc); fetchData()}}>{sxTenMonHoc ?  "▼" :"▲"} Tên môn học</TableCell>
                             <TableCell>Chức năng</TableCell>
                         </TableRow>
                     </TableHead>

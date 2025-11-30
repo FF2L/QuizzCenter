@@ -79,7 +79,7 @@ const BaiKiemTraDetail: React.FC = () => {
       if (!idBaiKiemTra) return;
       try {
         const res = await fetch(
-          `http://localhost:3000/bai-kiem-tra/findone/${idBaiKiemTra}`
+          `${process.env.REACT_APP_BACK_END_URL}/bai-kiem-tra/findone/${idBaiKiemTra}`
         );
         if (!res.ok) throw new Error("Không tìm thấy bài kiểm tra");
         const data: BaiKiemTra = await res.json();
@@ -94,7 +94,7 @@ const BaiKiemTraDetail: React.FC = () => {
     //xem chi tiet
     const fetchQuestionDetail = async (id: number) => {
       try {
-        const res = await fetch(`http://localhost:3000/cau-hoi/${id}`);
+        const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/cau-hoi/${id}`);
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data: CauHoiPayload = await res.json();
         setCurrentQuestionDetail(data);
@@ -109,7 +109,7 @@ const handleDeleteQuestion = async () => {
   if (!questionToDelete) return;
 
   try {
-    const res = await fetch(`http://localhost:3000/bai-kiem-tra/chi-tiet-cau-hoi/${questionToDelete.id}`, {
+    const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/bai-kiem-tra/chi-tiet-cau-hoi/${questionToDelete.id}`, {
       method: "DELETE",
     });
 
@@ -129,7 +129,7 @@ const handleDeleteQuestion = async () => {
 const fetchidMonHoc = async (): Promise<{ id: number; tenMonHoc: string } | null> => {
   if (!idBaiKiemTra) return null;
   try {
-    const res = await fetch(`http://localhost:3000/bai-kiem-tra/${idBaiKiemTra}/mon-hoc`);
+    const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/bai-kiem-tra/${idBaiKiemTra}/mon-hoc`);
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
     const mh = await res.json();
@@ -150,7 +150,7 @@ useEffect(() => {
 
     try {
       const res = await fetch(
-        `http://localhost:3000/bai-kiem-tra/${idBaiKiemTra}/chi-tiet-cau-hoi?skip=${skip}&limit=${limit}`,
+        `${process.env.REACT_APP_BACK_END_URL}/bai-kiem-tra/${idBaiKiemTra}/chi-tiet-cau-hoi?skip=${skip}&limit=${limit}`,
         {
           headers: {
             "Authorization": `Bearer ${accessToken}`,
