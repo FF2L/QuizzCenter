@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = process.env.REACT_APP_BACK_END_URL;
 
 export interface BaiLamResponse {
   baiLam: {

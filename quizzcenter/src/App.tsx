@@ -40,6 +40,7 @@ import QuanLyLopHoc from './page/system/quan-ly-lop-hoc/qllh';
 import QuanLyMonHoc from './page/system/quan-ly-mon-hoc/plmh';
 import ThemSinhVienVaoLopHocPhan from './page/system/quan-ly-lop-hoc/tsvlh';
 import BangDiemPage from './page/system/test/result';
+import QuanLyHocKy from './page/system/quan-ly-hoc-ky/qlhk';
 
 const App: FC = () => {
   return (
@@ -94,6 +95,7 @@ const App: FC = () => {
               <Route path="pcmh" element={<PhanCongMonHoc />} />
               <Route path="pllh" element={<QuanLyLopHoc />} />
               <Route path="plmh" element={<QuanLyMonHoc />} />
+              <Route path='qlhk' element={<QuanLyHocKy />} />
               <Route path="tsvlh/:idLopHocPhan" element={<ThemSinhVienVaoLopHocPhan />} />
             </Route>
 

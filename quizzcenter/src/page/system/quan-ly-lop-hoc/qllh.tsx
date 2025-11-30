@@ -30,6 +30,7 @@ const QuanLyLopHoc = () => {
 
   const [danhSachMonHoc, setDanhSachMonHoc] = useState<any[]>([]);
   const [danhSachGiangVien, setDanhSachGiangVien] = useState<any[]>([]);
+  const [danhSachHocKy, setDanhSachHocKy] = useState<any[]>([]);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedLop, setSelectedLop] = useState<any>(null);
@@ -40,8 +41,6 @@ const QuanLyLopHoc = () => {
   const [form, setForm] = useState({
     tenLopHoc: "",
     hocKy: "",
-    thoiGianBatDau: "",
-    thoiGianKetThuc: "",
     idMonHoc: "",
     idGiangVien: "",
   });
@@ -50,8 +49,6 @@ const QuanLyLopHoc = () => {
   const [editForm, setEditForm] = useState({
     tenLopHoc: "",
     hocKy: "",
-    thoiGianBatDau: "",
-    thoiGianKetThuc: "",
     idMonHoc: "",
     idGiangVien: "",
   });
@@ -59,10 +56,18 @@ const QuanLyLopHoc = () => {
   // ================== LOAD LIST ==================
   const fetchData = async () => {
     const result = await AdminApi.layTatCaLopHocPhan(currentPage, 10, search);
+    const resHocKy = await AdminApi.layTatCaHocKyDangDienRa();
+    if (resHocKy.ok) {
+      setDanhSachHocKy(resHocKy.data ?? []);
+    } else {
+      setDanhSachHocKy([]);
+    }
     if (result.ok) {
       setDanhSachLopHoc(result.data.data);
       setTotal(result.data.total);
       setCurrentPage(result.data.currentPage);
+    } else {
+      setDanhSachLopHoc([]);
     }
   };
 
@@ -73,15 +78,9 @@ const QuanLyLopHoc = () => {
   // ================== TẠO ==================
   const validateCreate = () => {
     if (!form.tenLopHoc.trim()) return toast.error("Tên lớp học không được để trống"), false;
-    if (!form.hocKy.trim()) return toast.error("Học kỳ không được để trống"), false;
-    if (!form.thoiGianBatDau.trim()) return toast.error("Thời gian bắt đầu không được để trống"), false;
-    if (!form.thoiGianKetThuc.trim()) return toast.error("Thời gian kết thúc không được để trống"), false;
+    if (!form.hocKy) return toast.error("Học kỳ không được để trống"), false;
     if (!form.idMonHoc) return toast.error("Môn học không được để trống"), false;
     if (!form.idGiangVien) return toast.error("Giảng viên không được để trống"), false;
-
-    const s = new Date(form.thoiGianBatDau);
-    const e = new Date(form.thoiGianKetThuc);
-    if (s > e) return toast.error("Thời gian kết thúc phải sau thời gian bắt đầu" + s + " " + e), false;
 
     return true;
   };
@@ -99,8 +98,6 @@ const QuanLyLopHoc = () => {
     setForm({
       tenLopHoc: "",
       hocKy: "",
-      thoiGianBatDau: "",
-      thoiGianKetThuc: "",
       idMonHoc: "",
       idGiangVien: "",
     });
@@ -142,49 +139,55 @@ const QuanLyLopHoc = () => {
       fetchData();
       setTotal((t) => t + 1);
     } else {
-        const err: any = res?.error;
+      console.log(res);
+      const err: any = res?.error;
       const mess = err?.response?.data?.message ?? "Tạo lớp học thất bại";
       toast.error(mess);
     }
   };
 
   // ================== SỬA ==================
-  const handleClickEdit = async (row: any) => {
-    // nạp danh sách môn học nếu chưa có
-    if (!danhSachMonHoc.length) {
-      const resMon = await AdminApi.layTatCaMonHocKhongQuery();
-      if (resMon?.ok) {
-        const arr = Array.isArray(resMon.data) ? resMon.data : resMon.data?.data ?? [];
-        setDanhSachMonHoc(arr);
-      } else {
-        setDanhSachMonHoc([]);
-      }
-    }
-
-    // lấy id môn/giảng viên từ record (tuỳ API field)
-    const idMH = row.idmonhoc ?? row.idMonHoc ?? row.mh_id ?? "";
-    if (idMH) {
-      const resGV = await AdminApi.layTatCaGiangVienTheoIdMonHoc(+idMH);
-      if (resGV?.ok) setDanhSachGiangVien(resGV.data ?? []);
-      else setDanhSachGiangVien([]);
+const handleClickEdit = async (row: any) => {
+  // nạp danh sách môn học nếu chưa có
+  if (!danhSachMonHoc.length) {
+    const resMon = await AdminApi.layTatCaMonHocKhongQuery();
+    if (resMon?.ok) {
+      const arr = Array.isArray(resMon.data) ? resMon.data : resMon.data?.data ?? [];
+      setDanhSachMonHoc(arr);
     } else {
-      setDanhSachGiangVien([]);
+      setDanhSachMonHoc([]);
     }
+  }
 
-    setEditRowId(row.lhp_id ?? row.id);
+  const idMH = row.mh_id ?? row.idMonHoc ?? row.idmonhoc ?? "";
 
-    setEditForm({
-      tenLopHoc: row.tenlhp ?? row.tenLopHoc ?? "",
-      hocKy: row.hocky ?? row.hocKy ?? "",
-      // Lấy yyyy-MM-dd cho input date từ chuỗi ISO/trả về
-      thoiGianBatDau: (row.thoigianbatdau ?? row.thoiGianBatDau ?? "").slice(0, 10),
-      thoiGianKetThuc: (row.thoigianketthuc ?? row.thoiGianKetThuc ?? "").slice(0, 10),
-      idMonHoc: String(idMH ?? ""),
-      idGiangVien: String(row.idgiangvien ?? row.idGiangVien ?? row.nd_id ?? ""),
-    });
+  // nạp giảng viên theo môn hiện tại
+  if (idMH) {
+    const resGV = await AdminApi.layTatCaGiangVienTheoIdMonHoc(+idMH);
+    if (resGV?.ok) setDanhSachGiangVien(resGV.data ?? []);
+    else setDanhSachGiangVien([]);
+  } else {
+    setDanhSachGiangVien([]);
+  }
 
-    setShowCreateRow(false);
-  };
+  // 🔥 row chỉ có tên học kỳ (hocky), nên phải map ngược lại sang id
+  const hkMatch = danhSachHocKy.find(
+    (hk: any) => hk.tenHocKy === (row.hocky ?? row.hocKy)
+  );
+
+  setEditRowId(row.lhp_id ?? row.id);
+
+  setEditForm({
+    tenLopHoc: row.tenlhp ?? row.tenLopHoc ?? "",
+    hocKy: hkMatch ? String(hkMatch.id) : "",        // 👈 value = id của học kỳ
+    idMonHoc: String(idMH ?? ""),
+    idGiangVien: String(row.nd_id ?? row.idgiangvien ?? row.idGiangVien ?? ""),
+  });
+
+  setShowCreateRow(false);
+};
+
+
 
   const onEditChange = async (name: string, value: string) => {
     setEditForm((f) => ({ ...f, [name]: value }));
@@ -202,12 +205,7 @@ const QuanLyLopHoc = () => {
 
   const validateEdit = () => {
     if (!editForm.tenLopHoc.trim()) return toast.error("Tên lớp học không được để trống"), false;
-    if (!editForm.hocKy.trim()) return toast.error("Học kỳ không được để trống"), false;
-    if (!editForm.thoiGianBatDau) return toast.error("Thời gian bắt đầu không được để trống"), false;
-    if (!editForm.thoiGianKetThuc) return toast.error("Thời gian kết thúc không được để trống"), false;
-    const s = new Date(editForm.thoiGianBatDau);
-    const e = new Date(editForm.thoiGianKetThuc);
-    if (s > e) return toast.error("Thời gian kết thúc phải sau thời gian bắt đầu"), false;
+    if (!editForm.hocKy) return toast.error("Học kỳ không được để trống"), false;
     if (!editForm.idMonHoc) return toast.error("Môn học không được để trống"), false;
     if (!editForm.idGiangVien) return toast.error("Giảng viên không được để trống"), false;
     return true;
@@ -223,9 +221,6 @@ const QuanLyLopHoc = () => {
     const payload = {
       tenLopHoc: editForm.tenLopHoc,
       hocKy: editForm.hocKy,
-      // BE của bạn đang chấp nhận kiểu Date/ISO/DATE — bạn đang gửi yyyy-MM-dd giống khi tạo
-      thoiGianBatDau: editForm.thoiGianBatDau,
-      thoiGianKetThuc: editForm.thoiGianKetThuc,
       idMonHoc: +editForm.idMonHoc,
       idGiangVien: +editForm.idGiangVien,
     };
@@ -260,7 +255,9 @@ const QuanLyLopHoc = () => {
       setDanhSachLopHoc((prev) => prev.filter((x: any) => x.lhp_id !== selectedLop.lhp_id));
       setTotal((t) => t - 1);
     } else {
-      toast.error("Xóa lớp học thất bại");
+      const err: any = result?.error;
+      const msg = err?.response?.data?.message ?? "Xóa lớp học thất bại";
+      toast.error(msg);
     }
     setConfirmOpen(false);
     setSelectedLop(null);
@@ -300,11 +297,8 @@ const QuanLyLopHoc = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Mã lớp học</TableCell>
               <TableCell>Tên lớp học</TableCell>
               <TableCell>Học kỳ</TableCell>
-              <TableCell>Thời gian bắt đầu</TableCell>
-              <TableCell>Thời gian kết thúc</TableCell>
               <TableCell>Môn học</TableCell>
               <TableCell>Giảng viên</TableCell>
               <TableCell>Hành động</TableCell>
@@ -315,15 +309,6 @@ const QuanLyLopHoc = () => {
             {/* HÀNG TẠO */}
             {showCreateRow && (
               <TableRow style={{ alignItems: "center", justifyContent: "center" }}>
-                <TableCell padding="none">
-                  <TextField
-                    size="small"
-                    variant="standard"
-                    sx={{ width: 160, height: 40 }}
-                    placeholder=""
-                    InputProps={{ readOnly: true }}
-                  />
-                </TableCell>
 
                 <TableCell padding="none">
                   <TextField
@@ -331,7 +316,7 @@ const QuanLyLopHoc = () => {
                     value={form.tenLopHoc}
                     placeholder="Tên lớp học"
                     variant="standard"
-                    sx={{ width: 160, height: 40 }}
+                    sx={{ width: 200, height: 40 }}
                     onChange={(e) => onChangeCreate("tenLopHoc", e.target.value)}
                   />
                 </TableCell>
@@ -343,34 +328,14 @@ const QuanLyLopHoc = () => {
                     size="small"
                     value={form.hocKy}
                     onChange={(e) => onChangeCreate("hocKy", e.target.value)}
-                    sx={{ width: 120, height: 40 }}
+                    sx={{ width: 200, height: 40 }}
                   >
-                    <MenuItem value="Học kỳ 1">Học kỳ 1</MenuItem>
-                    <MenuItem value="Học kỳ 2">Học kỳ 2</MenuItem>
-                    <MenuItem value="Học kỳ hè">Học kỳ hè</MenuItem>
+                    {(danhSachHocKy ?? []).map((hk: any) => (
+                      <MenuItem key={hk.id} value={hk.id}>
+                        {hk.tenHocKy}
+                      </MenuItem>
+                    ))}
                   </TextField>
-                </TableCell>
-
-                <TableCell padding="none">
-                  <TextField
-                    size="medium"
-                    type="date"
-                    value={form.thoiGianBatDau}
-                    variant="standard"
-                    sx={{ width: 140, height: 40 }}
-                    onChange={(e) => onChangeCreate("thoiGianBatDau", e.target.value)}
-                  />
-                </TableCell>
-
-                <TableCell padding="none">
-                  <TextField
-                    size="medium"
-                    type="date"
-                    value={form.thoiGianKetThuc}
-                    variant="standard"
-                    sx={{ width: 140, height: 40 }}
-                    onChange={(e) => onChangeCreate("thoiGianKetThuc", e.target.value)}
-                  />
                 </TableCell>
 
                 <TableCell padding="none">
@@ -380,7 +345,7 @@ const QuanLyLopHoc = () => {
                     size="small"
                     value={form.idMonHoc}
                     onChange={(e) => onChangeCreate("idMonHoc", e.target.value)}
-                    sx={{ width: 180, height: 40 }}
+                    sx={{ width: 200, height: 40 }}
                   >
                     {(danhSachMonHoc ?? []).map((monHoc: any) => (
                       <MenuItem key={monHoc.id} value={monHoc.id}>
@@ -397,7 +362,7 @@ const QuanLyLopHoc = () => {
                     size="small"
                     value={form.idGiangVien}
                     onChange={(e) => onChangeCreate("idGiangVien", e.target.value)}
-                    sx={{ width: 170, height: 40 }}
+                    sx={{ width: 200, height: 40 }}
                     disabled={(danhSachGiangVien ?? []).length === 0}
                   >
                     {(danhSachGiangVien ?? []).map((giangVien: any) => (
@@ -432,13 +397,11 @@ const QuanLyLopHoc = () => {
               <TableRow key={lopHoc.lhp_id}>
                 {editRowId === lopHoc.lhp_id ? (
                   <>
-                    <TableCell sx={{width: 100}}>{lopHoc.malhp}</TableCell>
-
                     <TableCell padding="none">
                       <TextField
                         size="small"
                         variant="standard"
-                        sx={{ width: 100, height: 40 }}
+                        sx={{ width: 200, height: 40 }}
                         value={editForm.tenLopHoc}
                         onChange={(e) => onEditChange("tenLopHoc", e.target.value)}
                       />
@@ -449,44 +412,26 @@ const QuanLyLopHoc = () => {
                         select
                         size="small"
                         variant="standard"
-                        sx={{ width: 120, height: 40 }}
+                        sx={{ width: 200, height: 40 }}
                         value={editForm.hocKy}
                         onChange={(e) => onEditChange("hocKy", e.target.value)}
                       >
-                        <MenuItem value="Học kỳ 1">Học kỳ 1</MenuItem>
-                        <MenuItem value="Học kỳ 2">Học kỳ 2</MenuItem>
-                        <MenuItem value="Học kỳ hè">Học kỳ hè</MenuItem>
+                        {danhSachHocKy.map((hk: any) => (
+                          <MenuItem key={hk.id} value={hk.id}>
+                            {hk.tenHocKy}
+                          </MenuItem>
+                        ))}
                       </TextField>
+
                     </TableCell>
 
-                    <TableCell padding="none">
-                      <TextField
-                        type="date"
-                        size="small"
-                        variant="standard"
-                        sx={{ width: 140, height: 40 }}
-                        value={editForm.thoiGianBatDau}
-                        onChange={(e) => onEditChange("thoiGianBatDau", e.target.value)}
-                      />
-                    </TableCell>
-
-                    <TableCell padding="none">
-                      <TextField
-                        type="date"
-                        size="small"
-                        variant="standard"
-                        sx={{ width: 140, height: 40 }}
-                        value={editForm.thoiGianKetThuc}
-                        onChange={(e) => onEditChange("thoiGianKetThuc", e.target.value)}
-                      />
-                    </TableCell>
 
                     <TableCell padding="none">
                       <TextField
                         select
                         size="small"
                         variant="standard"
-                        sx={{ width: 180, height: 40 }}
+                        sx={{ width: 200, height: 40 }}
                         value={editForm.idMonHoc}
                         onChange={(e) => onEditChange("idMonHoc", e.target.value)}
                       >
@@ -503,7 +448,7 @@ const QuanLyLopHoc = () => {
                         select
                         size="small"
                         variant="standard"
-                        sx={{ width: 180, height: 40 }}
+                        sx={{ width: 200, height: 40 }}
                         value={editForm.idGiangVien}
                         onChange={(e) => onEditChange("idGiangVien", e.target.value)}
                         disabled={(danhSachGiangVien ?? []).length === 0}
@@ -535,33 +480,12 @@ const QuanLyLopHoc = () => {
                   </>
                 ) : (
                   <>
-                    <TableCell>{lopHoc.malhp}</TableCell>
                     <TableCell
-                      onClick={() => navigate(
-                        `/admin/tsvlh/${lopHoc.lhp_id}`,
-                        {
-                          state: {
-                            tenLopHoc: lopHoc.tenlhp ?? lopHoc.tenLopHoc,
-                            tenMonHoc: lopHoc.tenmonhoc ?? lopHoc.tenMonHoc
-                          }
-                        }
-                      )}
-                      sx={{
-                        color: "#1976d2",
-                        cursor: "pointer",
-                        fontWeight: 500,
-                        "&:hover": { color: "#0044cc", textDecoration: "underline" }
-                      }}
                     >
                       {lopHoc.tenlhp ?? lopHoc.tenLopHoc}
                     </TableCell>
                     <TableCell>{lopHoc.hocky ?? lopHoc.hocKy}</TableCell>
-                    <TableCell>
-                      {toDateDisplay(lopHoc.thoigianbatdau ?? lopHoc.thoiGianBatDau) || "-"}
-                    </TableCell>
-                    <TableCell>
-                      {toDateDisplay(lopHoc.thoigianketthuc ?? lopHoc.thoiGianKetThuc) || "-"}
-                    </TableCell>
+
                     <TableCell>{lopHoc.tenmonhoc ?? lopHoc.tenMonHoc}</TableCell>
                     <TableCell>{lopHoc.tengiangvien ?? lopHoc.tenGiangVien}</TableCell>
                     <TableCell>
@@ -578,6 +502,17 @@ const QuanLyLopHoc = () => {
                         >
                           Xóa
                         </a>
+
+                        <a style={{ color: "green", cursor: "pointer", textDecoration: "none" }}
+                        onClick={() => navigate(`/admin/tsvlh/${lopHoc.lhp_id}`,
+                        {
+                          state: {
+                            tenLopHoc: lopHoc.tenlhp ?? lopHoc.tenLopHoc,
+                            tenMonHoc: lopHoc.tenmonhoc ?? lopHoc.tenMonHoc
+                          }
+                        }
+                      )}
+                      >Xem chi tiết lớp học</a>
                       </Stack>
                     </TableCell>
                   </>

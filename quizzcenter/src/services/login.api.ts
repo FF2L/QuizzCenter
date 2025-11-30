@@ -18,6 +18,7 @@ export class LoginService {
   }
     static login = async (username: string, password: string) => {
         try {
+            console.log((API_URL))
             const res = await axios.post(`${API_URL}/auth/login`, {
                 email: username,
                 matKhau: password,

@@ -118,7 +118,7 @@ const BaiKiemTraList = () => {
         params.append("tenBaiKiemTra", searchValue.trim());
       }
 
-      const url = `http://localhost:3000/bai-kiem-tra/${idLopHocPhan}?${params.toString()}`;
+      const url = `${process.env.REACT_APP_BACK_END_URL}/bai-kiem-tra/${idLopHocPhan}?${params.toString()}`;
 
       const res = await fetch(url, {
         headers: {
@@ -165,7 +165,7 @@ const BaiKiemTraList = () => {
 
   const handleCreateBaiKiemTra = async (payload: any) => {
     try {
-      const res = await fetch("http://localhost:3000/bai-kiem-tra", {
+      const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/bai-kiem-tra`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -190,7 +190,7 @@ const BaiKiemTraList = () => {
 
   const handleUpdateBaiKiemTra = async (id: number, payload: any) => {
     try {
-      const res = await fetch(`http://localhost:3000/bai-kiem-tra/${id}`, {
+      const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/bai-kiem-tra/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -227,7 +227,7 @@ const BaiKiemTraList = () => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa bài kiểm tra này?")) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/bai-kiem-tra/${id}`, {
+      const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/bai-kiem-tra/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -263,7 +263,7 @@ const BaiKiemTraList = () => {
     if (!window.confirm(confirmMessage)) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/bai-kiem-tra/phat-hanh/${bai.id}`, {
+      const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/bai-kiem-tra/phat-hanh/${bai.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

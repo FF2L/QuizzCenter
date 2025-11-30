@@ -89,7 +89,7 @@ export default function UpdateQuestionPage() {
       
       setLoading(true);
       try {
-        const res = await fetch(`http://localhost:3000/cau-hoi/${cauHoiId}`);
+        const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/cau-hoi/${cauHoiId}`);
         if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
         
         const data: CauHoiPayload = await res.json();
@@ -210,7 +210,7 @@ export default function UpdateQuestionPage() {
     
     if (answer.id) {
       try {
-        const res = await fetch(`http://localhost:3000/dap-an/${answer.id}`, {
+        const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/dap-an/${answer.id}`, {
           method: "DELETE",
         });
         if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
@@ -249,7 +249,7 @@ export default function UpdateQuestionPage() {
         const formData = new FormData();
         formData.append("file", file);
 
-        const res = await fetch("http://localhost:3000/gui-file/anh", {
+        const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/gui-file/anh`, {
           method: "POST",
           body: formData,
         });
@@ -330,7 +330,7 @@ export default function UpdateQuestionPage() {
         doKho,
       };
 
-      const resCauHoi = await fetch(`http://localhost:3000/cau-hoi/${cauHoiId}`, {
+      const resCauHoi = await fetch(`${process.env.REACT_APP_BACK_END_URL}/cau-hoi/${cauHoiId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -352,7 +352,7 @@ export default function UpdateQuestionPage() {
             dapAnDung: answer.dapAnDung,
           };
 
-          const resDapAn = await fetch(`http://localhost:3000/dap-an/${answer.id}`, {
+          const resDapAn = await fetch(`${process.env.REACT_APP_BACK_END_URL}/dap-an/${answer.id}`, {
             method: "PATCH",
             headers: {
               "Content-Type": "application/json",
@@ -372,7 +372,7 @@ export default function UpdateQuestionPage() {
             idCauHoi: Number(cauHoiId),
           };
 
-          const resNewDapAn = await fetch("http://localhost:3000/dap-an", {
+          const resNewDapAn = await fetch(`${process.env.REACT_APP_BACK_END_URL}/dap-an`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

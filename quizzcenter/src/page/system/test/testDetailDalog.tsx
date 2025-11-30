@@ -27,7 +27,7 @@ const ViewBaiKiemTraDialog: React.FC<Props> = ({ open, onClose, idBaiKiemTra }) 
       const fetchDetail = async () => {
         try {
           setLoading(true);
-          const res = await fetch(`http://localhost:3000/bai-kiem-tra/findone/${idBaiKiemTra}`);
+          const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/bai-kiem-tra/findone/${idBaiKiemTra}`);
           const data: BaiKiemTra = await res.json();
           setDetail(data);
         } catch (error) {

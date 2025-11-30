@@ -14,6 +14,7 @@ const QuanLyMonHoc = () => {
     const [selectedMonHoc, setSelectedMonHoc] = useState<any>(null);
     const [editRowId, setEditRowId] = useState<number | null>(null);
     const [showCreateRow, setShowCreateRow] = useState(false);
+    const [sxTenMonHoc, setSxTenMonHoc] = useState<boolean>(false);
     const [form, setForm] = useState({
         maMonHoc:"",
         tenMonHoc:""
@@ -103,8 +104,7 @@ const QuanLyMonHoc = () => {
         if (res?.ok !== false) {
             const newMonHoc = res.data;
             setShowCreateRow(false);
-            setDanhSachMonHoc((prev) => [newMonHoc, ...prev]);
-            setTotal(total + 1);
+            fetchData();
             toast.success("Tạo môn học thành công");
         } else {
             const err: any = res.error;
@@ -134,16 +134,16 @@ const QuanLyMonHoc = () => {
         setConfirmOpen(false);
         setSelectedMonHoc(null);
     };
-
-    useEffect (() =>{
-        const fetchData = async () =>{
-            const result = await AdminApi.layTatCaMonHoc(currentPage,10, search);
+    const fetchData = async () =>{
+            const result = await AdminApi.layTatCaMonHoc(currentPage,10, search, sxTenMonHoc);
             setDanhSachMonHoc(result.data.data)
             setTotal(result.data.total)
             setCurrentPage(result.data.currentPage)
         }
+
+    useEffect (() =>{
         fetchData()
-    },[currentPage, search])
+    },[currentPage, search, sxTenMonHoc]);
 
     return (
         <Box 
@@ -171,8 +171,8 @@ const QuanLyMonHoc = () => {
                 <Table>
                     <TableHead>
                         <TableRow>
-                            <TableCell>Mã môn học</TableCell>
-                            <TableCell>Tên môn học</TableCell>
+                            <TableCell> Mã môn học</TableCell>
+                            <TableCell onClick={() => {setSxTenMonHoc(!sxTenMonHoc); fetchData()}}>{sxTenMonHoc ?  "▼" :"▲"} Tên môn học</TableCell>
                             <TableCell>Chức năng</TableCell>
                         </TableRow>
                     </TableHead>
@@ -272,14 +272,15 @@ const QuanLyMonHoc = () => {
                     </TableBody>
                     <TableFooter>
                         <TablePagination
-                        align="left"
-                        component="div"
-                        count={total}
-                        page={currentPage - 1}
-                        onPageChange={(_, newPage) => setCurrentPage(newPage + 1)}
-                        rowsPerPage={10}
-                        rowsPerPageOptions={[]}
-                        />
+                            component="div"
+                            count={total}
+                            page={currentPage - 1}
+                            onPageChange={(_, newPage) => setCurrentPage(newPage + 1)}
+                            rowsPerPage={10}
+                            rowsPerPageOptions={[]}
+                            labelDisplayedRows={({ page }) => `Trang ${page + 1}`}
+                            labelRowsPerPage=""
+                            />
                     </TableFooter>
                     
                 </Table>

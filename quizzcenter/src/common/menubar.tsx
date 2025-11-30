@@ -22,7 +22,8 @@ import {
   Book,
   GroupAdd,
   Group,
-  MeetingRoom
+  MeetingRoom,
+  School
   
 } from "@mui/icons-material";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -140,6 +141,7 @@ export default function MenuBar({ role }: { role: string }) {
         { id: 3, title: "Quản lý lớp học", icon: <MeetingRoom />, path: "/admin/pllh" },
         { id: 4, title: "Quản lý môn học", icon: <Book />, path: "/admin/plmh" },
         { id: 5, title: "Phân công môn học", icon: <GroupAdd />, path: "/admin/pcmh" },
+        { id: 6, title: "Quản lý học kỳ", icon: <School />, path: "/admin/qlhk" },
       ]);
     }
   }, [role]);

@@ -241,7 +241,7 @@ const BankQuestion = () => {
   const handleDeleteQuestion = useCallback(async () => {
     if (!questionToDelete) return;
     try {
-      const res = await fetch(`http://localhost:3000/cau-hoi/${questionToDelete.id}`, { 
+      const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/cau-hoi/${questionToDelete.id}`, { 
        method: "DELETE",
        headers: {
        Authorization: `Bearer ${accessTokenRef.current}`,

@@ -8,7 +8,7 @@ const CollegeDashBoard: React.FC = () =>{
     useEffect(() =>{
         const danhSanhLopHocPhan = async () =>{
             try{
-                const res = await axios.get('http://localhost:3000/v2/lop-hoc-phan', {
+                const res = await axios.get(`${process.env.REACT_APP_BACK_END_URL}/v2/lop-hoc-phan`, {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }

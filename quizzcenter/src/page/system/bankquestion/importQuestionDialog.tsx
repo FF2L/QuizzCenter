@@ -186,7 +186,7 @@ const ImportQuestionDialog = ({
       }));
 
       const res = await fetch(
-        `http://localhost:3000/cau-hoi/danh-sach-cau-hoi/chuong/${selectedChuong}`,
+        `${process.env.REACT_APP_BACK_END_URL}/cau-hoi/danh-sach-cau-hoi/chuong/${selectedChuong}`,
         {
           method: "POST",
           headers: {

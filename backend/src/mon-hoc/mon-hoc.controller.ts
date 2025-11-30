@@ -17,8 +17,11 @@ export class MonHocController {
 
 //CRUD môn học Admin
   @Get('admin')
-  async findAllAdmin(@Query('skip') skip?: number, @Query('limit') limit?: number, @Query('tenMon') tenMon?: string){
-    return await this.monHocService.layTatCaMonHoc({ skip, limit, tenMon });
+  async findAllAdmin(@Query('skip') skip?: number,
+  @Query('limit') limit?: number,
+  @Query('tenMon') tenMon?: string,
+  @Query('sxTenMon') sxTenMon?: boolean) {
+    return await this.monHocService.layTatCaMonHoc({ skip, limit, tenMon, sxTenMon });
   }
   @Post('admin')
   create(@Body() createMonHocDto: CreateMonHocDto) {
@@ -51,8 +54,9 @@ export class MonHocController {
   async layDanhSachMonHocDaPhanCongChoGiangVien(
     @Query('skip') skip?: number,
     @Query('limit') limit?: number,
-    @Query('tenGiangVien') tenGiangVien?: string){
-    return this.monHocService.layTatCaMonHocDaPhanCong({skip, limit, tenGiangVien});
+    @Query('tenGiangVien') tenGiangVien?: string,
+    @Query('sxTenGiangVien') sxTenGiangVien?: boolean){
+    return this.monHocService.layTatCaMonHocDaPhanCong({skip, limit, tenGiangVien,sxTenGiangVien});
   }
   //Phân công
   @Post('phan-cong/giang-vien/:idGiangVien/admin')

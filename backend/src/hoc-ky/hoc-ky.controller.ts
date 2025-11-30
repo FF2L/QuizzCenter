@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { HocKyService } from './hoc-ky.service';
 import { CreateHocKyDto } from './dto/create-hoc-ky.dto';
 import { UpdateHocKyDto } from './dto/update-hoc-ky.dto';
@@ -11,15 +11,20 @@ export class HocKyController {
   create(@Body() createHocKyDto: CreateHocKyDto) {
     return this.hocKyService.create(createHocKyDto);
   }
-
   @Get('admin')
-  findAll() {
-    return this.hocKyService.findAll();
+  findAll(@Query() tenHocKy: any) {
+    console.log(tenHocKy);
+    return this.hocKyService.findAll( tenHocKy.tenHocKy);
   }
 
-  @Get('admin/phat-hanh')
+  @Get('admin/dang-dien-ra')
   findAllHocKyPhatHanh() {
-    return this.hocKyService.findAllHocKyPhatHanh();
+    return this.hocKyService.findAllHocKyDangDienRaVaTuongLai();
+  }
+
+  @Get('admin/:id')
+  findOne(@Param('id') id: string) {
+    return this.hocKyService.findOne(+id);
   }
 
   @Patch('admin/:id')

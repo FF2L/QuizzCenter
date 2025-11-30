@@ -88,7 +88,7 @@ const LectureClass = () => {
   const fetchAllLopHocPhan = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:3000/lop-hoc-phan/giang-vien", {
+      const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/lop-hoc-phan/giang-vien`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -125,7 +125,7 @@ const LectureClass = () => {
         limit: limit.toString(),
       });
 
-      const url = `http://localhost:3000/lop-hoc-phan/giang-vien?${params.toString()}`;
+      const url = `${process.env.REACT_APP_BACK_END_URL}/lop-hoc-phan/giang-vien?${params.toString()}`;
 
       const res = await fetch(url, {
         headers: {

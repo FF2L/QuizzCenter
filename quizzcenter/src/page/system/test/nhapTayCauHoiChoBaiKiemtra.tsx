@@ -219,7 +219,7 @@ export default function CreateQuestionForTest() {
       formData.append("createCauHoi", JSON.stringify(createCauHoiTemp));
 
       // Tạo câu hỏi
-      const res = await fetch("http://localhost:3000/cau-hoi", {
+      const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/cau-hoi`, {
         method: "POST",
         body: formData,
       });
@@ -234,7 +234,7 @@ export default function CreateQuestionForTest() {
       
 
       // Thêm câu hỏi vào bài kiểm tra
-      const addToTestRes = await fetch("http://localhost:3000/bai-kiem-tra/chi-tiet-cau-hoi", {
+      const addToTestRes = await fetch(`${process.env.REACT_APP_BACK_END_URL}/bai-kiem-tra/chi-tiet-cau-hoi`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

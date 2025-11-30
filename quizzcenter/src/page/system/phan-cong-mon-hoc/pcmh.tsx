@@ -1,43 +1,41 @@
-// src/pages/admin/PhanCongMonHoc.tsx
 import {
-  Box,
-  Button,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-  TablePagination,
-  MenuItem,
+  Box, Button, Stack, Table, TableBody, TableCell, TableHead, TableRow,
+  TextField, Typography, TablePagination,
+  MenuItem, Dialog, DialogTitle, DialogContent, DialogActions,
+  Checkbox, FormControlLabel, FormGroup
 } from "@mui/material";
+
 import { useEffect, useState } from "react";
 import { AdminApi } from "../../../services/admin.api";
 import { toast } from "react-toastify";
-import ConfirmDialog from "../../../common/dialog";
+
 
 const PhanCongMonHoc = () => {
-  const [search, setSearch] = useState("");                // tìm theo tên giảng viên
-  const [danhSach, setDanhSach] = useState<any[]>([]);     // list phân công
-  const [total, setTotal] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
+const [search, setSearch] = useState("");                
+const [danhSach, setDanhSach] = useState<any[]>([]);     
+const [total, setTotal] = useState(0);
+const [currentPage, setCurrentPage] = useState(1);
 
-  const [showCreateRow, setShowCreateRow] = useState(false);
-  const [dsGiangVien, setDsGiangVien] = useState<any[]>([]);
-  const [dsMonHoc, setDsMonHoc] = useState<any[]>([]);
+const [dsMonHoc, setDsMonHoc] = useState<any[]>([]);
+
+const [openEditDialog, setOpenEditDialog] = useState(false);
+const [editingGV, setEditingGV] = useState<any>(null);
+const [selectedMonHocIds, setSelectedMonHocIds] = useState<number[]>([]);
+const [initialMonHocIds, setInitialMonHocIds] = useState<number[]>([]);
+
 
   const [form, setForm] = useState({ idGiangVien: "", idMonHoc: "" });
 
-  const [confirmOpen, setConfirmOpen] = useState(false);
+
   const [selectedRow, setSelectedRow] = useState<any>(null);
+  const [sxTenGiangVien,setSxTenGiangVien] =useState<boolean>(false)
 
   // ===== LOAD LIST =====
   const fetchData = async () => {
-    const res = await AdminApi.layTatCaMonHocDaPhanCong(currentPage, 10, search);
+    const res = await AdminApi.layTatCaMonHocDaPhanCong(currentPage, 10, search, sxTenGiangVien);
     if (res?.ok) {
-      setDanhSach(res.data?.data ?? []);
+      setDanhSach(res.data?.danhSach ?? []);
+      console.log("danhSach", res.data?.danhSach);
       setTotal(res.data?.total ?? 0);
       setCurrentPage(res.data?.currentPage ?? 1);
     } else {
@@ -45,88 +43,81 @@ const PhanCongMonHoc = () => {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [currentPage, search]);
-
-  // ===== THÊM =====
-  const openCreateRow = async () => {
-    // Giảng viên (không phân trang)
-    const resGV = await AdminApi.layTatCaGiangVienKhongPhanTrang();
-    if (resGV?.ok) setDsGiangVien(Array.isArray(resGV.data) ? resGV.data : []);
-    else setDsGiangVien([]);
-
-    // Môn học (không query)
+    const fetchMonHoc = async () => {
     const resMH = await AdminApi.layTatCaMonHocKhongQuery();
     if (resMH?.ok) {
       const arr = Array.isArray(resMH.data) ? resMH.data : resMH.data?.data ?? [];
       setDsMonHoc(arr);
     } else setDsMonHoc([]);
-
-    setForm({ idGiangVien: "", idMonHoc: "" });
-    setShowCreateRow(true);
   };
 
-  const onChangeCreate = (name: string, value: string) => {
-    setForm((f) => ({ ...f, [name]: value }));
-  };
+  useEffect(() => {
+    fetchData();
+  }, [currentPage, search, sxTenGiangVien]);
 
-  const cancelCreate = () => {
-    setShowCreateRow(false);
-  };
+  useEffect(() => {
+  fetchMonHoc();
+}, []);
 
-  const validateCreate = () => {
-    if (!form.idGiangVien) return toast.error("Vui lòng chọn giảng viên"), false;
-    if (!form.idMonHoc) return toast.error("Vui lòng chọn môn học"), false;
-    return true;
-  };
+const handleOpenEdit = (row: any) => {
+  setEditingGV(row);
 
-  const handleSave = async () => {
-    if (!validateCreate()) return;
-    // idGiangVien là idNguoiDung theo API controller của bạn
-    const res = await AdminApi.phanCongMonHocChoGiangVien(+form.idGiangVien, +form.idMonHoc);
-    if (res?.ok !== false) {
-      toast.success("Phân công thành công");
-      setShowCreateRow(false);
-      fetchData();
-      setTotal((t) => t + 1);
-    } else {
-      const err: any = res?.error;
-      const msg = err?.response?.data?.message ?? "Phân công thất bại";
-      toast.error(String(msg));
-    }
-  };
+  // danhSachMonHoc: từ API, mỗi phần tử có id, tenMonHoc
+  const currentIds: number[] =
+    row.danhSachMonHoc?.[0].id !== null
+      ? row.danhSachMonHoc.map((mh: any) => mh.id)
+      : [];
 
-  // ===== XOÁ =====
-  const handleClickDelete = (row: any) => {
-    setSelectedRow(row);
-    setConfirmOpen(true);
-  };
+  setInitialMonHocIds(currentIds);
+  setSelectedMonHocIds(currentIds); // checkbox ban đầu trùng với phân công hiện tại
 
-  const handleCloseConfirm = () => {
-    setConfirmOpen(false);
-    setSelectedRow(null);
-  };
+  setOpenEditDialog(true);
+};
+const toggleMonHoc = (idMonHoc: number) => {
+  setSelectedMonHocIds((prev) =>
+    prev.includes(idMonHoc)
+      ? prev.filter((x) => x !== idMonHoc)
+      : [...prev, idMonHoc]
+  );
+};
 
-  const handleConfirmDelete = async () => {
-    const idMonHoc = selectedRow?.mh_id; // từ getRawMany()
-    // chọn id gửi cho API delete: ưu tiên nd_id (nếu backend cần idNguoiDung)
-    const idGiangVienForApi = selectedRow?.gv_idNguoiDung
- 
-    console.log("selectedRow", selectedRow)
+const handleSaveEdit = async () => {
+  if (!editingGV) return;
 
-    const res = await AdminApi.xoaPhanCongMonHoc(+idGiangVienForApi, idMonHoc);
-    if (res?.ok) {
-      toast.success("Xóa phân công thành công");
-        fetchData();
-    } else {
-      const err: any= res?.error;
-      const msg = err?.response?.data?.message ?? "Xoá phân công thất bại";
-      toast.error(String(msg));
-    }
-    setConfirmOpen(false);
-    setSelectedRow(null);
-  };
+  const gvId = editingGV.idnguoiDung
+
+  const toAdd = selectedMonHocIds.filter((id) => !initialMonHocIds.includes(id));
+  const toRemove = initialMonHocIds.filter((id) => !selectedMonHocIds.includes(id));
+
+  try {
+    await Promise.all([
+      ...toAdd.map((idMonHoc) =>
+        AdminApi.phanCongMonHocChoGiangVien(gvId, idMonHoc)
+      ),
+      ...toRemove.map((idMonHoc) =>
+        AdminApi.xoaPhanCongMonHoc(gvId, idMonHoc)
+      ),
+    ]);
+
+    toast.success("Cập nhật phân công thành công");
+    setOpenEditDialog(false);
+    setEditingGV(null);
+    fetchData();
+  } catch (err: any) {
+    console.error(err);
+    const msg =
+      err?.response?.data?.message || "Cập nhật phân công thất bại";
+    toast.error(String(msg));
+  }
+};
+
+const handleCancelEdit = () => {
+  setOpenEditDialog(false);
+  setEditingGV(null);
+  setSelectedMonHocIds([]);
+  setInitialMonHocIds([]);
+};
+
 
   // ===== RENDER =====
   return (
@@ -153,16 +144,13 @@ const PhanCongMonHoc = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <Button variant="contained" color="primary" onClick={openCreateRow}>
-              Thêm phân công
-            </Button>
           </Stack>
         </Stack>
 
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Giảng viên</TableCell>
+              <TableCell onClick={() => { setSxTenGiangVien(!sxTenGiangVien); fetchData(); }}>{sxTenGiangVien ? "▲" : "▼"} Giảng viên</TableCell>
               <TableCell>Môn học được phân công</TableCell>
               <TableCell>Hành động</TableCell>
             </TableRow>
@@ -170,66 +158,6 @@ const PhanCongMonHoc = () => {
 
           <TableBody>
             {/* HÀNG THÊM */}
-            {showCreateRow && (
-              <TableRow>
-                <TableCell padding="none">
-                  <TextField
-                    variant="standard"
-                    select
-                    size="small"
-                    value={form.idGiangVien}
-                    onChange={(e) => onChangeCreate("idGiangVien", e.target.value)}
-                    sx={{ width: 280, height: 40, pl: 1 }}
-                  >
-                    <MenuItem value="">
-                      <em>— Chọn giảng viên —</em>
-                    </MenuItem>
-                    {(dsGiangVien ?? []).map((gv: any) => (
-                      <MenuItem key={gv.idNguoiDung} value={gv.idNguoiDung}>
-                        {gv.__nguoiDung__?.hoTen ?? `GV #${gv.idNguoiDung}`}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </TableCell>
-
-                <TableCell padding="none">
-                  <TextField
-                    variant="standard"
-                    select
-                    size="small"
-                    value={form.idMonHoc}
-                    onChange={(e) => onChangeCreate("idMonHoc", e.target.value)}
-                    sx={{ width: 280, height: 40 }}
-                  >
-                    <MenuItem value="">
-                      <em>— Chọn môn học —</em>
-                    </MenuItem>
-                    {(dsMonHoc ?? []).map((mh: any) => (
-                      <MenuItem key={mh.id} value={mh.id}>
-                        {mh.tenMonHoc}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </TableCell>
-
-                <TableCell padding="none" sx={{ px: 1 }}>
-                  <Stack direction="row" spacing={5}>
-                    <a
-                      style={{ color: "#1976d2", cursor: "pointer", textDecoration: "none" }}
-                      onClick={handleSave}
-                    >
-                      Lưu
-                    </a>
-                    <a
-                      style={{ color: "#d32f2f", cursor: "pointer", textDecoration: "none" }}
-                      onClick={cancelCreate}
-                    >
-                      Hủy
-                    </a>
-                  </Stack>
-                </TableCell>
-              </TableRow>
-            )}
 
             {/* DANH SÁCH */}
             {danhSach.length === 0 ? (
@@ -240,16 +168,29 @@ const PhanCongMonHoc = () => {
               </TableRow>
             ) : (
               danhSach.map((row: any, idx: number) => (
-                <TableRow key={`${row.gv_id ?? row.nd_id}-${row.mh_id}-${idx}`}>
-                  <TableCell>{row.nd_hoTen}</TableCell>
-                  <TableCell>{row.mh_tenMonHoc}</TableCell>
+                <TableRow key={row.idnguoiDung }>
+                  <TableCell>{row.hoTen}</TableCell>
+                  <TableCell
+                    sx={{
+                      whiteSpace: "normal",
+                      wordBreak: "break-word",
+                      maxWidth: 200   
+                    }}
+                  >
+                    {row.danhSachMonHoc?.[0].id !== null?
+                    row.danhSachMonHoc.map((mh: any) => mh.tenMonHoc).join(", ")
+                    : <Typography variant="body2" color="
+                    #9e9e9e">Chưa có môn học nào được phân công</Typography>
+                    }
+                  </TableCell>
+
                   <TableCell>
                     <Stack direction="row" spacing={5}>
                       <a
                         style={{ color: "#d32f2f", cursor: "pointer", textDecoration: "none" }}
-                        onClick={() => handleClickDelete(row)}
+                         onClick={() => handleOpenEdit(row)}
                       >
-                        Xóa
+                        Sửa phân công
                       </a>
                     </Stack>
                   </TableCell>
@@ -258,26 +199,64 @@ const PhanCongMonHoc = () => {
             )}
           </TableBody>
 
-          <TablePagination
-            component="div"
-            count={total}
-            page={currentPage - 1}
-            onPageChange={(_, newPage) => setCurrentPage(newPage + 1)}
-            rowsPerPage={10}
-            rowsPerPageOptions={[]}
-          />
-        </Table>
 
-        <ConfirmDialog
-          open={confirmOpen}
-          title="Xóa phân công"
-          message={`Bạn có chắc muốn xóa phân công môn "${selectedRow?.mh_tenMonHoc}" của giảng viên "${selectedRow?.nd_hoTen}" không?`}
-          confirmText="Xóa"
-          cancelText="Hủy"
-          onClose={handleCloseConfirm}
-          onConfirm={handleConfirmDelete}
-        />
+            <TablePagination
+              component="div"
+              count={total}
+              page={currentPage - 1}
+              onPageChange={(_, newPage) => setCurrentPage(newPage + 1)}
+              rowsPerPage={10}
+              rowsPerPageOptions={[]}
+              labelDisplayedRows={({ page }) => `Trang ${page + 1}`}
+              labelRowsPerPage=""
+              />
+        </Table>
       </Stack>
+      <Dialog
+        open={openEditDialog}
+        onClose={(event, reason) => {
+          // chặn đóng khi click bên ngoài hoặc nhấn ESC
+          if (reason === "backdropClick" || reason === "escapeKeyDown") return;
+          handleCancelEdit();
+        }}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Sửa phân công môn học</DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          {editingGV && (
+            <Stack spacing={2} mt={1}>
+              <Typography sx={{ fontWeight: "bold" }}>
+                Giảng viên: {editingGV.hoTen}
+              </Typography>
+
+              <Typography variant="body2">Chọn các môn được phân công:</Typography>
+
+              <FormGroup>
+                {dsMonHoc.map((mh: any) => (
+                  <FormControlLabel
+                    key={mh.id}
+                    control={
+                      <Checkbox
+                        checked={selectedMonHocIds.includes(mh.id)}
+                        onChange={() => toggleMonHoc(mh.id)}
+                      />
+                    }
+                    label={`${mh.maMonHoc} - ${mh.tenMonHoc}`}
+                  />
+                ))}
+              </FormGroup>
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelEdit}>Hủy</Button>
+          <Button variant="contained" onClick={handleSaveEdit}>
+            Lưu
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </Box>
   );
 };
