@@ -146,14 +146,13 @@ export class LopHocPhanService {
   }
 
   async xoaLopHocPhan(id: number) {
-    try {
-      const sinhVienCoTrongLop = await this.lopHocPhanRep.createQueryBuilder('lhp')
+    const sinhVienCoTrongLop = await this.lopHocPhanRep.createQueryBuilder('lhp')
         .leftJoin('lhp.sinhVien', 'sv')
         .where('lhp.id = :id AND sv.idNguoiDung IS NOT NULL', { id })
         .getOne();
       if (sinhVienCoTrongLop) 
-        throw new BadRequestException('Không thể xóa lớp học phần vì đã có sinh viên đăng ký');
-  
+        throw new BadRequestException('Không thể xóa lớp học phần vì đã có sinh viên')
+    try {
         const lopHocPhan = await this.lopHocPhanRep.findOne({ where: { id } });
       if (!lopHocPhan) throw new NotFoundException(`Không tìm thấy lớp học phần với id ${id}`);
       await this.lopHocPhanRep.delete(id);

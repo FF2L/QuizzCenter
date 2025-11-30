@@ -255,7 +255,9 @@ const handleClickEdit = async (row: any) => {
       setDanhSachLopHoc((prev) => prev.filter((x: any) => x.lhp_id !== selectedLop.lhp_id));
       setTotal((t) => t - 1);
     } else {
-      toast.error("Xóa lớp học thất bại");
+      const err: any = result?.error;
+      const msg = err?.response?.data?.message ?? "Xóa lớp học thất bại";
+      toast.error(msg);
     }
     setConfirmOpen(false);
     setSelectedLop(null);
