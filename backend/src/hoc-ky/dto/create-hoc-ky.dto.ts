@@ -1,6 +1,10 @@
-import { IsBoolean, IsDate, isDate, IsString } from "class-validator"
+import { IsBoolean, IsDate, isDate, IsNumber, IsOptional, IsString } from "class-validator"
 
 export class CreateHocKyDto {
+    @IsNumber()
+    @IsOptional()
+    id?: number
+
     @IsString()
     tenHocKy: string
     @IsDate()

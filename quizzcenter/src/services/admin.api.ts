@@ -66,13 +66,14 @@ export class AdminApi {
     }
 
     /* Quản lý môn học */
-    static layTatCaMonHoc = async (page: number = 1, limit: number = 10, tenMonHoc?: string) => {
+    static layTatCaMonHoc = async (page: number = 1, limit: number = 10, tenMonHoc?: string, sxTenMonHoc?: boolean) => {
         try{
             const res = await axios.get(`${API_URL}/mon-hoc/admin`, {
                 params: {
                     skip: (page - 1) * limit,
                     limit,
-                    tenMon: tenMonHoc
+                    tenMon: tenMonHoc,
+                    sxTenMon: sxTenMonHoc
                 }
             })
             return {ok: true, data: res.data}
@@ -110,6 +111,19 @@ export class AdminApi {
     }
 
     /* Quản lý lớp học phần */
+    static layTatCaHocKyDangDienRa= async () =>{
+        try{
+            const res = await axios.get(`${API_URL}/hoc-ky/admin/dang-dien-ra`);
+            console.log("Ongoing semesters fetched:", res.data);
+            return {ok: true, data: res.data}
+        }
+        catch(err){
+            console.error("Error fetching ongoing semesters:", err);
+            return {ok: false, error: err}
+        }
+
+    }
+    
     static layTatCaLopHocPhan = async (page: number = 1, limit: number = 10, tenLopHoc?: string) => {
         try{
             const res = await axios.get(`${API_URL}/lop-hoc-phan/all/admin`, {
@@ -217,6 +231,7 @@ export class AdminApi {
         }
     }
 
+
     /*Phân công giảng viên vào câu hỏi */
     static layTatCaPhanCongGiangVienVaoCauHoi = async (page: number = 1, limit: number = 10, tenGiangVien?: string) =>{
         try{
@@ -233,7 +248,7 @@ export class AdminApi {
             return {ok: false, error: err}
         }
     }
-    static layTatCaMonHocDaPhanCong = async (page: number = 1, limit: number = 10, tenGiangVien?: string) => {
+    static layTatCaMonHocDaPhanCong = async (page: number = 1, limit: number = 10, tenGiangVien?: string, sxTenGiangVien?: boolean) => {
         console.log({page, limit, tenGiangVien});
     
         try {
@@ -242,6 +257,7 @@ export class AdminApi {
                 skip: (page - 1) * limit,
                 limit,
                 tenGiangVien,
+                sxTenGiangVien
             },
             });
             console.log("Fetched all subjects assigned to lecturers:", res.data);
@@ -282,6 +298,76 @@ export class AdminApi {
         }
     }
 
+    //Quản lý học kỳ
+    static layTatCaHocKy = async (tenHocKy: string) => {
+        try{
+            console.log("Fetching semesters with name filter:", tenHocKy);
+            const res = await axios.get(`${API_URL}/hoc-ky/admin`, {    
+                params: {
+                    tenHocKy
+                }
+            })
+            console.log("Fetched semesters:", res);
+            return {ok: true, data: res.data}
+        }
+        catch(err){
+            console.error("Error fetching semesters:", err);
+            return {ok: false, error: err}
+        }
+    }
+
+    static layTatCaHocKyPhatHanh = async () => {
+        try{
+            const res = await axios.get(`${API_URL}/hoc-ky/admin/phat-hanh`)
+            return {ok: true, data: res.data}
+        }
+        catch(err){
+            console.error("Error fetching published semesters:", err);
+            return {ok: false, error: err}
+        } 
+    }
+
+    static layHocKyTheoId = async (id: number) => {
+        try{
+            const res = await axios.get(`${API_URL}/hoc-ky/admin/${id}`)
+            return {ok: true, data: res.data}
+        }
+        catch(err){
+            console.error("Error fetching semester by ID:", err);
+            return {ok: false, error: err}
+        }
+    }
+
+    static taoHocKy = async (data: any) =>{
+        try{
+            const res = await axios.post(`${API_URL}/hoc-ky/admin`, data);
+            return {ok: true, data: res.data}
+        }catch(err){
+            console.error("Error creating semester:", err);
+            return {ok: false, error: err}
+        }
+    }
+
+    static capNhatHocKy = async (id:number, data:any) =>{
+        try{
+            const res = await axios.patch(`${API_URL}/hoc-ky/admin/${id}`, data);
+            return {ok: true, data: res.data}
+        }catch(err){
+            console.error("Error updating semester:", err);
+            return {ok: false, error: err}
+        }
+    }
+
+    static xoaHocKy = async (id:number) =>{
+        try{
+            const res = await axios.delete(`${API_URL}/hoc-ky/admin/${id}`);
+            return {ok: true, data: res.data}
+        }catch(err){
+            console.error("Error deleting semester:", err);
+            return {ok: false, error: err}
+        }
+    }
+
     // Thêm sinh viên vào lớp học phần
     static themSinhVienVaoLopHocPhan = async (idLopHocPhan: number, maSinhVien: string) => {
         try{
@@ -304,7 +390,6 @@ export class AdminApi {
         }
     }
 
-    // Lấy tất cả sinh viên của lớp học phần
     // Lấy tất cả sinh viên của lớp học phần
     static layTatCaSinhVienCuaLopHocPhan = async (idLopHocPhan: number, page = 1, limit = 10, tenSinhVien?: string) => {
     try {

@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException, Query } from '@nestjs/common';
+import { error } from 'console';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, Query } from '@nestjs/common';
 import { CreateLopHocPhanDto } from './dto/create-lop-hoc-phan.dto';
 import { UpdateLopHocPhanDto } from './dto/update-lop-hoc-phan.dto';
 import { LopHocPhan } from './entities/lop-hoc-phan.entity';
-import { LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
+import { In, LessThanOrEqual, MoreThanOrEqual, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MonHocService } from 'src/mon-hoc/mon-hoc.service';
 import { GiangVienService } from 'src/giang-vien/giang-vien.service';
@@ -18,6 +19,7 @@ import { NguoiDung } from 'src/nguoi-dung/entities/nguoi-dung.entity';
 import * as ExcelJS from 'exceljs';
 import * as XLSX from 'xlsx';
 import { HocKy } from 'src/hoc-ky/entities/hoc-ky.entity';
+import { notEqual } from 'assert';
 
 @Injectable()
 export class LopHocPhanService {
@@ -35,13 +37,14 @@ export class LopHocPhanService {
   //CRUD Lớp học phần Admin
 
   async layTatCaLopHocPhanAdmin(query: any) {
-    const {tenLopHoc, skip, limit,} = query;
+    try {
+       const {tenLopHoc, skip, limit,} = query;
     const qb = this.lopHocPhanRep
     .createQueryBuilder('lhp')
-    .leftJoin('lhp.monHoc', 'mh')
-    .leftJoin('lhp.giangVien', 'gv')
-    .leftJoin('gv.nguoiDung', 'nd')
-    .leftJoin('lhp.hocKy', 'hk')
+    .innerJoin('lhp.monHoc', 'mh')
+    .innerJoin('lhp.giangVien', 'gv')
+    .innerJoin('gv.nguoiDung', 'nd')
+    .innerJoin('lhp.hocKy', 'hk')
 
     const total = await qb.getCount();
 
@@ -51,11 +54,12 @@ export class LopHocPhanService {
         { tenLopHoc: `%${tenLopHoc}%` }
       );
     }
+    qb.andWhere('hk.thoiGianKetThuc >= :now', { now: new Date() });
 
     const data = await qb.select([
       'lhp.id AS lhp_id',
-      'lhp.maLopHoc AS maLHP',
       'lhp.tenLopHoc AS tenLHP',
+      'lhp.create_at AS ngayTaoLopHoc',
       'hk.tenHocKy AS hocKy',
       'hk.thoiGianBatDau AS thoiGianBatDau',
       'hk.thoiGianKetThuc AS thoiGianKetThuc',
@@ -66,18 +70,33 @@ export class LopHocPhanService {
     ])
     .skip(skip ?? 0)
     .take(limit ?? DEFAULT_PAGE_LIMIT)
-    .orderBy('lhp.maLopHoc', 'DESC')
+    .orderBy('lhp.create_at', 'DESC')
     .getRawMany();
 
     return { data,
             total,
             currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1,
             totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT)) };
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('Lỗi khi lấy danh sách lớp học phần');
+      
+    }
+   
   }
 
   async taoLopHocPhan(createLopHocPhanDto: CreateLopHocPhanDto) {
-    const {tenLopHoc, hocKy, idMonHoc, idGiangVien } = createLopHocPhanDto;
-    
+      const lopHocPhanTonTaii = await this.lopHocPhanRep.findOne({
+      where: {
+        tenLopHoc: createLopHocPhanDto.tenLopHoc.trim(),
+        idMonHoc: createLopHocPhanDto.idMonHoc,
+        idHocKy: createLopHocPhanDto.hocKy,
+      }})
+      if(lopHocPhanTonTaii){
+        throw new BadRequestException('Lớp học phần với môn học đã tồn tại trong học kỳ này');
+      }
+    try {
+      const {tenLopHoc, hocKy, idMonHoc, idGiangVien } = createLopHocPhanDto;
 
     const lopHocSave = await this.lopHocPhanRep.save({
       tenLopHoc: tenLopHoc.trim(),
@@ -87,12 +106,28 @@ export class LopHocPhanService {
     });
 
     return await this.lopHocPhanRep.save(lopHocSave);
+      
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('Lỗi khi tạo lớp học phần');
+    }
+    
   }
 
   async capNhatLopHocPhan(id: number, updateLopHocPhanDto: UpdateLopHocPhanDto) {
     const lopHocPhan = await this.lopHocPhanRep.findOne({where: {id}});
 
     if (!lopHocPhan) throw new NotFoundException(`Không tìm thấy lớp học phần với id ${id}`); 
+
+    const lopHocPhanTonTaii = await this.lopHocPhanRep.findOne({
+      where: {
+        id: Not(id),
+        tenLopHoc: updateLopHocPhanDto.tenLopHoc.trim(),
+        idMonHoc: updateLopHocPhanDto.idMonHoc,
+        idHocKy: updateLopHocPhanDto.hocKy,
+      },})
+      if(lopHocPhanTonTaii) throw new BadRequestException('Lớp học phần với môn học đã tồn tại trong học kỳ này');
+    try {
 
     const { tenLopHoc, hocKy, idMonHoc, idGiangVien } = updateLopHocPhanDto;
 
@@ -102,16 +137,38 @@ export class LopHocPhanService {
     lopHocPhan.idGiangVien = idGiangVien;
 
     return await this.lopHocPhanRep.save(lopHocPhan);
+
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('Lỗi khi cập nhật lớp học phần');
+    }
+    
   }
 
   async xoaLopHocPhan(id: number) {
-    const lopHocPhan = await this.lopHocPhanRep.findOne({ where: { id } });
-    if (!lopHocPhan) throw new NotFoundException(`Không tìm thấy lớp học phần với id ${id}`);
-    await this.lopHocPhanRep.delete(id);
+    try {
+      const sinhVienCoTrongLop = await this.lopHocPhanRep.createQueryBuilder('lhp')
+        .leftJoin('lhp.sinhVien', 'sv')
+        .where('lhp.id = :id AND sv.idNguoiDung IS NOT NULL', { id })
+        .getOne();
+      if (sinhVienCoTrongLop) 
+        throw new BadRequestException('Không thể xóa lớp học phần vì đã có sinh viên đăng ký');
+  
+        const lopHocPhan = await this.lopHocPhanRep.findOne({ where: { id } });
+      if (!lopHocPhan) throw new NotFoundException(`Không tìm thấy lớp học phần với id ${id}`);
+      await this.lopHocPhanRep.delete(id);
+      return { message: 'Xóa lớp học phần thành công' };
+      
+    } catch (error) {
+      console.error(error);
+      throw new NotFoundException('Lỗi khi xóa lớp học phần');
+      
+    }
   }
 
   async layTatCaSinhVienCuaLopHocPhan(id: number, query: any) {
-    const {tenSinhVien, skip, limit,} = query;
+    try {
+      const {tenSinhVien, skip, limit,} = query;
     const qb = this.lopHocPhanRep
     .createQueryBuilder('lhp')
     .innerJoin('lhp.sinhVien', 'sv')
@@ -146,6 +203,11 @@ export class LopHocPhanService {
 
     return {data ,
        total, currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1, totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT))}
+    
+    }catch(error) {
+      console.error(error);
+      throw new InternalServerErrorException('Lỗi khi lấy danh sách sinh viên của lớp học phần');
+    }
     
     
   }
@@ -196,14 +258,20 @@ export class LopHocPhanService {
   }
 
   async tenLopHocPhanById(idLopHocPhan: number) {
+    try {  
     const lopHocPhan = await this.lopHocPhanRep.findOne({ where: { id: idLopHocPhan } });
     if (!lopHocPhan) throw new NotFoundException(`Không tìm thấy lớp học phần với id ${idLopHocPhan}`);
     return lopHocPhan.tenLopHoc;
+    } catch (error) {
+      console.error(error);
+      throw new NotFoundException('Lỗi khi lấy tên lớp học phần');      
+    }
+  
   }
 
-
   async exportDanhSachSinhVienExcel(idLopHocPhan: number): Promise<Buffer> {
-    const dsSinhVien = await this.layTatCaSinhVienCuaLopHocPhan(idLopHocPhan, {});
+    try {
+      const dsSinhVien = await this.layTatCaSinhVienCuaLopHocPhan(idLopHocPhan, {});
 
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Danh sach sinh vien');
@@ -229,10 +297,16 @@ export class LopHocPhanService {
 
     const buffer = await wb.xlsx.writeBuffer(); 
     return Buffer.from(buffer);
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('Lỗi khi xuất danh sách sinh viên ra file Excel');
+    }
+    
   }
 
   async uploadFileDanhSachSinhVien(id:number, file: Express.Multer.File) {
-    if(!file){
+    try {
+       if(!file){
       throw new BadRequestException('File không hợp lệ');
     }
 
@@ -267,6 +341,12 @@ export class LopHocPhanService {
       }
     }
     return { thanhCong, thatBai };
+      
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('Lỗi khi upload file danh sách sinh viên');
+    }
+   
   }
 
 
@@ -276,7 +356,8 @@ export class LopHocPhanService {
 
 
 async layTatCaLopHocPhanTheoIdGiaoVien( idGiangVien: number, query: any) {
-    const {giangDay, tenMonHoc, skip, limit,} = query;
+  try {
+     const {giangDay, tenMonHoc, skip, limit,} = query;
     const qb = this.lopHocPhanRep
     .createQueryBuilder('lhp')
     .innerJoin('lhp.giangVien', 'gv', 'gv.idNguoiDung = :idGiangVien' ,{idGiangVien})
@@ -300,6 +381,7 @@ async layTatCaLopHocPhanTheoIdGiaoVien( idGiangVien: number, query: any) {
     if (giangDay === 3) { // Sắp dạy
       qb.andWhere('hk.thoiGianBatDau > :now', { now });
     }
+      qb.andWhere('hk.phatHanh = true');
     if(tenMonHoc){
       const ten = tenMonHoc.trim();
       qb.andWhere(
@@ -328,9 +410,16 @@ async layTatCaLopHocPhanTheoIdGiaoVien( idGiangVien: number, query: any) {
     
 
     return {data , total, currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1, totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT))}
+  } catch (error) {
+    console.error(error);
+    throw new InternalServerErrorException('Lỗi khi lấy danh sách lớp học phần của giảng viên');
+    
+  }
+   
 }
 
  async layTatCaLopHocPhanDangDayCuaGiaoVien(idGiangVien: number) {
+  try {
     const now = new Date();
     const lopHocPhan = await this.lopHocPhanRep
     .createQueryBuilder('lhp')
@@ -338,6 +427,7 @@ async layTatCaLopHocPhanTheoIdGiaoVien( idGiangVien: number, query: any) {
     .leftJoin('lhp.monHoc', 'mh')
     .leftJoin('lhp.hocKy', 'hk')
     .where('hk.thoiGianBatDau <= :now AND hk.thoiGianKetThuc >= :now', { now })
+    .andWhere('hk.phatHanh = true')
     .select([
       'lhp.id AS lhp_id',
       'lhp.tenLopHoc AS tenLHP',
@@ -349,10 +439,17 @@ async layTatCaLopHocPhanTheoIdGiaoVien( idGiangVien: number, query: any) {
     .getRawMany();
 
     return lopHocPhan;
+    
+  } catch (error) {
+    console.error(error);
+    throw new InternalServerErrorException('Lỗi khi lấy danh sách lớp học phần đang dạy của giảng viên');
   }
+    
+}
 
 async layBangDiemChiTietTheoLopVaBaiKiemTra(idLopHocPhan: number, idBaiKiemTra: number, query: any) {
-  const { tenSinhVien } = query;
+  try {
+      const { tenSinhVien } = query;
   console.log(idBaiKiemTra, idLopHocPhan, tenSinhVien);
 
   // 1. Lấy danh sách sinh viên (raw rows) — giữ nguyên alias/keys bạn muốn
@@ -412,10 +509,16 @@ async layBangDiemChiTietTheoLopVaBaiKiemTra(idLopHocPhan: number, idBaiKiemTra: 
   }))
 
   return result;
+    
+  } catch (error) {
+    console.error(error);
+    throw new InternalServerErrorException('Lỗi khi lấy bảng điểm chi tiết theo lớp và bài kiểm tra');
+  }
+
 }
 
-
 async layDanhSachBaiKiemTra(idLopHocPhan: number) {
+  try {
     const danhSachBaiKiemTra = await this.bktRepo
     .createQueryBuilder('bkt')
     .where('bkt.idLopHocPhan = :idLopHocPhan', { idLopHocPhan })
@@ -427,10 +530,17 @@ async layDanhSachBaiKiemTra(idLopHocPhan: number) {
     ])
     .getRawMany();
     return danhSachBaiKiemTra;
+  } catch (error) {
+    console.error(error);
+    throw new InternalServerErrorException('Lỗi khi lấy danh sách bài kiểm tra');
+    
+  }
+    
 }
 
 async exportBangDiemExcel(idLopHocPhan: number, idBaiKiemTra:number): Promise<Buffer> {
-    const tenBaiKiemTra = await this.bktRepo.createQueryBuilder('bkt')
+  try {
+     const tenBaiKiemTra = await this.bktRepo.createQueryBuilder('bkt')
     .where('bkt.id = :idBaiKiemTra', { idBaiKiemTra })
     .select(['bkt.tenBaiKiemTra AS tenBaiKiemTra'])
     .getRawOne();
@@ -470,9 +580,16 @@ async exportBangDiemExcel(idLopHocPhan: number, idBaiKiemTra:number): Promise<Bu
     // 7) Xuất buffer
     const buffer = await wb.xlsx.writeBuffer();
     return Buffer.from(buffer);
+    
+  } catch (error) {
+    console.error(error);
+    throw new InternalServerErrorException('Lỗi khi xuất bảng điểm Excel');
+  }
+   
 }
 
 async thongKe(idLopHocPhan: number, idBaiKiemTra:number) {
+  try {
     const dsXuat = await this.layBangDiemChiTietTheoLopVaBaiKiemTra(idLopHocPhan, idBaiKiemTra, {});
     console.log('dsXuat', dsXuat);
     const tongSoSinhVien = dsXuat.length;
@@ -538,13 +655,19 @@ async thongKe(idLopHocPhan: number, idBaiKiemTra:number) {
       soSVCoDiemBHB9: soSVCoDiemBHB[9],
       soSVCoDiemBHB10: soSVCoDiemBHB[10],
     };
+    
+  } catch (error) {
+    console.error(error);
+    throw new InternalServerErrorException('Lỗi khi thống kê bảng điểm');
+  }
+    
 
 }
 
 
-
   async layTatCaLopHocPhanCuaSinhVien(lhpSVDto: FilterLopHocPhanSinhVienDto, idSinhVien: number) {
-    const {tenMonHoc,maMonHoc,...pageDto} = lhpSVDto
+    try {
+      const {tenMonHoc,maMonHoc,...pageDto} = lhpSVDto
     const {skip, limit} = pageDto
     const now = new Date();
     const qb = this.lopHocPhanRep
@@ -562,8 +685,8 @@ async thongKe(idLopHocPhan: number, idBaiKiemTra:number) {
       'mh.tenMonHoc AS tenMonHoc',
     ])
     .where('hk.thoiGianBatDau <= :now AND hk.thoiGianKetThuc >= :now', { now })
+    .andWhere('hk.phatHanh = true');
     const total =  await qb.getCount();
-
 
   const ten = (tenMonHoc ?? '').trim();
   const ma  = (maMonHoc ?? '').trim();
@@ -589,13 +712,27 @@ async thongKe(idLopHocPhan: number, idBaiKiemTra:number) {
     console.log({ data, total, currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1, totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT)) });
     return { data, total, currentPage: Math.floor((skip ?? 0) / (limit ?? DEFAULT_PAGE_LIMIT)) + 1, totalPages: Math.ceil(total / (limit ?? DEFAULT_PAGE_LIMIT)) };
 
+      
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('Lỗi khi lấy danh sách lớp học phần của sinh viên');
+    }
+    
   }
 
 
   async timMotLopHocPhanTheoId(idlopHocPHan: number){
-    const lopHocPhan = await this.lopHocPhanRep.findOne({where: {id: idlopHocPHan}})
-    if (!lopHocPhan) throw new NotFoundException(`Không tìm thấy lớp học phần với ${idlopHocPHan}`)
+    try {
+        const lopHocPhan = await this.lopHocPhanRep.findOne({where: {id: idlopHocPHan}})
+      if (!lopHocPhan) throw new NotFoundException(`Không tìm thấy lớp học phần với ${idlopHocPHan}`)
     return lopHocPhan
+      
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('Lỗi khi tìm lớp học phần theo id');
+      
+    }
+
   
   }
 
