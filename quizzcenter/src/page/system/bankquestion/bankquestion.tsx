@@ -1,6 +1,6 @@
 import AddIcon from "@mui/icons-material/Add";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Chuong, CauHoi, CauHoiPayload } from "../../../common/model";
 import { 
   IconButton, Box, Button, Card, CardContent, Stack, TextField, 
@@ -21,6 +21,11 @@ export enum DoKho {
   De = "De",
   TrungBinh = "TrungBinh",
   Kho = "Kho",
+}
+
+export enum LoaiCauHoi {
+  MotDung = "MotDung",
+  NhieuDung = "NhieuDung",
 }
 
 const BankQuestion = () => {
@@ -56,10 +61,8 @@ const BankQuestion = () => {
   // Filters
   const [difficulty, setDifficulty] = useState<DoKho | "">("");
   const [searchText, setSearchText] = useState("");
-
-  // Filter phía trên danh sách
-  const [listFilterDifficulty, setListFilterDifficulty] = useState<DoKho | "">("");
-  const [listSortBy, setListSortBy] = useState<string>("newest"); // newest, oldest, name-asc, name-desc
+  const [sortBy, setSortBy] = useState<string>("newest");
+  const [questionType, setQuestionType] = useState<LoaiCauHoi | "">("");
 
   // Pagination (server side)
   const [currentPage, setCurrentPage] = useState(1);
@@ -68,6 +71,12 @@ const BankQuestion = () => {
   const [total, setTotal] = useState(0);
 
   const navigate = useNavigate();
+
+  // ✅ FIX 1: Dùng ref để tránh re-create accessToken
+  const accessTokenRef = useRef(accessToken);
+  useEffect(() => {
+    accessTokenRef.current = accessToken;
+  }, [accessToken]);
 
   // Lấy chương mặc định từ route state (nếu có)
   useEffect(() => {
@@ -83,7 +92,7 @@ const BankQuestion = () => {
       if (!idMonHocNumber) return;
       setLoading(true);
       try {
-        const res = await LectureService.layTatCaChuongTheoMonHoc(idMonHocNumber, accessToken);
+        const res = await LectureService.layTatCaChuongTheoMonHoc(idMonHocNumber, accessTokenRef.current);
         const data: Chuong[] = res.data;
         setChuongList(data);
 
@@ -103,60 +112,86 @@ const BankQuestion = () => {
     fetchChuong();
   }, [idMonHocNumber, location.state]);
 
-  // Fetch questions (server-side pagination + filter)
-  const fetchQuestions = async () => {
+  // ✅ FIX 2: Fetch questions - BỎ useCallback và dependency từ useEffect
+  useEffect(() => {
     if (!selectedCategory) return;
-    setLoading(true);
-    try {
-      const res = await LectureService.layTatCauHoiTheoChuong(
-        accessToken,
-        Number(selectedCategory),
-        currentPage,
-        itemsPerPage,
-        difficulty || undefined,
-        searchText || undefined
-      );
-      const list: CauHoi[] = res.data.data ?? [];
-      const payloads: CauHoiPayload[] = list.map((cauHoi) => ({
-        cauHoi,
-        dapAn: [],
-        mangFileDinhKem: [],
-      }));
-      setQuestions(payloads);
-      setTotal(res.data.total ?? payloads.length);
-      setTotalPages(res.data.totalPages ?? 1);
-      if (typeof res.data.currentPage === "number") {
-        setCurrentPage(res.data.currentPage);
-      }
-    } catch (err) {
-      console.error("Lỗi khi fetch câu hỏi:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const getChuongName = (idChuong: number): string => {
+    const fetchQuestions = async () => {
+      setLoading(true);
+      try {
+        const res = await LectureService.layTatCauHoiTheoChuong(
+          accessTokenRef.current,
+          Number(selectedCategory),
+          currentPage,
+          itemsPerPage,
+          difficulty || undefined,
+          searchText || undefined
+        );
+        let list: CauHoi[] = res.data.data ?? [];
+        
+        // Lọc theo loại câu hỏi nếu có
+        if (questionType) {
+          list = list.filter((q) => q.loaiCauHoi === questionType);
+        }
+        
+        // Áp dụng sort ở client side
+        switch (sortBy) {
+          case "name-asc":
+            list.sort((a, b) => a.tenHienThi.localeCompare(b.tenHienThi));
+            break;
+          case "name-desc":
+            list.sort((a, b) => b.tenHienThi.localeCompare(a.tenHienThi));
+            break;
+          case "oldest":
+            list.sort((a, b) => a.id - b.id);
+            break;
+          case "newest":
+          default:
+            list.sort((a, b) => b.id - a.id);
+            break;
+        }
+        
+        const payloads: CauHoiPayload[] = list.map((cauHoi) => ({
+          cauHoi,
+          dapAn: [],
+          mangFileDinhKem: [],
+        }));
+        
+        setQuestions(payloads);
+        setTotal(res.data.total ?? payloads.length);
+        setTotalPages(res.data.totalPages ?? 1);
+        
+        // ✅ FIX 3: KHÔNG bao giờ setCurrentPage từ API response
+        // Chỉ cho phép user thay đổi page qua Pagination component
+      } catch (err) {
+        console.error("Lỗi khi fetch câu hỏi:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, [selectedCategory, currentPage, itemsPerPage, difficulty, searchText, sortBy, questionType]);
+  // ← Dependency trực tiếp, KHÔNG qua callback
+
+  const getChuongName = useCallback((idChuong: number): string => {
     const chuong = chuongList.find((c) => c.id === idChuong);
     return chuong?.tenchuong || `Chương ${idChuong}`;
-  };
+  }, [chuongList]);
 
-  useEffect(() => {
-    fetchQuestions();
-  }, [selectedCategory, currentPage, itemsPerPage, difficulty, searchText]);
-
-  // Khi đổi chương / filter thì về trang 1
+  // ✅ FIX 4: Reset về trang 1 khi filter thay đổi - dùng useEffect riêng
   useEffect(() => {
     setCurrentPage(1);
     setExpandedQuestions(new Set());
-  }, [selectedCategory, difficulty, searchText]);
+  }, [selectedCategory, difficulty, searchText, sortBy, questionType]);
 
   // Fetch question detail khi expand
-  const fetchQuestionDetailForExpand = async (id: number) => {
+  const fetchQuestionDetailForExpand = useCallback(async (id: number) => {
     if (questionDetails.has(id)) return;
     
     setLoadingDetails(prev => new Set(prev).add(id));
     try {
-      const res = await LectureService.layChiTIetCauHoi(accessToken, id);
+      const res = await LectureService.layChiTIetCauHoi(accessTokenRef.current, id);
       const data: CauHoiPayload = await res.data;
       setQuestionDetails(prev => new Map(prev).set(id, data));
     } catch (err) {
@@ -168,40 +203,48 @@ const BankQuestion = () => {
         return newSet;
       });
     }
-  };
+  }, [questionDetails]);
 
   // Toggle expand/collapse
-  const handleToggleExpand = (id: number) => {
-    const newExpanded = new Set(expandedQuestions);
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id);
-    } else {
-      newExpanded.add(id);
-      fetchQuestionDetailForExpand(id);
-    }
-    setExpandedQuestions(newExpanded);
-  };
+  const handleToggleExpand = useCallback((id: number) => {
+    setExpandedQuestions(prev => {
+      const newExpanded = new Set(prev);
+      if (newExpanded.has(id)) {
+        newExpanded.delete(id);
+      } else {
+        newExpanded.add(id);
+        fetchQuestionDetailForExpand(id);
+      }
+      return newExpanded;
+    });
+  }, [fetchQuestionDetailForExpand]);
 
   // Fetch question detail cho dialog
-  const fetchQuestionDetail = async (id: number) => {
+  const fetchQuestionDetail = useCallback(async (id: number) => {
     try {
-      const res = await LectureService.layChiTIetCauHoi(accessToken, id);
+      const res = await LectureService.layChiTIetCauHoi(accessTokenRef.current, id);
       const data: CauHoiPayload = await res.data;
       setCurrentQuestionDetail(data);
       setOpenDetailDialog(true);
     } catch (err) {
       console.error("Lỗi khi fetch chi tiết câu hỏi:", err);
     }
-  };
+  }, []);
 
-  // Delete question
-  const handleDeleteQuestion = async () => {
+  // ✅ FIX 5: Delete question - tạo hàm refetch riêng
+  const refetchQuestions = useCallback(() => {
+    // Trigger re-fetch bằng cách toggle một dependency
+    // Hoặc đơn giản là đặt currentPage về 1 để trigger useEffect
+    setCurrentPage(prev => prev);
+  }, []);
+
+  const handleDeleteQuestion = useCallback(async () => {
     if (!questionToDelete) return;
     try {
       const res = await fetch(`http://localhost:3000/cau-hoi/${questionToDelete.id}`, { 
        method: "DELETE",
        headers: {
-       Authorization: `Bearer ${accessToken}`,
+       Authorization: `Bearer ${accessTokenRef.current}`,
          }
         });
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -209,67 +252,38 @@ const BankQuestion = () => {
       setOpenDeleteDialog(false);
       setQuestionToDelete(null);
       alert("Xóa thành công!");
-      fetchQuestions();
+      refetchQuestions();
     } catch (err) {
       console.error("Lỗi khi xóa câu hỏi:", err);
       alert("Xóa thất bại!");
     }
-  };
+  }, [questionToDelete, refetchQuestions]);
 
   // Handle import success
-  const handleImportSuccess = () => {
+  const handleImportSuccess = useCallback(() => {
+    setExpandedQuestions(new Set());
+    setQuestionDetails(new Map());
     setCurrentPage(1);
-    fetchQuestions();
-  };
+    // Reset sẽ trigger useEffect fetch lại
+  }, []);
 
-  const getDoKhoLabel = (doKho: string) => {
+  const getDoKhoLabel = useCallback((doKho: string) => {
     switch (doKho) {
       case "De": return "Dễ";
       case "TrungBinh": return "Trung bình";
       case "Kho": return "Khó";
       default: return doKho;
     }
-  };
+  }, []);
 
-  const getDoKhoColor = (doKho: string): "success" | "warning" | "error" | "default" => {
+  const getDoKhoColor = useCallback((doKho: string): "success" | "warning" | "error" | "default" => {
     switch (doKho) {
       case "De": return "success";
       case "TrungBinh": return "warning";
       case "Kho": return "error";
       default: return "default";
     }
-  };
-
-  // Filter và sort questions ở client side
-  const getFilteredAndSortedQuestions = () => {
-    let filtered = [...questions];
-
-    // Filter theo độ khó (list filter)
-    if (listFilterDifficulty) {
-      filtered = filtered.filter(q => q.cauHoi.doKho === listFilterDifficulty);
-    }
-
-    // Sort
-    switch (listSortBy) {
-      case "name-asc":
-        filtered.sort((a, b) => a.cauHoi.tenHienThi.localeCompare(b.cauHoi.tenHienThi));
-        break;
-      case "name-desc":
-        filtered.sort((a, b) => b.cauHoi.tenHienThi.localeCompare(a.cauHoi.tenHienThi));
-        break;
-      case "oldest":
-        filtered.sort((a, b) => a.cauHoi.id - b.cauHoi.id);
-        break;
-      case "newest":
-      default:
-        filtered.sort((a, b) => b.cauHoi.id - a.cauHoi.id);
-        break;
-    }
-
-    return filtered;
-  };
-
-  const filteredQuestions = getFilteredAndSortedQuestions();
+  }, []);
 
   return (
     <Box sx={{ width: "100%", minHeight: "100vh", borderRadius: "10px", p: 0 }}>
@@ -341,6 +355,19 @@ const BankQuestion = () => {
                 <MenuItem value={DoKho.TrungBinh}>Trung bình</MenuItem>
                 <MenuItem value={DoKho.Kho}>Khó</MenuItem>
               </TextField>
+
+              <TextField
+                select
+                label="Loại câu hỏi"
+                value={questionType}
+                onChange={(e) => setQuestionType(e.target.value as LoaiCauHoi | "")}
+                sx={{ minWidth: 150, maxWidth: 200, backgroundColor: "white", borderRadius: 2 }}
+                size="small"
+              >
+                <MenuItem value="">Tất cả</MenuItem>
+                <MenuItem value={LoaiCauHoi.MotDung}>1 đúng</MenuItem>
+                <MenuItem value={LoaiCauHoi.NhieuDung}>Nhiều đúng</MenuItem>
+              </TextField>
             </Stack>
 
             <Stack direction="row" spacing={2} alignItems="center">
@@ -388,7 +415,7 @@ const BankQuestion = () => {
         <Box>
           <Typography sx={{ mb: 2, color: "#245D51" }}>Danh sách câu hỏi</Typography>
           
-          {/* FILTER PHÍA TRÊN DANH SÁCH */}
+          {/* Filter bar */}
           <Box sx={{ 
             backgroundColor: "#fff", 
             border: "1px solid #ddd", 
@@ -405,8 +432,8 @@ const BankQuestion = () => {
               <TextField
                 select
                 label="Lọc theo độ khó"
-                value={listFilterDifficulty}
-                onChange={(e) => setListFilterDifficulty(e.target.value as DoKho | "")}
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value as DoKho | "")}
                 sx={{ minWidth: 180, backgroundColor: "white" }}
                 size="small"
               >
@@ -428,15 +455,34 @@ const BankQuestion = () => {
                 </MenuItem>
               </TextField>
 
-              <Divider orientation="vertical" flexItem />
+              <TextField
+                select
+                label="Loại câu hỏi"
+                value={questionType}
+                onChange={(e) => setQuestionType(e.target.value as LoaiCauHoi | "")}
+                sx={{ minWidth: 180, backgroundColor: "white" }}
+                size="small"
+              >
+                <MenuItem value="">Tất cả loại</MenuItem>
+                <MenuItem value={LoaiCauHoi.MotDung}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Chip label="1 đúng" size="small" color="info" />
+                  </Stack>
+                </MenuItem>
+                <MenuItem value={LoaiCauHoi.NhieuDung}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Chip label="Nhiều đúng" size="small" color="secondary" />
+                  </Stack>
+                </MenuItem>
+              </TextField>
 
-       
+              <Divider orientation="vertical" flexItem />
               
               <TextField
                 select
                 label="Sắp xếp theo"
-                value={listSortBy}
-                onChange={(e) => setListSortBy(e.target.value)}
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
                 sx={{ minWidth: 180, backgroundColor: "white" }}
                 size="small"
               >
@@ -448,22 +494,22 @@ const BankQuestion = () => {
             </Stack>
 
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              Hiển thị <b>{filteredQuestions.length}</b> / {questions.length} câu hỏi
+              Hiển thị <b>{questions.length}</b> / {total} câu hỏi
             </Typography>
           </Box>
 
           <Box sx={{ border: "1px solid #ddd", borderTop: "none", borderRadius: "0 0 8px 8px", p: 2, backgroundColor: "#fafafa" }}>
-            {filteredQuestions.length === 0 && !loading && (
+            {questions.length === 0 && !loading && (
               <Typography variant="body2">Không có dữ liệu.</Typography>
             )}
-            {filteredQuestions.map((q, index) => {
+            {questions.map((q, index) => {
               const isExpanded = expandedQuestions.has(q.cauHoi.id);
               const detail = questionDetails.get(q.cauHoi.id);
               const isLoadingDetail = loadingDetails.has(q.cauHoi.id);
 
               return (
                 <Card
-                  key={q.cauHoi.id}
+                  key={`question-${q.cauHoi.id}`}
                   sx={{
                     mb: 2,
                     borderRadius: 2,
@@ -561,7 +607,7 @@ const BankQuestion = () => {
                       </Box>
                     </Box>
 
-                    <Collapse in={isExpanded} sx={{ width: '100%' }}>
+                    <Collapse in={isExpanded} timeout="auto" unmountOnExit sx={{ width: '100%' }}>
                       <Box sx={{ mt: 3, pt: 2, borderTop: "1px solid #e0e0e0" }}>
                         {isLoadingDetail ? (
                           <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
@@ -587,7 +633,7 @@ const BankQuestion = () => {
                                 <Stack spacing={1} sx={{ pl: 2 }}>
                                   {detail.dapAn.map((da, idx) => (
                                     <Box
-                                      key={idx}
+                                      key={`answer-${q.cauHoi.id}-${idx}`}
                                       sx={{
                                         display: "grid",
                                         gridTemplateColumns: "24px 1fr",
@@ -639,7 +685,7 @@ const BankQuestion = () => {
                                 </Typography>
                                 <Stack spacing={1} sx={{ pl: 2 }}>
                                   {detail.mangFileDinhKem.map((file, idx) => (
-                                    <Typography key={idx} variant="body2" sx={{ color: "text.secondary" }}>
+                                    <Typography key={`file-${q.cauHoi.id}-${idx}`} variant="body2" sx={{ color: "text.secondary" }}>
                                       📎 {file.tenFile || `File ${idx + 1}`}
                                     </Typography>
                                   ))}

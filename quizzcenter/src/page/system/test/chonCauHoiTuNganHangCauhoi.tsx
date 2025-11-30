@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import SearchIcon from "@mui/icons-material/Search";
+import InputAdornment from "@mui/material/InputAdornment";
 import {
   Box,
   Container,
@@ -8,6 +10,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  TextField,
   Card,
   CardContent,
   Stack,
@@ -92,7 +95,7 @@ export default function SelectFromBankPage() {
   const [openDetail, setOpenDetail] = useState(false);
   const [selectedCauHoi, setSelectedCauHoi] = useState<CauHoiDetailWithChuong | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
-
+  const [searchDebounce, setSearchDebounce] = useState('');
   // Pagination
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -105,7 +108,12 @@ const [openConfirmBack, setOpenConfirmBack] = useState(false);
 const [openMessage, setOpenMessage] = useState(false);
 const [message, setMessage] = useState("");
 const accessToken = localStorage.getItem("accessTokenGV") || "";
-
+const [filters, setFilters] = useState({
+  searchText: '',
+  loaiCauHoi: 'all',
+  doKho: 'all',
+  trangThai: 'all'
+});
 
   // ========== Fetch danh sách chương ==========
   useEffect(() => {
@@ -212,7 +220,17 @@ const accessToken = localStorage.getItem("accessTokenGV") || "";
     fetchCauHoi();
   }, [selectedChuong, page, accessToken]);
   
-
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchDebounce(filters.searchText);
+    }, 500); // đợi 500ms sau khi user ngừng gõ
+  
+    return () => clearTimeout(timer);
+  }, [filters.searchText]);
+  // Reset page khi filter thay đổi
+useEffect(() => {
+  setPage(1);
+}, [filters.loaiCauHoi, filters.doKho, filters.trangThai, searchDebounce]);
   // ========== Helpers ==========
 const hasUnsavedChanges = () => {
   if (cauHoiDaCoTrongDe.size !== cauHoiDaCoTrongDeGoc.size) return true;
@@ -224,7 +242,35 @@ const hasUnsavedChanges = () => {
   return false;
 };
 
+// Lọc danh sách câu hỏi theo filters
+const filteredCauHoiList = cauHoiList.filter((cauHoi) => {
+  // Filter theo search text
+  if (filters.searchText) {
+    const searchLower = filters.searchText.toLowerCase();
+    const matchName = cauHoi.tenHienThi.toLowerCase().includes(searchLower);
+    const matchContent = cauHoi.noiDungCauHoi.toLowerCase().includes(searchLower);
+    if (!matchName && !matchContent) return false;
+  }
 
+  // Filter theo loại câu hỏi
+  if (filters.loaiCauHoi !== 'all' && cauHoi.loaiCauHoi !== filters.loaiCauHoi) {
+    return false;
+  }
+
+  // Filter theo độ khó
+  if (filters.doKho !== 'all' && cauHoi.doKho !== filters.doKho) {
+    return false;
+  }
+
+  // Filter theo trạng thái
+  if (filters.trangThai !== 'all') {
+    const daChon = cauHoiDaCoTrongDe.has(cauHoi.id);
+    if (filters.trangThai === 'dachon' && !daChon) return false;
+    if (filters.trangThai === 'chuachon' && daChon) return false;
+  }
+
+  return true;
+});
   // ========== Điều hướng quay lại (không lưu) ==========
  const handleBack = () => {
   if (hasUnsavedChanges()) {
@@ -452,7 +498,80 @@ const handleComplete = async () => {
             ))}
           </Select>
         </FormControl>
+        <Box sx={{ mb: 3 }}>
+  <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+    <TextField
+      fullWidth
+      placeholder="Tìm kiếm câu hỏi theo tên hoặc nội dung..."
+      value={filters.searchText}
+      onChange={(e) => setFilters({...filters, searchText: e.target.value})}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <SearchIcon />
+          </InputAdornment>
+        ),
+        endAdornment: filters.searchText && (
+          <InputAdornment position="end">
+            <IconButton size="small" onClick={() => setFilters({...filters, searchText: ''})}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </InputAdornment>
+        )
+      }}
+    />
+  </Stack>
 
+  <Stack direction="row" spacing={2} flexWrap="wrap">
+    <FormControl sx={{ minWidth: 200 }}>
+      <InputLabel>Loại câu hỏi</InputLabel>
+      <Select
+        value={filters.loaiCauHoi}
+        onChange={(e) => setFilters({...filters, loaiCauHoi: e.target.value})}
+        label="Loại câu hỏi"
+      >
+        <MenuItem value="all">Tất cả</MenuItem>
+        <MenuItem value="MotDung">Một đáp án</MenuItem>
+        <MenuItem value="NhieuDung">Nhiều đáp án</MenuItem>
+      </Select>
+    </FormControl>
+
+    <FormControl sx={{ minWidth: 150 }}>
+      <InputLabel>Độ khó</InputLabel>
+      <Select
+        value={filters.doKho}
+        onChange={(e) => setFilters({...filters, doKho: e.target.value})}
+        label="Độ khó"
+      >
+        <MenuItem value="all">Tất cả</MenuItem>
+        <MenuItem value="De">Dễ</MenuItem>
+        <MenuItem value="TrungBinh">Trung bình</MenuItem>
+        <MenuItem value="Kho">Khó</MenuItem>
+      </Select>
+    </FormControl>
+
+    <FormControl sx={{ minWidth: 200 }}>
+      <InputLabel>Trạng thái</InputLabel>
+      <Select
+        value={filters.trangThai}
+        onChange={(e) => setFilters({...filters, trangThai: e.target.value})}
+        label="Trạng thái"
+      >
+        <MenuItem value="all">Tất cả</MenuItem>
+        <MenuItem value="dachon">Đã chọn</MenuItem>
+        <MenuItem value="chuachon">Chưa chọn</MenuItem>
+      </Select>
+    </FormControl>
+
+    <Button 
+      variant="outlined" 
+      color="secondary"
+      onClick={() => setFilters({searchText: '', loaiCauHoi: 'all', doKho: 'all', trangThai: 'all'})}
+    >
+      Xóa bộ lọc
+    </Button>
+  </Stack>
+</Box>
         {loading && <Typography>Đang tải câu hỏi...</Typography>}
 
         {!loading && cauHoiList.length === 0 && (
@@ -462,7 +581,7 @@ const handleComplete = async () => {
         )}
 
         <Stack spacing={2}>
-          {cauHoiList.map((cauHoi) => {
+        {filteredCauHoiList.map((cauHoi) => {
             const daCoTrongDe = cauHoiDaCoTrongDe.has(cauHoi.id);
 
             return (
@@ -500,11 +619,23 @@ const handleComplete = async () => {
                           variant="outlined"
                         />
                         <Chip
-                          label={cauHoi.doKho === "De" ? "Dễ" : "Khó"}
-                          size="small"
-                          variant="outlined"
-                          color={cauHoi.doKho === "De" ? "success" : "error"}
-                        />
+  label={
+    cauHoi.doKho === "De" 
+      ? "Dễ" 
+      : cauHoi.doKho === "TrungBinh" 
+        ? "Trung bình" 
+        : "Khó"
+  }
+  size="small"
+  variant="outlined"
+  color={
+    cauHoi.doKho === "De" 
+      ? "success" 
+      : cauHoi.doKho === "TrungBinh" 
+        ? "warning" 
+        : "error"
+  }
+/>
                       </Stack>
                     </Box>
                   </Stack>
@@ -577,9 +708,13 @@ const handleComplete = async () => {
           {selectedCauHoi.cauHoi.loaiCauHoi === "MotDung" ? "Một đáp án" : "Nhiều đáp án"}
         </Typography>
         <Typography variant="body2">
-          <strong>Độ khó:</strong>{" "}
-          {selectedCauHoi.cauHoi.doKho === "De" ? "Dễ" : "Khó"}
-        </Typography>
+  <strong>Độ khó:</strong>{" "}
+  {selectedCauHoi.cauHoi.doKho === "De" 
+    ? "Dễ" 
+    : selectedCauHoi.cauHoi.doKho === "TrungBinh" 
+      ? "Trung bình" 
+      : "Khó"}
+</Typography>
         <Typography variant="body2">
           <strong>Chương:</strong> {selectedCauHoi.tenchuong || selectedCauHoi.cauHoi.idChuong}
         </Typography>
