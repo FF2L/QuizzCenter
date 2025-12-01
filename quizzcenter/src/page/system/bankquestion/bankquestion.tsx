@@ -69,7 +69,7 @@ const BankQuestion = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const navigate = useNavigate();
 
   // ✅ FIX 1: Dùng ref để tránh re-create accessToken
@@ -160,9 +160,6 @@ const BankQuestion = () => {
         setQuestions(payloads);
         setTotal(res.data.total ?? payloads.length);
         setTotalPages(res.data.totalPages ?? 1);
-        
-        // ✅ FIX 3: KHÔNG bao giờ setCurrentPage từ API response
-        // Chỉ cho phép user thay đổi page qua Pagination component
       } catch (err) {
         console.error("Lỗi khi fetch câu hỏi:", err);
       } finally {
@@ -171,7 +168,7 @@ const BankQuestion = () => {
     };
 
     fetchQuestions();
-  }, [selectedCategory, currentPage, itemsPerPage, difficulty, searchText, sortBy, questionType]);
+  }, [selectedCategory, currentPage, itemsPerPage, difficulty, searchText, sortBy, questionType, refreshTrigger]);
   // ← Dependency trực tiếp, KHÔNG qua callback
 
   const getChuongName = useCallback((idChuong: number): string => {
@@ -264,7 +261,8 @@ const BankQuestion = () => {
     setExpandedQuestions(new Set());
     setQuestionDetails(new Map());
     setCurrentPage(1);
-    // Reset sẽ trigger useEffect fetch lại
+    // ✅ Trigger re-fetch bằng cách tăng refreshTrigger
+    setRefreshTrigger(prev => prev + 1);
   }, []);
 
   const getDoKhoLabel = useCallback((doKho: string) => {
