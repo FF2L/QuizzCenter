@@ -11,7 +11,7 @@ import { GiangVien } from 'src/giang-vien/entities/giang-vien.entity';
 import { UpdateNguoiDungAdminDto } from './dto/update-nguoi-dung-admin';
 import { DEFAULT_PAGE_LIMIT } from 'src/common/utiils/const.globals';
 import * as XLSX from 'xlsx';
-import { excelDateToString } from 'src/common/utiils/date.gobal';
+import { excelToDate } from 'src/common/utiils/date.gobal';
 
 @Injectable()
 export class NguoiDungService {
@@ -157,7 +157,8 @@ export class NguoiDungService {
     const data = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
     const danhSachNguoiDung = data.map((row: any,index: number) => {
-      const ngaySinhFormatted = excelDateToString(row['Ngày sinh'])
+      const ngaySinhFormatted = excelToDate(row['Ngày sinh'])
+      
       return {
       rowIndex: index + 2, // +2 để bù cho header và bắt đầu từ dòng 1 trong Excel
       nguoiDung: {
@@ -165,7 +166,7 @@ export class NguoiDungService {
         hoTen: String(row['Họ và tên']).trim(),
         email: String(row['Email']).trim(),
         soDienThoai: String(row['Số điện thoại']).trim(),
-        ngaySinh: new Date(ngaySinhFormatted),
+        ngaySinh: ngaySinhFormatted!,
         matKhau: '12312345',
         gioiTinh: String(row['Giới tính']).trim(), 
         vaiTro: row['Vai trò'] === 'Giảng viên' ? Role.GiaoVien : Role.SinhVien,
