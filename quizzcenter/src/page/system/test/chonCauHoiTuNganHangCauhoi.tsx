@@ -108,7 +108,9 @@ export default function SelectFromBankPage() {
   const [openMessage, setOpenMessage] = useState(false);
   const [message, setMessage] = useState("");
   const accessToken = localStorage.getItem("accessTokenGV") || "";
-  
+  const [tongSoCau, setTongSoCau] = useState(0);
+
+
   const [filters, setFilters] = useState({
     searchText: '',
     loaiCauHoi: 'all',
@@ -194,83 +196,96 @@ export default function SelectFromBankPage() {
   }, [filters.loaiCauHoi, filters.doKho, filters.trangThai, searchDebounce, selectedChuong]);
 
   // ========== Fetch câu hỏi theo chương + filter + trang ==========
-  useEffect(() => {
-    const fetchCauHoi = async () => {
-      if (!selectedChuong) return;
-      try {
-        setLoading(true);
+// ========== Fetch câu hỏi theo chương + filter + trang ==========
+useEffect(() => {
+  const fetchCauHoi = async () => {
+    if (!selectedChuong) return;
+    try {
+      setLoading(true);
 
-        // ✅ Chuẩn bị params cho API
-        const doKhoParam = filters.doKho !== 'all' ? filters.doKho : undefined;
-        const searchParam = searchDebounce || undefined;
-        
-        // ✅ Nếu filter theo trạng thái, lấy tất cả để filter client
-        const isFilteringByStatus = filters.trangThai !== 'all';
-        const limitParam = isFilteringByStatus ? 10000 : limit;
-        const pageParam = isFilteringByStatus ? 1 : page;
+      // ✅ Chuẩn bị params cho API
+      const doKhoParam = filters.doKho !== 'all' ? filters.doKho : undefined;
+      const searchParam = searchDebounce || undefined;
+      
+      // ✅ Nếu filter theo trạng thái, lấy tất cả để filter client
+      const isFilteringByStatus = filters.trangThai !== 'all';
+      const limitParam = isFilteringByStatus ? 10000 : limit;
+      const pageParam = isFilteringByStatus ? 1 : page;
 
-        const res = await LectureService.layTatCauHoiTheoChuong(
-          accessToken,
-          selectedChuong,
-          pageParam,
-          limitParam,
-          doKhoParam,
-          searchParam
-        );
+      const res = await LectureService.layTatCauHoiTheoChuong(
+        accessToken,
+        selectedChuong,
+        pageParam,
+        limitParam,
+        doKhoParam,
+        searchParam
+      );
 
-        if (res.ok) {
-          const data = res.data;
-          if (Array.isArray(data.data) && typeof data.total === "number") {
-            let list = data.data;
-            
-            // ✅ Lọc theo loại câu hỏi (client-side vì API có thể không hỗ trợ)
-            if (filters.loaiCauHoi !== 'all') {
-              list = list.filter((q: any) => q.loaiCauHoi === filters.loaiCauHoi);
-            }
-
-            // ✅ Lọc theo trạng thái (client-side vì BE không biết state)
-            if (filters.trangThai !== 'all') {
-              list = list.filter((q: any) => {
-                const daChon = cauHoiDaCoTrongDe.has(q.id);
-                if (filters.trangThai === 'dachon') return daChon;
-                if (filters.trangThai === 'chuachon') return !daChon;
-                return true;
-              });
-            }
-            
-            // ✅ Sắp xếp theo ID giảm dần (mới nhất trước)
-            list.sort((a: any, b: any) => b.id - a.id);
-
-            // ✅ Nếu đang filter theo trạng thái, phân trang thủ công
-            if (isFilteringByStatus) {
-              const totalFiltered = list.length;
-              const startIndex = (page - 1) * limit;
-              const endIndex = startIndex + limit;
-              list = list.slice(startIndex, endIndex);
-              setTotalPages(Math.ceil(totalFiltered / limit));
-            } else {
-              setTotalPages(Math.ceil(data.total / limit));
-            }
-            
-            setCauHoiList(list);
-          } else {
-            setCauHoiList([]);
-            setTotalPages(1);
+      if (res.ok) {
+        const data = res.data;
+        if (Array.isArray(data.data) && typeof data.total === "number") {
+          let list = data.data;
+          
+          // ✅ Lưu tổng số câu gốc từ API
+          const totalFromAPI = data.total;
+          
+          // ✅ Lọc theo loại câu hỏi (client-side vì API có thể không hỗ trợ)
+          if (filters.loaiCauHoi !== 'all') {
+            list = list.filter((q: any) => q.loaiCauHoi === filters.loaiCauHoi);
           }
-        } else {
-          console.error("Lỗi khi tải câu hỏi:", res.error);
-          alert("Không thể tải danh sách câu hỏi!");
-        }
-      } catch (error) {
-        console.error("Lỗi khi tải câu hỏi:", error);
-        alert("Không thể tải danh sách câu hỏi!");
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchCauHoi();
-  }, [selectedChuong, page, accessToken, filters.doKho, filters.loaiCauHoi, filters.trangThai, searchDebounce, cauHoiDaCoTrongDe, limit]);
+          // ✅ Lọc theo trạng thái (client-side vì BE không biết state)
+          if (filters.trangThai !== 'all') {
+            list = list.filter((q: any) => {
+              const daChon = cauHoiDaCoTrongDe.has(q.id);
+              if (filters.trangThai === 'dachon') return daChon;
+              if (filters.trangThai === 'chuachon') return !daChon;
+              return true;
+            });
+          }
+          
+          // ✅ Sắp xếp theo ID giảm dần (mới nhất trước)
+          list.sort((a: any, b: any) => b.id - a.id);
+
+          // ✅ Nếu đang filter theo trạng thái hoặc loại câu hỏi, cập nhật tổng số sau khi filter
+          if (isFilteringByStatus || filters.loaiCauHoi !== 'all') {
+            const totalFiltered = list.length;
+            const startIndex = (page - 1) * limit;
+            const endIndex = startIndex + limit;
+            list = list.slice(startIndex, endIndex);
+            setTotalPages(Math.ceil(totalFiltered / limit));
+            setTongSoCau(totalFiltered); // ✅ Tổng số sau khi filter
+          } else {
+            setTotalPages(Math.ceil(totalFromAPI / limit));
+            setTongSoCau(totalFromAPI); // ✅ Tổng số từ API
+          }
+          
+          setCauHoiList(list);
+        } else {
+          setCauHoiList([]);
+          setTotalPages(1);
+          setTongSoCau(0);
+        }
+      } else {
+        console.error("Lỗi khi tải câu hỏi:", res.error);
+        alert("Không thể tải danh sách câu hỏi!");
+        setCauHoiList([]);
+        setTotalPages(1);
+        setTongSoCau(0);
+      }
+    } catch (error) {
+      console.error("Lỗi khi tải câu hỏi:", error);
+      alert("Không thể tải danh sách câu hỏi!");
+      setCauHoiList([]);
+      setTotalPages(1);
+      setTongSoCau(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchCauHoi();
+}, [selectedChuong, page, accessToken, filters.doKho, filters.loaiCauHoi, filters.trangThai, searchDebounce, cauHoiDaCoTrongDe, limit]);
 
   // ========== Helpers ==========
   const hasUnsavedChanges = () => {
@@ -456,7 +471,6 @@ export default function SelectFromBankPage() {
           </Typography>
           <Box
             sx={{
-              backgroundColor: "rgba(255, 0, 0, 0.04)",
               borderRadius: "10px",
               height: "30px",
               px: 2,
@@ -474,7 +488,6 @@ export default function SelectFromBankPage() {
           <Typography sx={{ fontWeight: "bold", fontSize: "18px" }}>→</Typography>
           <Box
             sx={{
-              backgroundColor: "rgba(0, 124, 213, 0.1)",
               borderRadius: "10px",
               height: "30px",
               px: 2,
@@ -584,11 +597,23 @@ export default function SelectFromBankPage() {
 
         {loading && <Typography>Đang tải câu hỏi...</Typography>}
 
-        {!loading && cauHoiList.length === 0 && (
-          <Typography color="text.secondary" sx={{ textAlign: "center", py: 4 }}>
-            Không tìm thấy câu hỏi nào
-          </Typography>
-        )}
+        {!loading && cauHoiList.length > 0 && (
+  <Box 
+    sx={{ 
+      mb: 2, 
+      p: 1.5, 
+      backgroundColor: '#f5f5f5', 
+      borderRadius: 1,
+      display: 'inline-block'
+    }}
+  >
+    <Typography variant="subtitle1">
+      Đã chọn: <strong style={{ color: '#245D51', fontSize: '1.1rem' }}>
+        {cauHoiDaCoTrongDe.size}/{tongSoCau}
+      </strong> câu hỏi
+    </Typography>
+  </Box>
+)}
 
         <Stack spacing={2}>
           {cauHoiList.map((cauHoi, index) => {
