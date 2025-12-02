@@ -580,7 +580,7 @@ useEffect(() => {
 
                 <Typography
                   variant="body1"
-                  sx={{ fontWeight: 500, mb: 2 }}
+                  sx={{ fontWeight: 500, mb: 1 }}
                   dangerouslySetInnerHTML={{
                     __html: item.cauHoi.noiDung || "",
                   }}
@@ -607,7 +607,7 @@ useEffect(() => {
                             sx={{
                               display: "flex",
                               alignItems: "center",
-                              gap: 1,
+            
                             }}
                           >
                             <Typography
@@ -821,8 +821,9 @@ useEffect(() => {
                       variant={isDone ? "contained" : "outlined"}
                       color={isDone ? "success" : "inherit"}
                       sx={{
-                        width: 50,
-                        height: 50,
+                        width: 25,
+                        height: 25,
+                        borderRadius:"0px",
                         fontWeight: 600,
                         ...(isFlagged && {
                           border: "2px solid #ff9800",
