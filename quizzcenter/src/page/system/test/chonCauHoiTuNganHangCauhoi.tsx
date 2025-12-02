@@ -307,16 +307,20 @@ useEffect(() => {
     if (hasUnsavedChanges()) {
       setOpenConfirmBack(true);
     } else {
+      // SỬA: Navigate trực tiếp về đường dẫn cụ thể thay vì navigate(-1)
       navigate(`/lecturer/bai-kiem-tra/${idBaiKiemTra}`, {
         state: { idBaiKiemTra, idMonHoc, tenMonHoc, tenBaiKiemTra },
+        replace: true // Thay thế history thay vì thêm mới
       });
     }
   };
-
+  
   const confirmBack = () => {
     setOpenConfirmBack(false);
+    // SỬA: Navigate trực tiếp về đường dẫng cụ thể với replace: true
     navigate(`/lecturer/bai-kiem-tra/${idBaiKiemTra}`, {
       state: { idBaiKiemTra, idMonHoc, tenMonHoc, tenBaiKiemTra },
+      replace: true
     });
   };
 
@@ -420,10 +424,11 @@ useEffect(() => {
       setMessage("Lưu thay đổi thành công!");
       setOpenMessage(true);
       
-      // Sau khi đóng dialog, quay về trang trước
+      // SỬA: Sử dụng replace: true để không thêm vào history
       setTimeout(() => {
         navigate(`/lecturer/bai-kiem-tra/${idBaiKiemTra}`, {
           state: { idBaiKiemTra, idMonHoc, tenMonHoc, tenBaiKiemTra },
+          replace: true
         });
       }, 1500);
     } catch (err: any) {

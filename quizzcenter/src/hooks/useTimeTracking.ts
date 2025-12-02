@@ -123,101 +123,103 @@ export const useTimeTracking = ({
   );
 
   // =============== TIMER LOOP ==========================
-  useEffect(() => {
-    if (!isActive) {
-      if (timerRef.current) clearInterval(timerRef.current);
-      return;
-    }
+// =============== TIMER LOOP ==========================
+useEffect(() => {
+  if (!isActive) {
+    if (timerRef.current) clearInterval(timerRef.current);
+    return;
+  }
 
-    if (loaiKiemTra === "BaiKiemTra") {
-      // COUNTDOWN
-      timerRef.current = setInterval(() => {
-        setRemain((prev) => {
-          const next = Math.max(0, prev - 1);
-          const used = (thoiGianLam ?? 0) - next;
+  if (loaiKiemTra === "BaiKiemTra") {
+    // COUNTDOWN
+    timerRef.current = setInterval(() => {
+      setRemain((prev) => {
+        const next = Math.max(0, prev - 1);
+        const used = (thoiGianLam ?? 0) - next;
 
-          // Lưu remain vào localStorage
-          if (storageKey) {
-            localStorage.setItem(storageKey, String(next));
-          }
+        // Lưu remain vào localStorage
+        if (storageKey) {
+          localStorage.setItem(storageKey, String(next));
+        }
 
-          // Update DB mỗi giây để chính xác tuyệt đối
-          void syncToSupabase(used);
+        // Update DB mỗi giây
+        void syncToSupabase(used);
 
-          // Kiểm tra hết giờ
-          const expired = next <= 0;
-          const expiredWindow = thoiGianKetThucCuaSo
-            ? Date.now() >= new Date(thoiGianKetThucCuaSo).getTime()
-            : false;
+        // ✅ LOGIC CŨ - Kiểm tra hết giờ
+        const expired = next <= 0;
+        const expiredWindow = thoiGianKetThucCuaSo
+          ? Date.now() >= new Date(thoiGianKetThucCuaSo).getTime()
+          : false;
 
-          if ((expired || expiredWindow) && onTimeUp) {
-            console.log('⏰ HẾT GIỜ! Auto submit...');
-            clearInterval(timerRef.current!);
-            onTimeUp();
-          }
+        if ((expired || expiredWindow) && onTimeUp) {
+          console.log('⏰ HẾT GIỜ! Auto submit...');
+          clearInterval(timerRef.current!);
+          onTimeUp();
+        }
 
-          setElapsed(used);
-          return next;
-        });
-      }, 1000);
-    } else {
-      // COUNTUP — Luyện tập
-      timerRef.current = setInterval(() => {
-        setElapsed((prev) => {
-          const next = prev + 1;
+        setElapsed(used);
+        return next;
+      });
+    }, 1000);
+  } else {
+    // COUNTUP — Luyện tập
+    timerRef.current = setInterval(() => {
+      setElapsed((prev) => {
+        const next = prev + 1;
 
-          // Lưu elapsed vào localStorage
-          if (storageKey) {
-            localStorage.setItem(storageKey, String(next));
-          }
+        if (storageKey) {
+          localStorage.setItem(storageKey, String(next));
+        }
 
-          // Update DB mỗi giây để chính xác tuyệt đối
-          void syncToSupabase(next);
+        void syncToSupabase(next);
 
-          return next;
-        });
-      }, 1000);
-    }
+        return next;
+      });
+    }, 1000);
+  }
 
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [
-    isActive,
-    loaiKiemTra,
-    thoiGianLam,
-    onTimeUp,
-    storageKey,
-    syncToSupabase,
-    thoiGianKetThucCuaSo,
-  ]);
+  return () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+}, [
+  isActive,
+  loaiKiemTra,
+  thoiGianLam,
+  onTimeUp,
+  storageKey,
+  syncToSupabase,
+  thoiGianKetThucCuaSo,
+]);
 
   const forceSave = useCallback(async () => {
     if (!storageKey || !idBaiLamSinhVien) return;
-
+  
     if (loaiKiemTra === "BaiKiemTra") {
+      // ✅ Tính thời gian đã dùng CHÍNH XÁC từ remain hiện tại
       const currentUsed = (thoiGianLam ?? 0) - remain;
       
-      // Lưu localStorage
-      localStorage.setItem(storageKey, String(remain));
-      
-      // Lưu backend với thời gian HIỆN TẠI (không phải thời gian đã mod 5)
-      await syncToSupabase(currentUsed);
-      
       console.log('💾 Force save (BaiKiemTra):', {
-        remain,
+        total: thoiGianLam,
+        remain: remain,
         used: currentUsed,
         timestamp: new Date().toLocaleTimeString()
       });
+      
+      // Lưu localStorage (remain)
+      localStorage.setItem(storageKey, String(remain));
+      
+      // ✅ Lưu backend với thời gian ĐÃ DÙNG CHÍNH XÁC
+      await syncToSupabase(currentUsed);
+      
     } else {
       // Luyện tập - lưu elapsed hiện tại
-      localStorage.setItem(storageKey, String(elapsed));
-      await syncToSupabase(elapsed);
-      
       console.log('💾 Force save (LuyenTap):', {
         elapsed,
         timestamp: new Date().toLocaleTimeString()
       });
+      
+      localStorage.setItem(storageKey, String(elapsed));
+      await syncToSupabase(elapsed);
     }
   }, [loaiKiemTra, elapsed, remain, storageKey, syncToSupabase, thoiGianLam, idBaiLamSinhVien]);
 

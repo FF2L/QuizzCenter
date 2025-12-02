@@ -85,7 +85,7 @@ const DoTestPage: React.FC = () => {
   const [showTabSnackbar, setShowTabSnackbar] = useState(false);
   const isLuyenTap = baiKiemTraInfo?.loaiKiemTra === "LuyenTap";
   const DETAIL_PATH = `/quizzcenter/bai-kiem-tra-chi-tiet/${idBaiKiemTra}`;
-  const questionsStartRef = useRef<HTMLDivElement>(null);
+
   // lấy thoiGianSuDung từ backend (nếu có) - dùng để fallback nếu không có localStorage
   const initialUsedSeconds =
     (baiLamData as any)?.baiLam?.thoiGianSuDung ?? 0;
@@ -113,14 +113,7 @@ const DoTestPage: React.FC = () => {
     const endIndex = startIndex + QUESTIONS_PER_PAGE;
     return baiLamData.cauHoi.slice(startIndex, endIndex);
   }, [baiLamData, currentPage]);
-  useEffect(() => {
-    if (questionsStartRef.current) {
-      questionsStartRef.current.scrollIntoView({ 
-        behavior: "smooth",
-        block: "start"
-      });
-    }
-  }, [currentPage]);
+
   const handlePageChange = (
     _event: React.ChangeEvent<unknown>,
     page: number
@@ -505,7 +498,7 @@ useEffect(() => {
       >
         {/* Trái: câu hỏi */}
         <Box sx={{ flex: "1 1 65%", minWidth: 300 }}>
-          <Paper ref={questionsStartRef} sx={{ p: 3, mb: 2, boxShadow: "none" }}>
+          <Paper sx={{ p: 3, mb: 2, boxShadow: "none" }}>
             <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
               {baiKiemTraInfo?.tenBaiKiemTra || "Bài kiểm tra"}
             </Typography>

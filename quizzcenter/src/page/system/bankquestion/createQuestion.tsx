@@ -258,7 +258,7 @@ export default function CreateQuestionPage() {
         const formData = new FormData();
         formData.append("file", file);
   
-        const res = await fetch(`${process.env.BACK_END_URL}/gui-file/anh`, {
+        const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/gui-file/anh`, {
           method: "POST",
           body: formData,
         });
