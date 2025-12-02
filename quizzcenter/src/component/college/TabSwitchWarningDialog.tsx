@@ -3,8 +3,6 @@ import {
   Dialog, 
   DialogTitle, 
   DialogContent, 
-  DialogActions, 
-  Button, 
   Typography,
   LinearProgress,
   Box
@@ -50,8 +48,14 @@ const TabSwitchWarningDialog: React.FC<Props> = ({
 
   return (
     <Dialog 
-      open={open} 
-      onClose={onClose}
+      open={open}
+      onClose={(event, reason) => {
+        // Chặn tất cả các cách đóng dialog
+        if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
+          return;
+        }
+      }}
+      disableEscapeKeyDown
       maxWidth="sm"
       fullWidth
       PaperProps={{
@@ -78,12 +82,17 @@ const TabSwitchWarningDialog: React.FC<Props> = ({
         <Typography variant="body2" color="error" sx={{ mb: 2 }}>
           ⚠️ Hệ thống sẽ tự động nộp bài sau <strong>{countdown} giây</strong>
         </Typography>
-        <LinearProgress 
-          variant="determinate" 
-          value={progress}
-          color="error"
-          sx={{ height: 8, borderRadius: 1 }}
-        />
+        <Box sx={{ mb: 2 }}>
+          <LinearProgress 
+            variant="determinate" 
+            value={progress}
+            color="error"
+            sx={{ height: 8, borderRadius: 1 }}
+          />
+        </Box>
+        <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+          Không thể đóng thông báo này. Vui lòng chờ hệ thống nộp bài tự động.
+        </Typography>
       </DialogContent>
     </Dialog>
   );
