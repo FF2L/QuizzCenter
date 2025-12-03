@@ -66,6 +66,17 @@ export class NguoiDungService {
       }
     })
     if (kiemTraNguoiDung) throw new BadRequestException('Email đã tồn tại')
+       console.log( maNguoiDung, hoTen, email, matKhau, soDienThoai, gioiTinh, ngaySinh, vaiTro)
+      if(!maNguoiDung || !hoTen || !email || !soDienThoai || !gioiTinh || !ngaySinh || !vaiTro){
+        throw new BadRequestException('Thiếu dữ liệu người dùng');
+      }
+     
+    const kiemtraDienThoai = await this.nguoiDungRepo.findOne({
+      where: {
+        soDienThoai
+      }
+    })
+    if(kiemtraDienThoai) throw new BadRequestException('Số điện thoại đã tồn tại')
       
     const validateEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     if(!validateEmail) throw new BadRequestException('Email không hợp lệ');
@@ -107,10 +118,28 @@ export class NguoiDungService {
     }
   }
   async updateNguoiDung(id:number,dto: UpdateNguoiDungAdminDto){
+
     const {hoTen, soDienThoai, email, ngaySinh,gioiTinh, matKhau, maNguoiDung} = dto
     const nguoiDung = await this.nguoiDungRepo.findOne({
       where: { id: id}
     });
+     if(!nguoiDung) throw new NotFoundException();
+
+      
+    const validateEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if(!validateEmail) throw new BadRequestException('Email không hợp lệ');
+
+    const kiemtraDienThoai = await this.nguoiDungRepo.findOne({
+      where: {
+        soDienThoai,
+        id: Not(id)
+      }
+    })
+    if(kiemtraDienThoai) throw new BadRequestException('Số điện thoại đã tồn tại')
+
+
+    if(soDienThoai.length !== 10) throw new BadRequestException('Số điện thoại không hợp lệ');
+    
 
     const nguoiDungCoEmailKhac = await this.nguoiDungRepo.findOne({
       where: { email: email, id: Not(id) }
@@ -120,12 +149,10 @@ export class NguoiDungService {
     const nguoiDungCoMaGiong = await this.nguoiDungRepo.findOne({
       where: { maNguoiDung: maNguoiDung, id: Not(id) }
     });
-    console.log(maNguoiDung);
-    console.log(id);
-    console.log(nguoiDungCoMaGiong);
+
     if(nguoiDungCoMaGiong) throw new BadRequestException('Mã người dùng đã được sử dụng bởi người dùng khác');
 
-    if(!nguoiDung) throw new NotFoundException();
+   
     nguoiDung.hoTen = hoTen;
     if(matKhau) nguoiDung.matKhau = matKhau;
     nguoiDung.soDienThoai = soDienThoai;
@@ -146,48 +173,49 @@ export class NguoiDungService {
     return {message: 'Xóa người dùng thành công'}
   }
 
-  async uploadFile(file: Express.Multer.File){
-    if(!file){
-      throw new BadRequestException('File không hợp lệ');
-    }
-    const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+async uploadFile(file: Express.Multer.File) {
+  if (!file) {
+    throw new BadRequestException('File không hợp lệ');
+  }
 
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-
-    const data = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-
-    const danhSachNguoiDung = data.map((row: any,index: number) => {
-      const ngaySinhFormatted = excelToDate(row['Ngày sinh'])
-      
-      return {
-      rowIndex: index + 2, // +2 để bù cho header và bắt đầu từ dòng 1 trong Excel
-      nguoiDung: {
-        maNguoiDung: String(row['Mã người dùng']).trim() ,
-        hoTen: String(row['Họ và tên']).trim(),
-        email: String(row['Email']).trim(),
-        soDienThoai: String(row['Số điện thoại']).trim(),
-        ngaySinh: ngaySinhFormatted!,
-        matKhau: '12312345',
-        gioiTinh: String(row['Giới tính']).trim(), 
-        vaiTro: row['Vai trò'] === 'Giảng viên' ? Role.GiaoVien : Role.SinhVien,
-      } 
-    };
-});
+  const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const data = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
   const thanhCong: any[] = [];
   const thatBai: { row: number; message: string }[] = [];
 
-  for (const item of danhSachNguoiDung) {
-    const { rowIndex, nguoiDung } = item;
+  for (const [index, row] of (data as any[]).entries()) {
+    const rowIndex = index + 2; // +2: header + dòng bắt đầu
+
     try {
-      const nguoiDungSave =await this.taoNguoiDung(nguoiDung);
+      // 👉 Bắt lỗi parse ngày ngay trong try
+      const ngaySinhFormatted = excelToDate(row['Ngày sinh']);
+
+      const nguoiDung = {
+        maNguoiDung: String(row['Mã người dùng']).trim(),
+        hoTen: String(row['Họ và tên']).trim(),
+        email: String(row['Email']).trim(),
+        soDienThoai: String(row['Số điện thoại']).trim(),
+        ngaySinh: ngaySinhFormatted!,       // giờ mà null/lỗi sẽ bị catch
+        matKhau: '12312345',
+        gioiTinh: String(row['Giới tính']).trim(),
+        vaiTro: row['Vai trò'] === 'Giảng viên' ? Role.GiaoVien : Role.SinhVien,
+      };
+
+      const nguoiDungSave = await this.taoNguoiDung(nguoiDung);
       thanhCong.push(nguoiDungSave);
-    } catch (error) {
-      thatBai.push({ row: rowIndex, message: error.message });
+    } catch (error: any) {
+      thatBai.push({
+        row: rowIndex,
+        message: error?.message ?? String(error),
+      });
     }
   }
+
   return { thanhCong, thatBai };
 }
+
   // End CRUD người dùng
 
   //Phục vu cho giảng vien

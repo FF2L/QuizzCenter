@@ -1,4 +1,4 @@
-import { Box, Button, colors, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, Table, TableBody, TableCell, TableHead, TablePagination, TableRow, TextField, Typography } from "@mui/material";
+import { Box, Button, colors, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Pagination, Stack, Table, TableBody, TableCell, TableHead, TablePagination, TableRow, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { AdminApi } from "../../../services/admin.api";
 import ConfirmDialog from "../../../common/dialog";
@@ -164,8 +164,7 @@ const QuanLyNguoiDung = () => {
     if (res?.ok !== false) {
         const newUser = res.data;
         setShowCreateRow(false);
-        setDanhSachNd((prev) => [newUser, ...prev]);
-        setTotal(total + 1);
+        await fetchData(); 
         toast.success("Tạo người dùng thành công");
     } else {
         const err: any = res.error;
@@ -242,14 +241,13 @@ const QuanLyNguoiDung = () => {
         toast.error(mess);
     }
     };
-
-    useEffect(() =>{
         const fetchData = async () => {
-            const result = await AdminApi.layTatCaNguoiDung(currentPage, 10,search);
-            setDanhSachNd(result.data.data)
-            setTotal(result.data.total)
-            setCurrentPage(result.data.currentPage)
-        };
+        const result = await AdminApi.layTatCaNguoiDung(currentPage, 10,search);
+        setDanhSachNd(result.data.data)
+        setTotal(result.data.total)
+        setCurrentPage(result.data.currentPage)
+    };
+    useEffect(() =>{
         fetchData();
     },[currentPage,search]);
 
@@ -513,15 +511,17 @@ const QuanLyNguoiDung = () => {
                     )}
 
                 </TableBody>
-                <TablePagination
-                    component="div"
-                    count={total}
-                    page={currentPage - 1}
-                    onPageChange={(_, newPage) => setCurrentPage(newPage + 1)}
-                    rowsPerPage={10}
-                    rowsPerPageOptions={[]}
-                />
             </Table>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", pr: 10, pb: 3 }}>
+                    <Pagination
+                    count={Math.ceil(total / 10)}
+                    page={currentPage}
+                    onChange={(_, value) => setCurrentPage(value)}
+                    shape="rounded"
+                    siblingCount={0}      // số trang bên cạnh trang hiện tại
+                    boundaryCount={1}     // số trang đầu / cuối luôn hiện
+                    />
+                </Box>
         </Stack>
 
         <ConfirmDialog

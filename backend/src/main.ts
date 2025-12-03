@@ -7,7 +7,8 @@ async function bootstrap() {
   app.enableCors({
   origin: [
     "https://chat.fff3l.click",    // FE của bạn
-    "http://localhost:5000"        // nếu bạn còn dev local
+    "https://quizz.fff3l.click", // quizzcenter
+    "http://localhost:5000",        // nếu bạn còn dev local
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],

@@ -222,7 +222,7 @@ async layTatCaMonHocCuaGiangVien(query: any, userId: number) {
     }
     const total = await qb.getCount();
 
-     if(sxTenGiangVien === true){
+   if(sxTenGiangVien === true){
       qb.addOrderBy('nd.hoTen', 'DESC');
     }else if(sxTenGiangVien === false){
       qb.addOrderBy('nd.hoTen', 'ASC');

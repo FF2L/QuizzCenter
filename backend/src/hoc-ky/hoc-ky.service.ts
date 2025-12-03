@@ -12,9 +12,11 @@ export class HocKyService {
     @InjectRepository(HocKy) private hocKyRepository: Repository<HocKy>,
     @InjectRepository(LopHocPhan) private lopHocPhanRepository: Repository<LopHocPhan>
   ){}
-  
-  async checkHocKy(id?: number, tenHocKy?: string, thoiGianBatDau?: Date, thoiGianKetThuc?: Date) {
-    if (!tenHocKy || !thoiGianBatDau || !thoiGianKetThuc) {
+
+    
+  async create(createHocKyDto: CreateHocKyDto) {
+    const {tenHocKy, thoiGianBatDau, thoiGianKetThuc, phatHanh} = createHocKyDto;
+        if (!tenHocKy || !thoiGianBatDau || !thoiGianKetThuc) {
       throw new BadRequestException('Thiếu dữ liệu học kỳ');
     }
 
@@ -25,26 +27,7 @@ export class HocKyService {
       if(new Date(thoiGianBatDau) < new Date()){
         throw new BadRequestException('Thời gian bắt đầu phải là tương lai');
       }
-      if(id !== undefined){
-        console.log('check with id');
               const existByName = await this.hocKyRepository.findOne({
-          where: { tenHocKy: tenHocKy.trim(), id: Not(id) },
-        });
-        if (existByName) {
-          throw new BadRequestException('Tên học kỳ đã tồn tại');
-        }
-          const existByTime = await this.hocKyRepository.findOne({
-          where: {
-            thoiGianBatDau: LessThanOrEqual(thoiGianKetThuc),
-            thoiGianKetThuc: MoreThanOrEqual(thoiGianBatDau),
-            id: Not(id)
-          },
-        });
-        if (existByTime) {
-          throw new BadRequestException('Thời gian học kỳ bị trùng với học kỳ khác');
-        }
-      }else{
-        const existByName = await this.hocKyRepository.findOne({
           where: { tenHocKy: tenHocKy.trim() },
         });
         if (existByName) {
@@ -59,12 +42,6 @@ export class HocKyService {
         if (existByTime) {
           throw new BadRequestException('Thời gian học kỳ bị trùng với học kỳ khác');
         }
-      }
-  }
-    
-  async create(createHocKyDto: CreateHocKyDto) {
-    const {tenHocKy, thoiGianBatDau, thoiGianKetThuc, phatHanh} = createHocKyDto;
-    await this.checkHocKy(undefined, tenHocKy, thoiGianBatDau, thoiGianKetThuc);
     try {  
       const hocKy = this.hocKyRepository.create({
         tenHocKy,
@@ -122,11 +99,34 @@ export class HocKyService {
   }
 
   async update(id: number, updateHocKyDto: UpdateHocKyDto) {
+    const {tenHocKy, thoiGianBatDau, thoiGianKetThuc} = updateHocKyDto;
+     if (!tenHocKy || !thoiGianBatDau || !thoiGianKetThuc) {
+      throw new BadRequestException('Thiếu dữ liệu học kỳ');
+    }
+
+    if(new Date(thoiGianBatDau) >= new Date(thoiGianKetThuc)){
+        throw new BadRequestException('Thời gian kết thúc phải sau thời gian bắt đầu');
+      }
     const hocKy = await this.hocKyRepository.findOneBy({id});
     if(!hocKy){
       throw new InternalServerErrorException('Học kỳ không tồn tại');
     }
-    await this.checkHocKy(id,updateHocKyDto.tenHocKy, updateHocKyDto.thoiGianBatDau, updateHocKyDto.thoiGianKetThuc);
+    const existByName = await this.hocKyRepository.findOne({
+          where: { tenHocKy: tenHocKy.trim(), id: Not(id) },
+        });
+        if (existByName) {
+          throw new BadRequestException('Tên học kỳ đã tồn tại');
+        }
+          const existByTime = await this.hocKyRepository.findOne({
+          where: {
+            thoiGianBatDau: LessThanOrEqual(thoiGianKetThuc),
+            thoiGianKetThuc: MoreThanOrEqual(thoiGianBatDau),
+            id: Not(id)
+          },
+        });
+        if (existByTime) {
+          throw new BadRequestException('Thời gian học kỳ bị trùng với học kỳ khác');
+        }
     try{
       return await this.hocKyRepository.update(id, updateHocKyDto);  
     }catch(error){
