@@ -13,6 +13,7 @@ export class AuthController {
     @UseGuards(LocalAuthGuard) 
     @Post('login')
     async dangNhapEmailVaMatKhau(@Request() req){
+      console.log(req.user.id)
 
       return await this.authService.dangNhap(req.user.id)
     }

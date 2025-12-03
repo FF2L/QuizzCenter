@@ -33,6 +33,7 @@ const QuanLyHocKy = () => {
   const [selectedRow, setSelectedRow] = useState<any>(null);
 
   const [updateOrInsert, setUpdateOrInsert] = useState<"insert" | "update">("insert");
+  const [tenBang, setTenBang] = useState<"Thêm học kỳ" | "Cập nhật học kỳ">("Thêm học kỳ");
 
   const [openCreate, setOpenCreate] = useState(false);
 
@@ -56,6 +57,7 @@ const QuanLyHocKy = () => {
 
   const updateHocKy = async (id: any) => {
     setUpdateOrInsert("update");
+    setTenBang("Cập nhật học kỳ");
     setOpenCreate(true);
     const res = await AdminApi.layHocKyTheoId(id);
     if (res?.ok) {
@@ -185,7 +187,7 @@ const QuanLyHocKy = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <Button variant="contained" color="primary" onClick={() => {setOpenCreate(true);}}>
+            <Button variant="contained" color="primary" onClick={() => {setOpenCreate(true); setTenBang("Thêm học kỳ")}}>
               Thêm học kỳ
             </Button>
           </Stack>
@@ -291,7 +293,7 @@ const QuanLyHocKy = () => {
           fullWidth
           maxWidth="sm"
         >
-          <DialogTitle>Thêm học kỳ</DialogTitle>
+          <DialogTitle>{tenBang}</DialogTitle>
           <DialogContent sx={{ pt: 1 }}>
             <Stack spacing={2} mt={1}>
               <TextField

@@ -9,6 +9,7 @@ import {
   DialogTitle,
   IconButton,
   MenuItem,
+  Pagination,
   Stack,
   Table,
   TableBody,
@@ -322,15 +323,17 @@ const ThemSinhVienVaoLopHocPhan = () => {
             )}
           </TableBody>
 
-          <TablePagination
-            component="div"
-            count={total}
-            page={page - 1}
-            onPageChange={(_, newPage) => setPage(newPage + 1)}
-            rowsPerPage={rowsPerPage}
-            rowsPerPageOptions={[]}
-          />
         </Table>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", pr: 10, pb: 3 }}>
+            <Pagination
+              count={Math.ceil(total / rowsPerPage)}   // tổng số trang
+              page={page}                              // đang ở trang nào
+              onChange={(_, value) => setPage(value)}  // đổi trang => loadData chạy lại
+              shape="rounded"
+              siblingCount={0}
+              boundaryCount={1}
+            />
+          </Box>
       </Stack>
           <ConfirmDialog
             open={confirmOpen}

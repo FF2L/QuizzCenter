@@ -1,4 +1,4 @@
-import { Box, Button, Stack, Table, TableBody, TableCell, TableFooter, TableHead, TablePagination, TableRow, TextField, Typography } from "@mui/material";
+import { Box, Button, Pagination, Stack, Table, TableBody, TableCell, TableFooter, TableHead, TablePagination, TableRow, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { AdminApi } from "../../../services/admin.api";
 import ConfirmDialog from "../../../common/dialog";
@@ -172,7 +172,7 @@ const QuanLyMonHoc = () => {
                     <TableHead>
                         <TableRow>
                             <TableCell> Mã môn học</TableCell>
-                            <TableCell onClick={() => {setSxTenMonHoc(!sxTenMonHoc); fetchData()}}>{sxTenMonHoc ?  "▼" :"▲"} Tên môn học</TableCell>
+                            <TableCell onClick={() => {setSxTenMonHoc(!sxTenMonHoc); }}>{sxTenMonHoc ?  "▼" :"▲"} Tên môn học</TableCell>
                             <TableCell>Chức năng</TableCell>
                         </TableRow>
                     </TableHead>
@@ -270,20 +270,18 @@ const QuanLyMonHoc = () => {
                     )}
 
                     </TableBody>
-                    <TableFooter>
-                        <TablePagination
-                            component="div"
-                            count={total}
-                            page={currentPage - 1}
-                            onPageChange={(_, newPage) => setCurrentPage(newPage + 1)}
-                            rowsPerPage={10}
-                            rowsPerPageOptions={[]}
-                            labelDisplayedRows={({ page }) => `Trang ${page + 1}`}
-                            labelRowsPerPage=""
-                            />
-                    </TableFooter>
                     
                 </Table>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", pr: 10, pb: 3 }}>
+                    <Pagination
+                    count={Math.ceil(total / 10)}      // tổng số trang, 10 là size mỗi trang
+                    page={currentPage}                 // đang ở trang nào (1-based)
+                    onChange={(_, value) => setCurrentPage(value)}  // đổi trang
+                    shape="rounded"
+                    siblingCount={0}      // số trang bên cạnh trang hiện tại
+                    boundaryCount={1}     // số trang đầu / cuối luôn hiện
+                    />
+                </Box>
                 
 
         </Stack>
