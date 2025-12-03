@@ -303,50 +303,99 @@ export class LopHocPhanService {
     
   }
 
-  async uploadFileDanhSachSinhVien(id:number, file: Express.Multer.File) {
-    try {
-       if(!file){
-      throw new BadRequestException('File không hợp lệ');
-    }
-
-    const workbook = XLSX.read(file.buffer, { type: 'buffer' });
-    
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-
-    const data = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-
-    const danhSachSinhVien = data.map((row: any,index: number) => {
-     return {
-       rowIndex: index + 2, 
-       sinhVien: {
-        maNguoiDung: String(row['Mã sinh viên']).trim() ,
-        hoTen: String(row['Họ và tên']).trim(),
-        email: String(row['Email']).trim(),
-       }
-     }
-    })
-
-    let thanhCong: number = 0;
-    const thatBai: { row: number; message: string }[] = [];
-
-    for (const item of danhSachSinhVien) {
-      const { rowIndex, sinhVien } = item;
-      try {
-        await this.themSinhVienVaoLopHocPhan(id, sinhVien.maNguoiDung); 
-        thanhCong++;
-
-      } catch (error) {
-        thatBai.push({ row: rowIndex, message: error.message });
-      }
-    }
-    return { thanhCong, thatBai };
-      
-    } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException('Lỗi khi upload file danh sách sinh viên');
-    }
-   
+async uploadFileDanhSachSinhVien(id: number, file: Express.Multer.File) {
+  if (!file) {
+    throw new BadRequestException('File không hợp lệ');
   }
+
+  const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const data = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+  let thanhCong = 0;
+  const thatBai: { row: number; message: string }[] = [];
+
+  for (const [index, row] of (data as any[]).entries()) {
+    const rowIndex = index + 2; // +2 vì header + dòng Excel bắt đầu từ 1
+
+    try {
+      // ============================
+      // 1. VALIDATE CƠ BẢN DÒNG EXCEL
+      // ============================
+
+      const maSV = String(row['Mã sinh viên'] ?? '').trim();
+      const hoTen = String(row['Họ và tên'] ?? '').trim();
+      const email = String(row['Email'] ?? '').trim();
+
+      if (!maSV) {
+        throw new BadRequestException('Mã sinh viên không được để trống');
+      }
+
+      if (!hoTen) {
+        throw new BadRequestException('Họ và tên không được để trống');
+      }
+
+      // Validate email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !emailRegex.test(email)) {
+        throw new BadRequestException(`Email không hợp lệ: ${email}`);
+      }
+
+      // ============================
+      // 2. KIỂM TRA CÓ TỒN TẠI TRONG HỆ THỐNG KHÔNG
+      // ============================
+
+      const nguoiDung = await this.ndRepo.findOne({
+        where: { maNguoiDung: maSV, email },
+      });
+
+      if (!nguoiDung) {
+        throw new NotFoundException(
+          `Không tìm thấy sinh viên với mã "${maSV}" hoặc email "${email}"`
+        );
+      }
+
+      // ============================
+      // 3. KIỂM TRA ĐÃ CÓ TRONG LỚP HỌC PHẦN CHƯA
+      // ============================
+
+      const daTonTai = await this.lopHocPhanRep
+        .createQueryBuilder('lhp')
+        .leftJoin('lhp.sinhVien', 'sv')
+        .leftJoin('sv.nguoiDung', 'nd')
+        .where('lhp.id = :id', { id })
+        .andWhere('nd.id = :idND', { idND: nguoiDung.id })
+        .getOne();
+
+      if (daTonTai) {
+        throw new BadRequestException(`Sinh viên "${maSV}" đã có trong lớp`);
+      }
+
+      // ============================
+      // 4. THÊM VÀO LỚP
+      // ============================
+
+      await this.lopHocPhanRep
+        .createQueryBuilder()
+        .relation(LopHocPhan, 'sinhVien')
+        .of(id)
+        .add(nguoiDung.id);
+
+      thanhCong++;
+    } catch (error: any) {
+      thatBai.push({
+        row: rowIndex,
+        message:
+          error.response?.message ||
+          error.message ||
+          'Lỗi không xác định xảy ra',
+      });
+    }
+  }
+
+  return { thanhCong, thatBai };
+}
+
 
 
   //End CRUD Lớp học phần Admin

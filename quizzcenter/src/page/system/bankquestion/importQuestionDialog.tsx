@@ -127,7 +127,7 @@ const ImportQuestionDialog = ({
       const formData = new FormData();
       formData.append("file", file);
 
-      const res: any= await fetch(`http://localhost:3000/gui-file/import/${selectedChuong}`, {
+      const res: any= await fetch(`${process.env.REACT_APP_BACK_END_URL}:3000/gui-file/import/${selectedChuong}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
