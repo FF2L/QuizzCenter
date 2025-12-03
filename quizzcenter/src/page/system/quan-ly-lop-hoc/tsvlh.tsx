@@ -124,7 +124,7 @@ const ThemSinhVienVaoLopHocPhan = () => {
     const res = await AdminApi.xoaSinhVienKhoiLopHocPhan(+idLopHocPhan, maSinhVien);
     if (res?.ok) {
       toast.success("Xóa sinh viên khỏi lớp thành công");
-      setRows((prev) => prev.filter((x) => x.masinhvien !== maSinhVien));
+      loadData();
       setTotal((t) => t - 1);
     } else {
       const err: any = res?.error;
