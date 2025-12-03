@@ -310,9 +310,9 @@ const BaiKiemTraList = () => {
         mb={2}
       >
         <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-          <IconButton onClick={() => navigate(-1)}>
-            <ArrowBackIcon />
-          </IconButton>
+        <IconButton onClick={() => navigate('/lecturer/course', { replace: true })}>
+  <ArrowBackIcon />
+</IconButton>
           <Typography variant="h4">Bài kiểm tra</Typography>
         </Box>
         <Button

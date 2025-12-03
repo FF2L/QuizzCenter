@@ -339,33 +339,6 @@ const BankQuestion = () => {
                   ),
                 }}
               />
-
-              <TextField
-                select
-                label="Độ khó"
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value as DoKho | "")}
-                sx={{ minWidth: 150, maxWidth: 200, backgroundColor: "white", borderRadius: 2 }}
-                size="small"
-              >
-                <MenuItem value="">Tất cả</MenuItem>
-                <MenuItem value={DoKho.De}>Dễ</MenuItem>
-                <MenuItem value={DoKho.TrungBinh}>Trung bình</MenuItem>
-                <MenuItem value={DoKho.Kho}>Khó</MenuItem>
-              </TextField>
-
-              <TextField
-                select
-                label="Loại câu hỏi"
-                value={questionType}
-                onChange={(e) => setQuestionType(e.target.value as LoaiCauHoi | "")}
-                sx={{ minWidth: 150, maxWidth: 200, backgroundColor: "white", borderRadius: 2 }}
-                size="small"
-              >
-                <MenuItem value="">Tất cả</MenuItem>
-                <MenuItem value={LoaiCauHoi.MotDung}>1 đúng</MenuItem>
-                <MenuItem value={LoaiCauHoi.NhieuDung}>Nhiều đúng</MenuItem>
-              </TextField>
             </Stack>
 
             <Stack direction="row" spacing={2} alignItems="center">
