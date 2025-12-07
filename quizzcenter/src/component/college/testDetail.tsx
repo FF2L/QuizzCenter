@@ -4,9 +4,13 @@ import {
   Box, Typography, Button, Paper, CircularProgress, Divider, Chip,
   Dialog, DialogTitle, DialogContent, DialogActions, Alert,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  LinearProgress
+  LinearProgress, Collapse, IconButton
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
 import dayjs from "dayjs";
 import { BaiLamSinhVienApi } from "../../services/bai-lam-sinh-vien.api";
 
@@ -25,6 +29,14 @@ interface BaiKiemTra {
 
 type TrangThai = "chuaBatDau" | "dangDienRa" | "daKetThuc" | "";
 
+interface DapAn {
+  id: number;
+  noiDung: string;
+  isCorrect: boolean;
+  selected: boolean;
+  [key: string]: any; 
+}
+
 interface CauHoiThongKe {
   idCauHoi: number;
   tenHienThi: string;
@@ -32,13 +44,7 @@ interface CauHoiThongKe {
   soLanSai: number;
   soLanLam: number;
   tiLeSai: number;
-}
-
-interface DapAn {
-  id: number;
-  isCorrect: boolean;
-  selected: boolean;
-  [key: string]: any; 
+  danhSachDapAn?: DapAn[];
 }
 
 const CollegeTestDetail: React.FC = () => {
@@ -55,13 +61,7 @@ const CollegeTestDetail: React.FC = () => {
   const [openThongKe, setOpenThongKe] = useState(false);
   const [loadingThongKe, setLoadingThongKe] = useState(false);
   const [thongKeData, setThongKeData] = useState<CauHoiThongKe[]>([]);
-
-  // const [, forceTick] = useState(0);
-  
-  // useEffect(() => {
-  //   const id = setInterval(() => forceTick(v => v + 1), 1000);
-  //   return () => clearInterval(id);
-  // }, []);
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (!baiKiemTra) return;
@@ -119,48 +119,45 @@ const CollegeTestDetail: React.FC = () => {
 
   const autoSubmittedIdsRef = useRef<Set<number>>(new Set());
   
-useEffect(() => {
-  if (!baiKiemTra) return;
+  useEffect(() => {
+    if (!baiKiemTra) return;
 
-  const checkAndSubmit = async () => {
-    const needSubmit: number[] = [];
+    const checkAndSubmit = async () => {
+      const needSubmit: number[] = [];
 
-    for (const att of attempts) {
-      if (att.thoiGianketThuc) continue; // đã nộp rồi thì bỏ
+      for (const att of attempts) {
+        if (att.thoiGianketThuc) continue;
 
-      const used = att.thoiGianSuDung ?? 0;
-      const overDuration = used >= baiKiemTra.thoiGianLam; // hết thời gian cho phép làm
+        const used = att.thoiGianSuDung ?? 0;
+        const overDuration = used >= baiKiemTra.thoiGianLam;
 
-      // Nếu bạn vẫn muốn giới hạn theo cửa sổ bài kiểm tra (thoiGianKetThuc), giữ thêm phần này:
-      const overWindow = baiKiemTra.thoiGianKetThuc
-        ? Date.now() >= new Date(baiKiemTra.thoiGianKetThuc).getTime()
-        : false;
+        const overWindow = baiKiemTra.thoiGianKetThuc
+          ? Date.now() >= new Date(baiKiemTra.thoiGianKetThuc).getTime()
+          : false;
 
-      if ((overDuration || overWindow) && !autoSubmittedIdsRef.current.has(att.id)) {
-        needSubmit.push(att.id);
+        if ((overDuration || overWindow) && !autoSubmittedIdsRef.current.has(att.id)) {
+          needSubmit.push(att.id);
+        }
       }
-    }
 
-    if (needSubmit.length === 0) return;
+      if (needSubmit.length === 0) return;
 
-    for (const id of needSubmit) {
-      try {
-        autoSubmittedIdsRef.current.add(id);
-        await BaiLamSinhVienApi.nopBai(id);
-      } catch (e) {
-        console.error("Auto submit failed for", id, e);
+      for (const id of needSubmit) {
+        try {
+          autoSubmittedIdsRef.current.add(id);
+          await BaiLamSinhVienApi.nopBai(id);
+        } catch (e) {
+          console.error("Auto submit failed for", id, e);
+        }
       }
-    }
 
-    await fetchAttempts();
-  };
+      await fetchAttempts();
+    };
 
-  const id = setInterval(checkAndSubmit, 1000);
-  return () => clearInterval(id);
-}, [attempts, baiKiemTra]);
+    const id = setInterval(checkAndSubmit, 1000);
+    return () => clearInterval(id);
+  }, [attempts, baiKiemTra]);
 
-
-  // Format thời gian từ giây
   const formatTimeFromSeconds = (seconds?: number) => {
     if (!seconds) return '00:00:00';
     
@@ -170,20 +167,19 @@ useEffect(() => {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-const getRemainByUsage = (att: any) => {
-  if(att.loaiKiemTra === "LuyenTap") {
-    console.log('remainSec', att.thoiGianSuDung)
-    return att.thoiGianSuDung
-  }
-  const used = att.thoiGianSuDung ?? 0;           // số giây đã làm
-  const total = baiKiemTra.thoiGianLam || 0;      // tổng thời gian cho phép (giây)
-  return Math.max(0, total - used);
-};
+  const getRemainByUsage = (att: any) => {
+    if(att.loaiKiemTra === "LuyenTap") {
+      return att.thoiGianSuDung;
+    }
+    const used = att.thoiGianSuDung ?? 0;
+    const total = baiKiemTra.thoiGianLam || 0;
+    return Math.max(0, total - used);
+  };
 
-const formatRemain = (att: any) => {
-  const remainSec = getRemainByUsage(att);
-  return formatTimeFromSeconds(remainSec);
-};
+  const formatRemain = (att: any) => {
+    const remainSec = getRemainByUsage(att);
+    return formatTimeFromSeconds(remainSec);
+  };
 
   const handleLamBai = async () => {
     if (reachedAttemptLimit || hasOngoingAttempt) return;
@@ -203,31 +199,17 @@ const formatRemain = (att: any) => {
     try {
       const tiepTuc = await BaiLamSinhVienApi.tiepTucLamBai(attId);
   
-      // Lấy thời gian còn lại đang hiển thị
       const att = attempts.find(a => a.id === attId);
       
       if (baiKiemTra.loaiKiemTra === "BaiKiemTra") {
-        // Bài kiểm tra → lưu thời gian CÒN LẠI
         const usedSeconds = att?.thoiGianSuDung ?? 0;
         const totalSeconds = baiKiemTra.thoiGianLam || 0;
         const remainSeconds = Math.max(0, totalSeconds - usedSeconds);
         
-        // LƯU REMAIN vào localStorage
         localStorage.setItem(`baiLam_${attId}_remain`, String(remainSeconds));
-        
-        console.log('🔵 Tiếp tục bài kiểm tra:', {
-          used: usedSeconds,
-          total: totalSeconds,
-          remain: remainSeconds
-        });
       } else {
-        // Luyện tập → lưu thời gian ĐÃ DÙNG
         const usedSeconds = att?.thoiGianSuDung ?? 0;
         localStorage.setItem(`baiLam_${attId}_elapsed`, String(usedSeconds));
-        
-        console.log('🟢 Tiếp tục luyện tập:', {
-          elapsed: usedSeconds
-        });
       }
   
       navigate(`/quizzcenter/lam-bai/${baiKiemTra.id}`, {
@@ -242,6 +224,7 @@ const formatRemain = (att: any) => {
       }
     }
   };
+
   const handleXemBaiLam = async (idBaiLam: number) => {
     try {
       setLoadingView(idBaiLam);
@@ -258,6 +241,7 @@ const formatRemain = (att: any) => {
   const handleThongKe = async () => {
     setOpenThongKe(true);
     setLoadingThongKe(true);
+    setExpandedRows(new Set());
     
     try {
       const completedAttempts = attempts.filter(att => att.thoiGianketThuc);
@@ -274,6 +258,7 @@ const formatRemain = (att: any) => {
         noiDung: string;
         soLanSai: number;
         soLanLam: number;
+        danhSachDapAn?: DapAn[];
       }>();
 
       for (const att of completedAttempts) {
@@ -290,7 +275,8 @@ const formatRemain = (att: any) => {
                 tenHienThi: chiTiet.cauHoi?.tenHienThi || "",
                 noiDung: chiTiet.cauHoi?.noiDung || "",
                 soLanSai: 0,
-                soLanLam: 0
+                soLanLam: 0,
+                danhSachDapAn: chiTiet.dapAn as DapAn[]
               });
             }
 
@@ -328,6 +314,18 @@ const formatRemain = (att: any) => {
     } finally {
       setLoadingThongKe(false);
     }
+  };
+
+  const toggleRowExpansion = (idCauHoi: number) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(idCauHoi)) {
+        newSet.delete(idCauHoi);
+      } else {
+        newSet.add(idCauHoi);
+      }
+      return newSet;
+    });
   };
 
   const handleBack = () => {
@@ -453,25 +451,15 @@ const formatRemain = (att: any) => {
         ) : (
           attemptsSorted.map((att) => {
             const ngay = dayjs(att.thoiGianBatDau).format("HH:mm DD/MM/YYYY");
-
-            const diemText =
-              typeof att.tongDiem === "number"
-                ? `${Number(att.tongDiem).toFixed(1)}/10`
-                : "—";
-
+            const diemText = typeof att.tongDiem === "number" ? `${Number(att.tongDiem).toFixed(1)}/10` : "—";
             const isDangLam = !att.thoiGianketThuc;
             
             let thoiGianDisplay = "";
             if (isDangLam) {
-              // còn bao nhiêu giây theo thoiGianSuDung
-                thoiGianDisplay = formatRemain(att);
-              console.log('bbb')
+              thoiGianDisplay = formatRemain(att);
             } else {
-              // tổng thời gian đã dùng
               thoiGianDisplay = formatTimeFromSeconds(att.thoiGianSuDung);
-              console.log('aaaa')
             }
-
 
             return (
               <Box
@@ -571,6 +559,7 @@ const formatRemain = (att: any) => {
                 <Table size="small">
                   <TableHead>
                     <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
+                      <TableCell sx={{ width: 50 }}></TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>STT</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>Câu hỏi</TableCell>
                       <TableCell align="center" sx={{ fontWeight: 700 }}>Số lần sai</TableCell>
@@ -580,44 +569,142 @@ const formatRemain = (att: any) => {
                   </TableHead>
                   <TableBody>
                     {thongKeData.map((item, idx) => (
-                      <TableRow key={item.idCauHoi}>
-                        <TableCell>{idx + 1}</TableCell>
-                        <TableCell>
-                          <Typography sx={{ fontWeight: 600, mb: 0.5 }}>
-                            {item.tenHienThi}
-                          </Typography>
-                          <Typography 
-                            variant="body2" 
-                            sx={{ color: "text.secondary" }}
-                            dangerouslySetInnerHTML={{ __html: item.noiDung }}
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip 
-                            label={item.soLanSai} 
-                            color="error" 
-                            size="small"
-                            sx={{ fontWeight: 700 }}
-                          />
-                        </TableCell>
-                        <TableCell align="center">{item.soLanLam}</TableCell>
-                        <TableCell align="center">
-                          <Box>
+                      <React.Fragment key={item.idCauHoi}>
+                        <TableRow 
+                          sx={{ 
+                            cursor: 'pointer',
+                            '&:hover': { backgroundColor: '#f5f5f5' }
+                          }}
+                          onClick={() => toggleRowExpansion(item.idCauHoi)}
+                        >
+                          <TableCell>
+                            <IconButton size="small">
+                              {expandedRows.has(item.idCauHoi) ? 
+                                <KeyboardArrowUpIcon /> : 
+                                <KeyboardArrowDownIcon />
+                              }
+                            </IconButton>
+                          </TableCell>
+                          <TableCell>{idx + 1}</TableCell>
+                          <TableCell>
+                            <Typography sx={{ fontWeight: 600, mb: 0.5 }}>
+                              {item.tenHienThi}
+                            </Typography>
                             <Typography 
                               variant="body2" 
-                              sx={{ fontWeight: 700, color: "error.main", mb: 0.5 }}
-                            >
-                              {item.tiLeSai.toFixed(1)}%
-                            </Typography>
-                            <LinearProgress 
-                              variant="determinate" 
-                              value={item.tiLeSai} 
-                              color="error"
-                              sx={{ height: 6, borderRadius: 3 }}
+                              sx={{ color: "text.secondary" }}
+                              dangerouslySetInnerHTML={{ __html: item.noiDung }}
                             />
-                          </Box>
-                        </TableCell>
-                      </TableRow>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip 
+                              label={item.soLanSai} 
+                              color="error" 
+                              size="small"
+                              sx={{ fontWeight: 700 }}
+                            />
+                          </TableCell>
+                          <TableCell align="center">{item.soLanLam}</TableCell>
+                          <TableCell align="center">
+                            <Box>
+                              <Typography 
+                                variant="body2" 
+                                sx={{ fontWeight: 700, color: "error.main", mb: 0.5 }}
+                              >
+                                {item.tiLeSai.toFixed(1)}%
+                              </Typography>
+                              <LinearProgress 
+                                variant="determinate" 
+                                value={item.tiLeSai} 
+                                color="error"
+                                sx={{ height: 6, borderRadius: 3 }}
+                              />
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell 
+                            style={{ paddingBottom: 0, paddingTop: 0 }} 
+                            colSpan={6}
+                          >
+                            <Collapse 
+                              in={expandedRows.has(item.idCauHoi)} 
+                              timeout="auto" 
+                              unmountOnExit
+                            >
+                              <Box sx={{ margin: 2, p: 2, backgroundColor: '#fafafa', borderRadius: 2 }}>
+                                <Typography 
+                                  variant="h6" 
+                                  gutterBottom 
+                                  sx={{ fontWeight: 700, color: '#1976d2', mb: 2 }}
+                                >
+                                  Chi tiết câu hỏi và đáp án
+                                </Typography>
+                                
+                                <Typography 
+                                  sx={{ 
+                                    mb: 2, 
+                                    p: 2, 
+                                    backgroundColor: 'white', 
+                                    borderRadius: 1,
+                                    fontWeight: 600 
+                                  }}
+                                  dangerouslySetInnerHTML={{ __html: item.noiDung }}
+                                />
+
+                                <Typography 
+                                  variant="subtitle1" 
+                                  sx={{ fontWeight: 700, mb: 1.5, color: '#555' }}
+                                >
+                                  Đáp án:
+                                </Typography>
+                                
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                                  {item.danhSachDapAn?.map((dapAn, daIdx) => (
+                                    <Box
+                                      key={dapAn.id}
+                                      sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1.5,
+                                        p: 1.5,
+                                        backgroundColor: dapAn.isCorrect ? '#e8f5e9' : 'white',
+                                        border: `2px solid ${dapAn.isCorrect ? '#4caf50' : '#e0e0e0'}`,
+                                        borderRadius: 1.5,
+                                      }}
+                                    >
+                                      {dapAn.isCorrect ? (
+                                        <CheckCircleIcon sx={{ color: '#4caf50', fontSize: 28 }} />
+                                      ) : (
+                                        <CancelIcon sx={{ color: '#f44336', fontSize: 28 }} />
+                                      )}
+                                      
+                                      <Box sx={{ flex: 1 }}>
+                                        <Typography 
+                                          sx={{ 
+                                            fontWeight: dapAn.isCorrect ? 600 : 400,
+                                            color: dapAn.isCorrect ? '#2e7d32' : 'text.primary'
+                                          }}
+                                          dangerouslySetInnerHTML={{ __html: dapAn.noiDung }}
+                                        />
+                                      </Box>
+                                      
+                                      {dapAn.isCorrect && (
+                                        <Chip 
+                                          label="Đáp án đúng" 
+                                          color="success" 
+                                          size="small"
+                                          sx={{ fontWeight: 600 }}
+                                        />
+                                      )}
+                                    </Box>
+                                  ))}
+                                </Box>
+                              </Box>
+                            </Collapse>
+                          </TableCell>
+                        </TableRow>
+                      </React.Fragment>
                     ))}
                   </TableBody>
                 </Table>
