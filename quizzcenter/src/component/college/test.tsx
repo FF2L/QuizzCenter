@@ -15,6 +15,7 @@ import {
   Button,
   TextField,
   Pagination,
+  Chip,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AssignmentIcon from "@mui/icons-material/Assignment";
@@ -80,6 +81,15 @@ const CollegeTest: React.FC = () => {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  // Kiểm tra xem bài kiểm tra có mới không (trong vòng 7 ngày)
+  const isNewBaiKiemTra = (updateAt: string): boolean => {
+    const now = new Date();
+    const updateDate = new Date(updateAt);
+    const diffInMs = now.getTime() - updateDate.getTime();
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+    return diffInDays <= 3;
   };
 
   // Fetch bài kiểm tra với query params - GIỐNG HỆT PAGE GV
@@ -193,8 +203,9 @@ const CollegeTest: React.FC = () => {
         mb: 1.5,
         cursor: "pointer",
         transition: "all 0.2s",
+        boxShadow:"none",
+        border:"1px solid #cccccc",
         "&:hover": {
-          boxShadow: 3,
           backgroundColor: "#f8f9fa",
         },
       }}
@@ -205,7 +216,7 @@ const CollegeTest: React.FC = () => {
             width: 40,
             height: 40,
             borderRadius: 1,
-            backgroundColor: "#e91e63",
+            backgroundColor: "#145c26",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -215,17 +226,34 @@ const CollegeTest: React.FC = () => {
           <AssignmentIcon sx={{ color: "#fff", fontSize: 24 }} />
         </Box>
         <Box sx={{ flex: 1 }}>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              color: "#e91e63",
-              fontWeight: 600,
-              mb: 0.5,
-            }}
-          >
-            {item.loaiKiemTra === "BaiKiemTra" ? "TRẮC NGHIỆM" : "LUYỆN TẬP"}
-          </Typography>
-          <Typography variant="body1" sx={{ fontWeight: 500, mb: 0.5 }}>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+            <Typography
+              variant="subtitle1"
+              sx={{
+                color: "#145c26",
+                fontWeight: 600,
+              }}
+            >
+              {item.loaiKiemTra === "BaiKiemTra" ? "TRẮC NGHIỆM" : "LUYỆN TẬP"}
+            </Typography>
+            {isNewBaiKiemTra(item.update_at) && (
+              <Chip
+                label="Mới"
+                size="small"
+                sx={{
+                  height: 20,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  backgroundColor: "#4caf50",
+                  color: "white",
+                  "& .MuiChip-label": {
+                    px: 1,
+                  },
+                }}
+              />
+            )}
+          </Stack>
+          <Typography variant="body1" sx={{color:"#ff6a00", fontWeight: 500, mb: 0.5 }}>
             {item.tenBaiKiemTra}
           </Typography>
           <Typography variant="body2" sx={{ color: "#666", fontSize: 13 }}>
