@@ -18,6 +18,7 @@ import {
   CircularProgress,
   Tabs,
   Tab,
+  TableSortLabel,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
@@ -35,6 +36,9 @@ interface BangDiem {
   diem: number;
 }
 
+type OrderDirection = "asc" | "desc";
+type SortableField = "hoTenSinhVien" | "maSinhVien" | "emailSinhVien" | "diem";
+
 const BangDiemPage = () => {
   const { idLopHocPhan, idBaiKiemTra } = useParams<{
     idLopHocPhan: string;
@@ -49,6 +53,8 @@ const BangDiemPage = () => {
   const [searchValue, setSearchValue] = useState("");
   const [isExporting, setIsExporting] = useState(false);
   const [currentTab, setCurrentTab] = useState(0);
+  const [orderBy, setOrderBy] = useState<SortableField>("hoTenSinhVien");
+  const [order, setOrder] = useState<OrderDirection>("asc");
 
   const accessToken = localStorage.getItem("accessTokenGV") || "";
 
@@ -138,6 +144,50 @@ const BangDiemPage = () => {
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
   };
+
+  // Xử lý sort
+  const handleRequestSort = (property: SortableField) => {
+    const isAsc = orderBy === property && order === "asc";
+    setOrder(isAsc ? "desc" : "asc");
+    setOrderBy(property);
+  };
+
+  // Hàm so sánh để sort
+  const getComparator = (
+    order: OrderDirection,
+    orderBy: SortableField
+  ): ((a: BangDiem, b: BangDiem) => number) => {
+    return order === "desc"
+      ? (a, b) => descendingComparator(a, b, orderBy)
+      : (a, b) => -descendingComparator(a, b, orderBy);
+  };
+
+  const descendingComparator = (
+    a: BangDiem,
+    b: BangDiem,
+    orderBy: SortableField
+  ): number => {
+    const aValue = a[orderBy];
+    const bValue = b[orderBy];
+
+    // Xử lý số
+    if (typeof aValue === "number" && typeof bValue === "number") {
+      return bValue - aValue;
+    }
+
+    // Xử lý chuỗi
+    if (typeof aValue === "string" && typeof bValue === "string") {
+      return bValue.localeCompare(aValue, "vi");
+    }
+
+    return 0;
+  };
+
+  // Sort danh sách
+  const sortedBangDiemList = React.useMemo(() => {
+    const comparator = getComparator(order, orderBy);
+    return [...bangDiemList].sort(comparator);
+  }, [bangDiemList, order, orderBy]);
 
   return (
     <Box sx={{ p: 3, backgroundColor: "#F8F8F8", minHeight: "100vh" }}>
@@ -338,7 +388,28 @@ const BangDiemPage = () => {
                         minWidth: "200px",
                       }}
                     >
-                      Tên sinh viên
+                      <TableSortLabel
+                        active={orderBy === "hoTenSinhVien"}
+                        direction={orderBy === "hoTenSinhVien" ? order : "asc"}
+                        onClick={() => handleRequestSort("hoTenSinhVien")}
+                        sx={{
+                          color: "white !important",
+                          "&:hover": {
+                            color: "white !important",
+                          },
+                          "& .MuiTableSortLabel-icon": {
+                            color: "white !important",
+                          },
+                          "&.Mui-active": {
+                            color: "white !important",
+                            "& .MuiTableSortLabel-icon": {
+                              color: "white !important",
+                            },
+                          },
+                        }}
+                      >
+                        Tên sinh viên
+                      </TableSortLabel>
                     </TableCell>
                     <TableCell
                       sx={{
@@ -348,7 +419,28 @@ const BangDiemPage = () => {
                         minWidth: "130px",
                       }}
                     >
-                      Mã sinh viên
+                      <TableSortLabel
+                        active={orderBy === "maSinhVien"}
+                        direction={orderBy === "maSinhVien" ? order : "asc"}
+                        onClick={() => handleRequestSort("maSinhVien")}
+                        sx={{
+                          color: "white !important",
+                          "&:hover": {
+                            color: "white !important",
+                          },
+                          "& .MuiTableSortLabel-icon": {
+                            color: "white !important",
+                          },
+                          "&.Mui-active": {
+                            color: "white !important",
+                            "& .MuiTableSortLabel-icon": {
+                              color: "white !important",
+                            },
+                          },
+                        }}
+                      >
+                        Mã sinh viên
+                      </TableSortLabel>
                     </TableCell>
                     <TableCell
                       sx={{
@@ -358,7 +450,28 @@ const BangDiemPage = () => {
                         minWidth: "220px",
                       }}
                     >
-                      Email
+                      <TableSortLabel
+                        active={orderBy === "emailSinhVien"}
+                        direction={orderBy === "emailSinhVien" ? order : "asc"}
+                        onClick={() => handleRequestSort("emailSinhVien")}
+                        sx={{
+                          color: "white !important",
+                          "&:hover": {
+                            color: "white !important",
+                          },
+                          "& .MuiTableSortLabel-icon": {
+                            color: "white !important",
+                          },
+                          "&.Mui-active": {
+                            color: "white !important",
+                            "& .MuiTableSortLabel-icon": {
+                              color: "white !important",
+                            },
+                          },
+                        }}
+                      >
+                        Email
+                      </TableSortLabel>
                     </TableCell>
                     <TableCell
                       sx={{
@@ -369,12 +482,33 @@ const BangDiemPage = () => {
                         width: "100px",
                       }}
                     >
-                      Điểm
+                      <TableSortLabel
+                        active={orderBy === "diem"}
+                        direction={orderBy === "diem" ? order : "asc"}
+                        onClick={() => handleRequestSort("diem")}
+                        sx={{
+                          color: "white !important",
+                          "&:hover": {
+                            color: "white !important",
+                          },
+                          "& .MuiTableSortLabel-icon": {
+                            color: "white !important",
+                          },
+                          "&.Mui-active": {
+                            color: "white !important",
+                            "& .MuiTableSortLabel-icon": {
+                              color: "white !important",
+                            },
+                          },
+                        }}
+                      >
+                        Điểm
+                      </TableSortLabel>
                     </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {bangDiemList.map((item, index) => (
+                  {sortedBangDiemList.map((item, index) => (
                     <TableRow
                       key={item.nd_id}
                       sx={{

@@ -110,17 +110,17 @@ const UpdateBaiKiemTraDialog: React.FC<UpdateBaiKiemTraDialogProps> = ({
   // Handler cho thời gian bắt đầu với validation
   const handleStartTimeChange = (value: string) => {
     setErrorMessage("");
-    setThoiGianBatDau(value);
     
     if (value && !hasStarted && !isEnded) {
       const selectedDate = new Date(value);
-      const minTime = new Date(); // Chỉ check sau thời gian hiện tại
+      const minTime = new Date(); // không cộng thêm phút nào
       
       // Validate đơn giản: chỉ check theo đúng giá trị user chọn
-      if (selectedDate < minTime) {
+      if (selectedDate <= minTime) {
         setErrorMessage(
           `⚠️ Thời gian bắt đầu (${selectedDate.toLocaleString('vi-VN')}) phải sau thời gian hiện tại (${new Date().toLocaleString('vi-VN')})`
         );
+        // KHÔNG GÁN GIÁ TRỊ - giữ nguyên giá trị cũ
         return;
       }
       
@@ -133,6 +133,9 @@ const UpdateBaiKiemTraDialog: React.FC<UpdateBaiKiemTraDialogProps> = ({
         }
       }
     }
+    
+    // Chỉ gán giá trị nếu pass validation
+    setThoiGianBatDau(value);
   };
 
   // Handler cho thời gian kết thúc với validation
@@ -211,7 +214,7 @@ const UpdateBaiKiemTraDialog: React.FC<UpdateBaiKiemTraDialogProps> = ({
     // Chỉ check thời gian bắt đầu nếu chưa bắt đầu
     if (!hasStarted && !isEnded) {
       // Check 1: Thời gian bắt đầu phải sau thời gian hiện tại (giống Create)
-      if (batDauDate < now) {
+      if (batDauDate <= now) {
         setErrorMessage(
           "Thời gian bắt đầu phải sau thời gian hiện tại!"
         );
