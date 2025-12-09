@@ -298,6 +298,7 @@ const handleClickEdit = async (row: any) => {
         <Table>
           <TableHead>
             <TableRow>
+              <TableCell>STT</TableCell>
               <TableCell>Tên lớp học</TableCell>
               <TableCell>Học kỳ</TableCell>
               <TableCell>Môn học</TableCell>
@@ -310,6 +311,7 @@ const handleClickEdit = async (row: any) => {
             {/* HÀNG TẠO */}
             {showCreateRow && (
               <TableRow style={{ alignItems: "center", justifyContent: "center" }}>
+                <TableCell></TableCell>
 
                 <TableCell padding="none">
                   <TextField
@@ -374,7 +376,7 @@ const handleClickEdit = async (row: any) => {
                   </TextField>
                 </TableCell>
 
-                <TableCell padding="none" sx={{ px: 1 }}>
+                <TableCell padding="none" sx={{ px: 1, pl: 4 }}>
                   <Stack direction="row" spacing={5}>
                     <a
                       style={{ color: "#1976d2", cursor: "pointer", textDecoration: "none" }}
@@ -394,8 +396,9 @@ const handleClickEdit = async (row: any) => {
             )}
 
             {/* DANH SÁCH + SỬA INLINE */}
-            {danhSachLopHoc.map((lopHoc: any) => (
+            {danhSachLopHoc.map((lopHoc: any, index: number) => (
               <TableRow key={lopHoc.lhp_id}>
+                <TableCell>{(currentPage - 1) * 10 + index + 1}</TableCell>
                 {editRowId === lopHoc.lhp_id ? (
                   <>
                     <TableCell padding="none">

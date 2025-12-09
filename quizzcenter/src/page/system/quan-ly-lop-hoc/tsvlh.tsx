@@ -213,7 +213,7 @@ const ThemSinhVienVaoLopHocPhan = () => {
               </Typography>
             )}
             {total && (
-              <Typography variant="caption" sx={{ color: "text.disabled" }}>
+              <Typography variant="caption" sx={{ color: "text.disabled", fontSize: 16 }}>
                 Sĩ số: {total}
               </Typography>
             )}
@@ -278,6 +278,7 @@ const ThemSinhVienVaoLopHocPhan = () => {
         <Table>
           <TableHead>
             <TableRow>
+              <TableCell width={60}>STT</TableCell>
               <TableCell width={60}>Ảnh</TableCell>
               <TableCell width={140}>MSSV</TableCell>
               <TableCell>Họ tên</TableCell>
@@ -295,8 +296,9 @@ const ThemSinhVienVaoLopHocPhan = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              rows.map((sv) => (
+              rows.map((sv, index) => (
                 <TableRow key={`${sv.nd_id}-${sv.masinhvien}`}>
+                  <TableCell>{(page - 1) * 10 + index + 1}</TableCell>
                   <TableCell>
                     <Avatar
                       src={sv.anhdaidiensinhvien ?? undefined}

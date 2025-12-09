@@ -151,6 +151,7 @@ const handleCancelEdit = () => {
         <Table>
           <TableHead>
             <TableRow>
+              <TableCell>STT</TableCell>
               <TableCell onClick={() => { setSxTenGiangVien(prev => !prev);}}>{sxTenGiangVien ? "▼" : "▲"} Giảng viên</TableCell>
               <TableCell>Môn học được phân công</TableCell>
               <TableCell>Hành động</TableCell>
@@ -170,6 +171,7 @@ const handleCancelEdit = () => {
             ) : (
               danhSach.map((row: any, idx: number) => (
                 <TableRow key={row.idnguoiDung }>
+                  <TableCell>{(currentPage - 1) * 10 + idx + 1}</TableCell>
                   <TableCell>{row.hoTen}</TableCell>
                   <TableCell
                     sx={{
@@ -188,7 +190,7 @@ const handleCancelEdit = () => {
                   <TableCell>
                     <Stack direction="row" spacing={5}>
                       <a
-                        style={{ color: "#d32f2f", cursor: "pointer", textDecoration: "none" }}
+                        style={{ color: "#1976d2", cursor: "pointer", textDecoration: "none" }}
                          onClick={() => handleOpenEdit(row)}
                       >
                         Sửa phân công

@@ -152,8 +152,11 @@ export class BaiLamSinhVienService {
           where: { idBaiLamSinhVien: baiLam.id },
         });
 
+        const tongCauHoi = dsChiTiet.length;
+        const diemMoiCau = Number((tongCauHoi === 0 ? 0 : 10 / tongCauHoi));
+
         let tongDapAnDung = 0;
-        let tongDapAnToanBo = 0;
+        let tongDiem = 0
 
         for (const ct of dsChiTiet) {
           const ctch = await manager.findOne(ChiTietCauHoiBaiKiemTra, {
@@ -165,21 +168,38 @@ export class BaiLamSinhVienService {
           if (!cauHoi) continue;
 
           const dsDapAn = await cauHoi.dapAn;
-          const dapAnDung = dsDapAn.filter(d => d.dapAnDung).map(d => d.id);
 
-          tongDapAnToanBo += dapAnDung.length;
+          if(cauHoi.loaiCauHoi === 'MotDung' ){
+            const dapAnChon = ct.mangIdDapAn ? ct.mangIdDapAn[0] : null;
+            const dapAnDung = dsDapAn.find(d => d.dapAnDung)?.id;
+            const isDung = dapAnChon === dapAnDung;
+            if (isDung){
+              tongDapAnDung += 1;
+              tongDiem += Number(diemMoiCau);
+              console.log('Câu hỏi đúng, cộng điểm:', diemMoiCau);
+            }
+              
+          }else if(cauHoi.loaiCauHoi === 'NhieuDung'){
+            const dsDapAnDaChon = ct.mangIdDapAn ?? [];
+            const dapAnDung = dsDapAn.filter(d => d.dapAnDung).map(d => d.id);
+            if(dsDapAnDaChon.length === 0){
+              tongDiem += 0;
+              console.log('Câu hỏi nhiều đáp án, không chọn đáp án nào, điểm cộng: 0');
+            } else{
+              if(dsDapAnDaChon.some(id => !dapAnDung.includes(id))){
+                tongDiem += 0;
+                console.log('Câu hỏi nhiều đáp án, chọn sai đáp án, điểm cộng: 0');
+              }else{
+                tongDapAnDung += dsDapAnDaChon.length; 
+                tongDiem += Number((dsDapAnDaChon.length * Number(diemMoiCau) / dapAnDung.length));
+                console.log('Câu hỏi nhiều đáp án, chọn đúng, điểm cộng:', (dsDapAnDaChon.length * Number(diemMoiCau) / dapAnDung.length) );
+              }
+            }
+          }
+          console.log('Tổng điểm hiện tại:', tongDiem);
 
-          const daChon = ct.mangIdDapAn ?? [];
-          const soDung = daChon.filter(id => dapAnDung.includes(id)).length;
-          tongDapAnDung += soDung;
         }
-
-        const tongDiem = tongDapAnToanBo === 0 
-          ? 0 
-          : Number(((tongDapAnDung / tongDapAnToanBo) * 10).toFixed(1));
-
-        baiLam.tongDiem = tongDiem;
-        console.log('Cập nhật điểm tạm thời:', tongDiem);
+        baiLam.tongDiem = Number(tongDiem.toFixed(1));
 
         await manager.save(baiLam);
 
@@ -207,8 +227,20 @@ export class BaiLamSinhVienService {
           where: { idBaiLamSinhVien },
         });
 
+        const tongCauHoi = dsChiTiet.length;
+        const diemMoiCau = Number((tongCauHoi === 0 ? 0 : 10 / tongCauHoi));
+
         let tongDapAnDung = 0;
-        let tongDapAnToanBo = 0;
+        const tongDapAnToanBo = await manager
+          .getRepository(ChiTietCauHoiBaiKiemTra)
+          .createQueryBuilder('ctch')
+          .innerJoinAndSelect('ctch.cauHoi', 'cauHoi')
+          .innerJoinAndSelect('cauHoi.dapAn', 'dapAn')
+          .where('ctch."idBaiKiemTra" = :idBaiKiemTra', { idBaiKiemTra: baiLam.idBaiKiemTra })
+          .andWhere('dapAn.dapAnDung = true')
+          .getCount();
+
+        let tongDiem = 0
 
         for (const ct of dsChiTiet) {
           const ctch = await manager.findOne(ChiTietCauHoiBaiKiemTra, {
@@ -220,21 +252,39 @@ export class BaiLamSinhVienService {
           if (!cauHoi) continue;
 
           const dsDapAn = await cauHoi.dapAn;
-          const dapAnDung = dsDapAn.filter(d => d.dapAnDung).map(d => d.id);
 
-          tongDapAnToanBo += dapAnDung.length;
+          if(cauHoi.loaiCauHoi === 'MotDung' ){
+            const dapAnChon = ct.mangIdDapAn ? ct.mangIdDapAn[0] : null;
+            const dapAnDung = dsDapAn.find(d => d.dapAnDung)?.id;
+            const isDung = dapAnChon === dapAnDung;
+            if (isDung){
+              tongDapAnDung += 1;
+              tongDiem += Number(diemMoiCau);
+              console.log('Câu hỏi đúng, cộng điểm:', diemMoiCau);
+            }
+              
+          }else if(cauHoi.loaiCauHoi === 'NhieuDung'){
+            const dsDapAnDaChon = ct.mangIdDapAn ?? [];
+            const dapAnDung = dsDapAn.filter(d => d.dapAnDung).map(d => d.id);
+            if(dsDapAnDaChon.length === 0){
+              tongDiem += 0;
+              console.log('Câu hỏi nhiều đáp án, không chọn đáp án nào, điểm cộng: 0');
+            } else{
+              if(dsDapAnDaChon.some(id => !dapAnDung.includes(id))){
+                tongDiem += 0;
+                console.log('Câu hỏi nhiều đáp án, chọn sai đáp án, điểm cộng: 0');
+              }else{
+                tongDapAnDung += dsDapAnDaChon.length; 
+                tongDiem += Number((dsDapAnDaChon.length * Number(diemMoiCau) / dapAnDung.length));
+                console.log('Câu hỏi nhiều đáp án, chọn đúng, điểm cộng:', (dsDapAnDaChon.length * Number(diemMoiCau) / dapAnDung.length) );
+              }
+            }
+          }
+          console.log('Tổng điểm hiện tại:', tongDiem);
 
-          const daChon = ct.mangIdDapAn ?? [];
-          const soDung = daChon.filter(id => dapAnDung.includes(id)).length;
-          tongDapAnDung += soDung;
         }
-
-        const tongDiem = tongDapAnToanBo === 0 
-          ? 0 
-          : Number(((tongDapAnDung / tongDapAnToanBo) * 10).toFixed(1));
-
         baiLam.thoiGianketThuc = new Date();
-        baiLam.tongDiem = tongDiem;
+        baiLam.tongDiem = Number(tongDiem.toFixed(1));
 
         await manager.save(baiLam);
 
@@ -313,8 +363,8 @@ export class BaiLamSinhVienService {
         })
       );
 
-      const diemThang10 =
-        tongDapAnToanBo === 0 ? 0 : Number(((tongDapAnDung / tongDapAnToanBo) * 10).toFixed(1));
+      // const diemThang10 =
+      //   tongDapAnToanBo === 0 ? 0 : Number(((tongDapAnDung / tongDapAnToanBo) * 10).toFixed(1));
 
       return {
         baiLam: {
@@ -322,7 +372,7 @@ export class BaiLamSinhVienService {
           idSinhVien: baiLam.idSinhVien,
           idBaiKiemTra: baiLam.idBaiKiemTra,
           tongDiem: baiLam.tongDiem,
-          diemTinhLai: diemThang10,
+          diemTinhLai: baiLam.tongDiem ,
           thoiGianBatDau: baiLam.thoiGianBatDau,
           thoiGianketThuc: baiLam.thoiGianketThuc,
         },
@@ -330,7 +380,7 @@ export class BaiLamSinhVienService {
           tongCau: dsChiTiet.length,
           tongDapAnDung,
           tongDapAnToanBo,
-          diemThang10,
+          diemThang10: baiLam.tongDiem ,
         },
         chiTiet: items,
       };
