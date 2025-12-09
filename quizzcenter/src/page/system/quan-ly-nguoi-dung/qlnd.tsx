@@ -1,4 +1,4 @@
-import { Box, Button, colors, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Pagination, Stack, Table, TableBody, TableCell, TableHead, TablePagination, TableRow, TextField, Typography } from "@mui/material";
+import { Box, Button, colors, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Pagination, Stack, Tab, Table, TableBody, TableCell, TableHead, TablePagination, TableRow, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { AdminApi } from "../../../services/admin.api";
 import ConfirmDialog from "../../../common/dialog";
@@ -281,6 +281,7 @@ const QuanLyNguoiDung = () => {
             <Table>
                 <TableHead>
                     <TableRow>
+                        <TableCell>STT</TableCell>
                         <TableCell>Họ và tên</TableCell>
                         <TableCell>Mã người dùng</TableCell>
                         <TableCell>Giới tính</TableCell>
@@ -295,6 +296,7 @@ const QuanLyNguoiDung = () => {
                 <TableBody>
                     {showCreateRow && (
                     <TableRow style={{alignItems: "center", justifyContent: "center"}} >
+                        <TableCell></TableCell>
                         <TableCell padding="none">
                         <TextField size="small" value={form.hoTen} placeholder="Họ tên"
                             style={{paddingLeft: "10px"}}
@@ -384,8 +386,9 @@ const QuanLyNguoiDung = () => {
                             </TableCell>
                         </TableRow>
                     ) : (
-                        danhSachNd.map((row: any) => (
+                        danhSachNd.map((row: any, index: number) => (
                         <TableRow key={row.id}>
+                            <TableCell>{(currentPage - 1) * 10 + index + 1}</TableCell>
                             {editRowId === row.id ? (
                             <>
                                 <TableCell padding="none">
@@ -480,6 +483,7 @@ const QuanLyNguoiDung = () => {
                             </>
                             ) : (
                             <>
+                            
                                 <TableCell>{row.hoTen}</TableCell>
                                 <TableCell>{row.maNguoiDung}</TableCell>
                                 <TableCell>{row.gioiTinh}</TableCell>

@@ -171,6 +171,7 @@ const QuanLyMonHoc = () => {
                 <Table>
                     <TableHead>
                         <TableRow>
+                            <TableCell>STT</TableCell>
                             <TableCell> Mã môn học</TableCell>
                             <TableCell onClick={() => {setSxTenMonHoc(!sxTenMonHoc); }}>{sxTenMonHoc ?  "▼" :"▲"} Tên môn học</TableCell>
                             <TableCell>Chức năng</TableCell>
@@ -179,6 +180,7 @@ const QuanLyMonHoc = () => {
                     <TableBody>
                     {showCreateRow && (
                     <TableRow style={{alignItems: "center", justifyContent: "center"}} >
+                        <TableCell></TableCell>
                         <TableCell padding="none">
                         <TextField size="small" value={form.maMonHoc} placeholder="Mã môn học"
                             style={{paddingLeft: "10px"}}
@@ -212,8 +214,9 @@ const QuanLyMonHoc = () => {
                             </TableCell>
                         </TableRow>
                     ) : (
-                        danhSachMonHoc.map((monHoc: any) => (
+                        danhSachMonHoc.map((monHoc: any, index:number) => (
                             <TableRow key={monHoc.id}>
+                                <TableCell>{(currentPage - 1) * 10 + index + 1}</TableCell>
                                 {editRowId === monHoc.id ? (
                                     <>
                                     <TableCell padding="none">

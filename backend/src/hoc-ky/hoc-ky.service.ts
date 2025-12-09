@@ -140,7 +140,7 @@ export class HocKyService {
       const lopHoc = await this.lopHocPhanRepository.findOne({
         where:{idHocKy: id}
       });
-      if(!lopHoc){
+      if(lopHoc){
         throw new BadRequestException('Không thể xóa học kỳ này vì đã có lớp học phần liên kết');
       }
       return await this.hocKyRepository.delete(id);
