@@ -153,15 +153,13 @@ const BaiKiemTraList = () => {
   }, [idLopHocPhan, tabValue, currentPage]);
 
   useEffect(() => {
-    if (!accessToken) return;
-
     const timeoutId = setTimeout(() => {
       setCurrentPage(1);
-      fetchBaiKiemTra();
     }, 500);
-
+  
     return () => clearTimeout(timeoutId);
   }, [searchValue]);
+  
 
   const handleCreateBaiKiemTra = async (payload: any) => {
     try {
@@ -310,7 +308,7 @@ const BaiKiemTraList = () => {
         mb={2}
       >
         <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-        <IconButton onClick={() => navigate('/lecturer/course', { replace: true })}>
+        <IconButton onClick={() => navigate('/lecturer/class', { replace: true })}>
   <ArrowBackIcon />
 </IconButton>
           <Typography variant="h4">Bài kiểm tra</Typography>

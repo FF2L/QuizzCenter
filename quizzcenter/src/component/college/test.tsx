@@ -55,6 +55,7 @@ const CollegeTest: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [baiKiemTraList, setBaiKiemTraList] = useState<BaiKiemTra[]>([]);
   const [searchValue, setSearchValue] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 10;
@@ -83,7 +84,7 @@ const CollegeTest: React.FC = () => {
     });
   };
 
-  // Kiểm tra xem bài kiểm tra có mới không (trong vòng 7 ngày)
+  // Kiểm tra xem bài kiểm tra có mới không (trong vòng 3 ngày)
   const isNewBaiKiemTra = (updateAt: string): boolean => {
     const now = new Date();
     const updateDate = new Date(updateAt);
@@ -92,7 +93,7 @@ const CollegeTest: React.FC = () => {
     return diffInDays <= 3;
   };
 
-  // Fetch bài kiểm tra với query params - GIỐNG HỆT PAGE GV
+  // Fetch bài kiểm tra với query params
   const fetchBaiKiemTra = async () => {
     try {
       setLoading(true);
@@ -106,9 +107,9 @@ const CollegeTest: React.FC = () => {
         limit: limit.toString(),
       });
 
-      // Thêm search nếu có
-      if (searchValue.trim()) {
-        params.append("tenBaiKiemTra", searchValue.trim());
+      // Thêm search nếu có - SỬ DỤNG debouncedSearch
+      if (debouncedSearch.trim()) {
+        params.append("tenBaiKiemTra", debouncedSearch.trim());
       }
 
       const url = `${process.env.REACT_APP_BACK_END_URL}/bai-kiem-tra/sinh-vien/${idLopHocPhan}?${params.toString()}`;
@@ -139,33 +140,35 @@ const CollegeTest: React.FC = () => {
       setLoading(false);
     }
   };
+
   const handleBack = () => {
-    // Lấy idLopHocPhan từ baiKiemTra state hoặc từ URL params
-      navigate(-1);
+    navigate(-1);
   };
-  // Fetch data khi component mount hoặc dependencies thay đổi
-  useEffect(() => {
-    if (accessToken && tabValue < 2) {
-      fetchBaiKiemTra();
-    }
-  }, [idLopHocPhan, tabValue, currentPage]);
 
-  // Debounce cho search
+  // useEffect 1: Debounce search value
   useEffect(() => {
-    if (!accessToken || tabValue >= 2) return;
-
     const timeoutId = setTimeout(() => {
-      setCurrentPage(1); // Reset về trang 1 khi search
-      fetchBaiKiemTra();
+      setDebouncedSearch(searchValue);
+      if (searchValue.trim() !== debouncedSearch.trim()) {
+        setCurrentPage(1); // Reset về trang 1 khi search thay đổi
+      }
     }, 500);
 
     return () => clearTimeout(timeoutId);
   }, [searchValue]);
 
+  // useEffect 2: Fetch data (CHỈ 1 useEffect duy nhất)
+  useEffect(() => {
+    if (accessToken && tabValue < 2) {
+      fetchBaiKiemTra();
+    }
+  }, [idLopHocPhan, tabValue, currentPage, debouncedSearch]);
+
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
     setCurrentPage(1); // Reset về trang 1 khi đổi tab
     setSearchValue(""); // Clear search khi đổi tab
+    setDebouncedSearch(""); // Clear debounced search khi đổi tab
   };
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,6 +188,7 @@ const CollegeTest: React.FC = () => {
     setExpandedBaiKiemTra(newState);
     setExpandedLuyenTap(newState);
   };
+
   // Nhóm dữ liệu theo loại
   const groupedData: GroupedData = {
     baiKiemTra: baiKiemTraList.filter((item) => item.loaiKiemTra === "BaiKiemTra"),
@@ -265,7 +269,6 @@ const CollegeTest: React.FC = () => {
             Thời gian làm: {item.thoiGianLam / 60} phút
           </Typography>
           )}
-          
         </Box>
       </Stack>
     </Paper>
@@ -290,25 +293,26 @@ const CollegeTest: React.FC = () => {
   return (
     <Box sx={{ flex: 1, pt: "40px", px: { xs: 2, md: 8 }, pb: 4 }}>
       <Box sx={{display:'flex', flexDirection:'row'}}>
-      <Button
-        startIcon={<ArrowBackIcon />}
-        onClick={handleBack}
-        sx={{ fontWeight: 600, height:"40px" }}
-        variant="text"
-        color="primary"
-      >
-      </Button>
-      {/* Header với tên môn */}
-      <Typography
-        variant="h5"
-        sx={{
-          color: "#ff6a00",
-          fontWeight: 700,
-        }}
-      >
-        {tenMonHoc} ({maMonHoc})
-      </Typography>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={handleBack}
+          sx={{ fontWeight: 600, height:"40px" }}
+          variant="text"
+          color="primary"
+        >
+        </Button>
+        {/* Header với tên môn */}
+        <Typography
+          variant="h5"
+          sx={{
+            color: "#ff6a00",
+            fontWeight: 700,
+          }}
+        >
+          {tenMonHoc} ({maMonHoc})
+        </Typography>
       </Box>
+
       {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
         <Tabs
@@ -333,7 +337,6 @@ const CollegeTest: React.FC = () => {
         >
           <Tab label="Bài kiểm tra" />
           <Tab label="Bài luyện tập" />
-          {/* <Tab label="Điểm số" /> */}
         </Tabs>
       </Box>
 
@@ -442,15 +445,6 @@ const CollegeTest: React.FC = () => {
           )}
         </Box>
       )}
-
-      {/* Tab điểm số */}
-      {/* {tabValue === 2 && (
-        <Box sx={{ p: 3, textAlign: "center" }}>
-          <Typography variant="h6" color="text.secondary">
-            Chức năng Điểm số đang được phát triển
-          </Typography>
-        </Box>
-      )} */}
     </Box>
   );
 };

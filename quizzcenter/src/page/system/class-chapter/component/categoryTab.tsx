@@ -74,7 +74,7 @@ const CategoryTab = () => {
 
   // Xử lý xóa chương
   const handleDeleteChuong = async (chuong: Chuong) => {
-    if (chuong.soluongcauhoi && chuong.soluongcauhoi > 0) {
+    if (chuong.soluongcauhoi && chuong.soluongcauhoi !== "0") {
       alert("Không thể xóa chương này vì chương đã có câu hỏi!");
       return;
     }
@@ -239,7 +239,6 @@ const handleChuongCreated = (newChuong: Chuong) => {
                   >
                     <Edit />
                   </IconButton>
-                  {chuong.soluongcauhoi === 0 && (
                     <IconButton
                       sx={{ color: "#d32f2f" }}
                       onClick={(event) => { 
@@ -249,7 +248,6 @@ const handleChuongCreated = (newChuong: Chuong) => {
                     >
                       <Delete />
                     </IconButton>
-                  )}
                 </Stack>
               </CardContent>
             </Card>
