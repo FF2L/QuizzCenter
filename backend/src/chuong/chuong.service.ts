@@ -6,22 +6,111 @@ import { UpdateChuongDto } from './dto/update-chuong.dto';
 import { MonHocService } from 'src/mon-hoc/mon-hoc.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { GiangVien } from 'src/giang-vien/entities/giang-vien.entity';
-import { MonHoc } from 'src/mon-hoc/entities/mon-hoc.entity';
-import { FindAllChuongDto } from './dto/findAll-chuong.dto';
-import { Pagination } from 'src/common/dto/pagination.dto';
 import { CauHoiService } from 'src/cau-hoi/cau-hoi.service';
-import { FilterCauHoiQueryDto } from 'src/cau-hoi/dto/filter_cau-hoi_query.dto';
-import { group } from 'console';
+import { BaiKiemTra } from 'src/bai-kiem-tra/entities/bai-kiem-tra.entity';
+import { ChiTietCauHoiBaiKiemTra } from 'src/bai-kiem-tra/entities/chi-tiet-cau-hoi-bai-kiem-tra';
 
 @Injectable()
 export class ChuongService {
 
   constructor( @InjectRepository(Chuong) private chuongRepo : Repository<Chuong>,
+              @InjectRepository(BaiKiemTra) private baiKiemTraRepo : Repository<BaiKiemTra>,
+              @InjectRepository(ChiTietCauHoiBaiKiemTra) private chiTietCauHoiBaiKiemTraRepo : Repository<ChiTietCauHoiBaiKiemTra>,
               private giangVienService: GiangVienService,
               private monHocService: MonHocService,
               @Inject(forwardRef(() => CauHoiService)) private cauHoiService: CauHoiService
   ) {}
+
+  async layChuongNgauNhienTheoMonHoc(idBaiKiemTra: number, idNguoiDung: number) {
+    console.log("Fetching random chapters for test ID:", idBaiKiemTra, "and user ID:", idNguoiDung);
+    const qb1 = await this.baiKiemTraRepo.createQueryBuilder('bkt')
+                .innerJoin('bkt.chiTietCauHoiBaiKiemTra', 'ctchbkt')
+
+    const mangId = await qb1.select(['ctchbkt.idCauHoi AS idCauHoi'])
+                .where('bkt.id = :idBaiKiemTra', { idBaiKiemTra })
+                .getRawMany()
+    console.log("Question IDs already in test (raw):", mangId);
+    
+    const mangIdCauHoii = mangId.map(item => item.idcauhoi);
+
+    console.log("Question IDs already in test:", mangIdCauHoii);
+
+      
+    const qb = await this.baiKiemTraRepo.createQueryBuilder('bkt')
+                .innerJoin('bkt.lopHocPhan', 'lhp')
+                .innerJoin('lhp.giangVien', 'gv')
+                .innerJoin('gv.nguoiDung', 'nd')
+                .innerJoin('lhp.monHoc', 'mh')
+                .innerJoin('mh.chuong', 'c')
+                .innerJoin('c.cauHoi', 'ch')
+                .andWhere('nd.id = :idNguoiDung', { idNguoiDung })
+                .andWhere('bkt.id = :idBaiKiemTra', { idBaiKiemTra })
+                .groupBy('c.id')
+                if(mangId.length > 0)
+                 qb.andWhere(`ch.id NOT IN (:...mangId)`, { mangId: mangIdCauHoii }) 
+                
+                
+    return await qb.select([
+      'c.id AS id', 
+      'c.tenChuong AS tenChuong',
+      'COUNT(ch.id) AS soLuongCauHoi',
+      'c.create_at AS create_at',
+    ])
+    .orderBy('c.create_at', 'ASC')
+    .getRawMany()
+  }
+
+  async layCauHoiNgauNhienTheoChuong(
+  soLuong: number,
+  idBaiKiemTra: number,
+  idChuong: number,
+  idNguoiDung: number
+) {
+  console.log("Fetching random questions for test ID:", idBaiKiemTra);
+
+  // Lấy danh sách câu hỏi đã có trong bài kiểm tra
+  const qb1 = this.baiKiemTraRepo.createQueryBuilder('bkt')
+    .innerJoin('bkt.chiTietCauHoiBaiKiemTra', 'ctchbkt');
+
+  const mangId = await qb1
+    .select(['ctchbkt.idCauHoi AS idCauHoi'])
+    .where('bkt.id = :idBaiKiemTra', { idBaiKiemTra })
+    .getRawMany();
+
+  const mangIdCauHoii = mangId.map(item => item.idcauhoi);
+
+  // Query lấy câu hỏi random
+  const qb = this.chuongRepo.createQueryBuilder('c')
+    .innerJoin('c.giangVien', 'gv')
+    .innerJoin('gv.nguoiDung', 'nd')
+    .innerJoin('c.cauHoi', 'ch')
+    .where('c.id = :idChuong', { idChuong })
+    .andWhere('nd.id = :idNguoiDung', { idNguoiDung });
+
+  // Nếu đã có câu hỏi → loại bỏ
+  if (mangIdCauHoii.length > 0) {
+    qb.andWhere(`ch.id NOT IN (:...mangId)`, { mangId: mangIdCauHoii });
+  }
+
+  // SELECT phải đứng trước ORDER BY + LIMIT
+  const cauHoi = await qb
+    .select(['ch.id AS id'])
+    .orderBy('RANDOM()')
+    .limit(soLuong)
+    .getRawMany();
+
+  const cauHoiIds = cauHoi.map(item => item.id);
+
+  // Tạo danh sách chi tiết bài kiểm tra
+  const danhSachChiTiet = cauHoiIds.map(id =>
+    this.chiTietCauHoiBaiKiemTraRepo.create({
+      idCauHoi: id,
+      idBaiKiemTra: idBaiKiemTra,
+    })
+  );
+
+  return await this.chiTietCauHoiBaiKiemTraRepo.save(danhSachChiTiet);
+}
 
 
 

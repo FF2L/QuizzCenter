@@ -96,7 +96,7 @@ export class LopHocPhanController {
     @Query('skip') skip?: number,
     @Query('limit') limit?: number,
     @Query('giang-day') giangDay?: number,
-    @Query ('ten-mon-hoc') tenMonHoc?: string
+    @Query ('tenMonHoc') tenMonHoc?: string
   ){
     console.log('tenMonHoc', tenMonHoc)
     console.log('req.user.id', req.user.id)

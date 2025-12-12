@@ -150,7 +150,7 @@ const BaiKiemTraList = () => {
     if (accessToken) {
       fetchBaiKiemTra();
     }
-  }, [idLopHocPhan, tabValue, currentPage]);
+  }, [idLopHocPhan, tabValue, currentPage, searchValue]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
