@@ -129,7 +129,9 @@ const QuanLyMonHoc = () => {
                 setDanhSachMonHoc(danhSachMonHoc.filter((monHoc: any) => monHoc.id !== selectedMonHoc.id))
                 setTotal(total -1);
             }else{
-                toast.error("Xóa môn học thất bại");
+                const err: any = result.error;
+                const mess = err.response?.data?.message
+                toast.error(mess);
              }
         setConfirmOpen(false);
         setSelectedMonHoc(null);
@@ -210,7 +212,7 @@ const QuanLyMonHoc = () => {
                         {danhSachMonHoc.length === 0 ? (
                         <TableRow>
                             <TableCell colSpan={6} align="center">
-                                Không có người dùng nào.
+                                Không có dữ liệu
                             </TableCell>
                         </TableRow>
                     ) : (

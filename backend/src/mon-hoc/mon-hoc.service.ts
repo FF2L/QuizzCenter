@@ -145,14 +145,22 @@ async layTatCaMonHocCuaGiangVien(query: any, userId: number) {
  
   }
   async remove(id: number) {
-    try {
+
+
+    const isLopHoc = await this.monHocRepo
+      .createQueryBuilder('mh')
+      .innerJoin('mh.lopHocPhan', 'lh')
+      .where('mh.id = :id', { id })
+      .getOne();
+
+      
+    console.log("Xóa môn học id:", id);
+
+      if(isLopHoc) throw new BadRequestException('Không thể xóa môn học vì đã có lớp học');
+
       const res = await this.monHocRepo.delete(id);
       if(!res) throw new NotFoundException('Môn học không tồn tại');
       return {message: 'Xóa môn học thành công'}
-    } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException('Xóa môn học thất bại');
-    }
     
   }
   async layTatCaMonHoc(query: any) {

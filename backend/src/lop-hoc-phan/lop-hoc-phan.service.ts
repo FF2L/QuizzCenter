@@ -212,7 +212,7 @@ export class LopHocPhanService {
   }
 
   async themSinhVienVaoLopHocPhan(idLopHocPhan:number, maSinhVien: string) {
-    try {
+    // try {
       const nguoiDung = await this.ndRepo.findOne({
         where: { maNguoiDung: maSinhVien }
       });
@@ -226,16 +226,48 @@ export class LopHocPhanService {
        .getOne();
       if(sinhVien) throw new BadRequestException('Sinh viên đã được thêm vào lớp học phần');
 
+      const monHoc = await this.lopHocPhanRep.createQueryBuilder('lhp')
+        .innerJoin('lhp.monHoc', 'mh')
+        .where('lhp.id = :idLopHocPhan', { idLopHocPhan })
+        .select(['mh.id AS mh_id'])
+        .getRawOne();
+      if(!monHoc) throw new NotFoundException('Không tìm thấy môn học của lớp học phần');
+
+      console.log('monHoc', monHoc.mh_id);
+
+      const hocKy = await this.lopHocPhanRep.createQueryBuilder('lhp')
+        .innerJoin('lhp.hocKy', 'hk')
+        .where('lhp.id = :idLopHocPhan', { idLopHocPhan })
+        .select(['hk.id AS hk_id'])
+        .getRawOne();
+      console.log('hocKy', hocKy.hk_id);
+
+      const isHocSinhDaHocMonHoc = await this.lopHocPhanRep.createQueryBuilder('lhp')
+        .innerJoin('lhp.monHoc', 'mh')
+        .innerJoin('lhp.sinhVien', 'sv')
+        .innerJoin('sv.nguoiDung', 'nd')
+        .innerJoin('lhp.hocKy', 'hk')
+        .where('nd.maNguoiDung = :maSinhVien', { maSinhVien })
+        .andWhere('mh.id = :idMonHoc', {  idMonHoc: monHoc.mh_id  })
+        .andWhere('hk.id = :idHocKy', { idHocKy: hocKy.hk_id })
+        .getExists();
+
+        console.log('isHocSinhDaHocMonHoc', isHocSinhDaHocMonHoc);
+
+      if(isHocSinhDaHocMonHoc) {
+        throw new BadRequestException('Sinh viên đã học môn học này trong học kỳ này');
+      }
+
       await this.lopHocPhanRep.createQueryBuilder()
       .relation(LopHocPhan, 'sinhVien')
       .of(idLopHocPhan)
       .add(nguoiDung.id);
       return { message: 'Thêm sinh viên vào lớp học phần thành công' };
       
-    } catch (error) {
-      console.error(error);
-      throw new NotFoundException('Lỗi khi thêm sinh viên vào lớp học phần');
-    }
+    // } catch (error) {
+    //   console.error(error);
+    //   throw new NotFoundException('Lỗi khi thêm sinh viên vào lớp học phần');
+    // }
   }
 
   async xoaSinhVienKhoiLopHocPhan(idLopHocPhan:number, maSinhVien: string) {
