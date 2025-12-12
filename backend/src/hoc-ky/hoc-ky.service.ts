@@ -136,7 +136,7 @@ export class HocKyService {
   }
 
   async remove(id: number) {
-    try{
+  
       const lopHoc = await this.lopHocPhanRepository.findOne({
         where:{idHocKy: id}
       });
@@ -144,9 +144,6 @@ export class HocKyService {
         throw new BadRequestException('Không thể xóa học kỳ này vì đã có lớp học phần liên kết');
       }
       return await this.hocKyRepository.delete(id);
-    }catch(error){
-      console.log(error);
-      throw new InternalServerErrorException('Lỗi xóa học kỳ');
-    }
+
   }
 }
