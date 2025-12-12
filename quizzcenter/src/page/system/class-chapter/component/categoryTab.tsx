@@ -209,23 +209,24 @@ const handleChuongCreated = (newChuong: Chuong) => {
               }
             >
               <CardContent sx={{height:"50px"}}>
-                <Stack direction="row" spacing={2}>
-                  <Stack spacing={2} direction="row">
+                <Stack direction="column" spacing={2}>
+                  <Stack spacing={2} direction="column">
                     <Typography sx={{  
                       fontSize: "20px", 
                       fontWeight: "medium", 
                       color: "black"
                     }}>
                       {chuong.tenchuong || "Chưa có tên"}
-                      <Typography sx={{ 
+                    </Typography>
+                  </Stack>
+                  <Stack>
+                  <Typography sx={{ 
                         fontFamily: "Poppins", 
                         fontSize: "14px", 
                         color: "#a5a5a5", 
-                        textAlign: "center" 
                       }}>
                         Số câu hỏi: {chuong.soluongcauhoi || 0}
                       </Typography>
-                    </Typography>
                   </Stack>
                 </Stack>
 

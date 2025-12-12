@@ -2,8 +2,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  Box, Typography, Paper, Chip, CircularProgress, Alert, Checkbox, FormControlLabel
+  Box, Typography, Paper, Chip, CircularProgress, Alert, Checkbox, FormControlLabel, Button
 } from "@mui/material";
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { BaiLamSinhVienApi } from "../../services/bai-lam-sinh-vien.api";
 
 interface DapAnReview {
@@ -70,6 +71,12 @@ const XemLaiBaiLamPage: React.FC = () => {
     void load();
   }, [idBaiLam, navigate]);
 
+  const handleBack = () => {
+    if (data?.baiLam.idBaiKiemTra) {
+      navigate(-1);
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ minHeight: "50vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
@@ -87,6 +94,16 @@ const XemLaiBaiLamPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 3, maxWidth: 1100, mx: "auto" }}>
+      {/* Nút Back */}
+      <Button
+        startIcon={<ArrowBackIcon />}
+        onClick={handleBack}
+        sx={{ mb: 2 }}
+        variant="outlined"
+      >
+        Quay lại
+      </Button>
+
       <Paper sx={{ p: 3, mb: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
           Kết quả bài làm #{data.baiLam.id}
