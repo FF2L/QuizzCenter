@@ -35,7 +35,26 @@ export class ChuongController {
   @Get()
   async findAll(@Query('idMonHoc', ParseIntPipe) idMonHoc : number, @Req() req) {
     return await this.chuongService.layTatCaChuongTheoMonHocVaNguoiDung(idMonHoc, req.user.id);
+  }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('ngau-nhien/bai-kiem-tra/:idBaiKiemTra')
+  async layChuongNgauNhienTheoMonHoc(
+    @Param('idBaiKiemTra', ParseIntPipe) idBaiKiemTra: number,
+    @Req() req
+  ) {
+    return await this.chuongService.layChuongNgauNhienTheoMonHoc(idBaiKiemTra, req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':idChuong/cau-hoi/so-luong/:soLuong/ngau-nhien/bai-kiem-tra/:idBaiKiemTra')
+  async layCauHoiNgauNhienTheoChuong(
+    @Param('soLuong', ParseIntPipe) soLuong: number,
+    @Param('idBaiKiemTra', ParseIntPipe) idBaiKiemTra: number,
+    @Param('idChuong', ParseIntPipe) idChuong: number,
+    @Req() req
+  ) {
+    return await this.chuongService.layCauHoiNgauNhienTheoChuong(soLuong, idBaiKiemTra, idChuong, req.user.id);
   }
 
   // lấy tất cả câu hỏi theo chương

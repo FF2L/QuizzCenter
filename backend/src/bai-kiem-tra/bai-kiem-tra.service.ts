@@ -56,11 +56,14 @@ export class BaiKiemTraService {
   async timTatCaBaiKiemTraTheoIdLopHocPhan(idLopHocPhan: number, query: any) {
 
     await this.lopHocPhanService.timMotLopHocPhanTheoId(idLopHocPhan);
-    const {loaiKiemTra, skip, limit} = query;
+    const {loaiKiemTra, skip, limit, tenBaiKiemTra} = query;
     const qb = this.baiKiemTraRepo.createQueryBuilder('bkt')
       .where('bkt.idLopHocPhan = :idLopHocPhan', { idLopHocPhan });
     if (loaiKiemTra) {
       qb.andWhere('bkt.loaiKiemTra = :loaiKiemTra', { loaiKiemTra });
+    }
+    if(tenBaiKiemTra){
+      qb.andWhere('bkt.tenBaiKiemTra ILIKE :tenBaiKiemTra', { tenBaiKiemTra: `%${tenBaiKiemTra}%` });
     }
     
     const [data,total] = await qb

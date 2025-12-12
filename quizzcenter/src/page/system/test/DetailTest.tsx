@@ -11,6 +11,14 @@ import {
   Menu,
   MenuItem,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  TextField,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
 } from "@mui/material";
 import { BaiKiemTra, CauHoiPayload } from "../../../common/model";
 import { Delete, Edit, Visibility } from "@mui/icons-material";
@@ -42,6 +50,85 @@ const BaiKiemTraDetail: React.FC = () => {
   const location = useLocation();
   const { tenMonHoc,tenLopHoc,tenBaiKiemTra,idMonHoc } = location.state || {};
   const limit = 5;
+  //Ngẫu nhiên//
+  const [openDialog, setOpenDialog] = useState(false);
+  const [dsChuong, setDsChuong] = useState<any[]>([]);
+  const [idChuongChon, setIdChuongChon] = useState<string | null>(null);
+  const [soLuong, setSoLuong] = useState("");
+  const [error, setError] = useState("");
+
+const handleOpenDialog = async () => {
+  setIdChuongChon(null);
+  setSoLuong("");
+  setError("");
+  handleClose();
+
+  setOpenDialog(true);
+
+  try {
+    const accessToken = localStorage.getItem('accessTokenGV');
+
+    const res = await fetch(`http://localhost:3000/chuong/ngau-nhien/bai-kiem-tra/${idBaiKiemTra}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`
+      }
+    });
+
+    const data = await res.json();
+    console.log("API trả về:", data);
+
+    setDsChuong(Array.isArray(data) ? data : []);
+  } catch (err) {
+    console.error("Lỗi load chương:", err);
+    setDsChuong([]);
+  }
+};
+
+const taoNgauNhien = async () => {
+  setIdChuongChon(null);
+  setSoLuong("");
+  handleClose();
+  setError("");
+
+  if (!idChuongChon) {
+    setError("Bạn phải chọn chương");
+    return;
+  }
+
+  const chuong = dsChuong.find(c => c.id === idChuongChon);
+  const soLuongCo = Number(chuong.soluongcauhoi);
+  const soLuongChon = Number(soLuong);
+
+  if (soLuongChon > soLuongCo) {
+    setError(`Số lượng chọn (${soLuongChon}) lớn hơn số lượng có (${soLuongCo})`);
+    return;
+  }
+
+  try {
+    const accessToken = localStorage.getItem('accessTokenGV');
+
+    const url = `http://localhost:3000/chuong/${idChuongChon}/cau-hoi/so-luong/${soLuongChon}/ngau-nhien/bai-kiem-tra/${idBaiKiemTra}`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`
+      }
+    });
+
+    if (!res.ok) throw new Error("API lỗi");
+
+    setOpenDialog(false);
+    fetchDetail();
+  } catch (err) {
+    console.error(err);
+    setError("Tạo ngẫu nhiên thất bại");
+  }
+};
+  //Ngẫu nhiên//
   // menu state
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const accessToken = localStorage.getItem('accessTokenGV') || '';
@@ -74,20 +161,20 @@ const BaiKiemTraDetail: React.FC = () => {
   };
 
   // fetch chi tiết bài kiểm tra
+  const fetchDetail = async () => {
+    if (!idBaiKiemTra) return;
+    try {
+      const res = await fetch(
+        `${process.env.REACT_APP_BACK_END_URL}/bai-kiem-tra/findone/${idBaiKiemTra}`
+      );
+      if (!res.ok) throw new Error("Không tìm thấy bài kiểm tra");
+      const data: BaiKiemTra = await res.json();
+      setBai(data);
+    } catch (err) {
+      console.error("Lỗi fetch bài kiểm tra:", err);
+    }
+  };
   useEffect(() => {
-    const fetchDetail = async () => {
-      if (!idBaiKiemTra) return;
-      try {
-        const res = await fetch(
-          `${process.env.REACT_APP_BACK_END_URL}/bai-kiem-tra/findone/${idBaiKiemTra}`
-        );
-        if (!res.ok) throw new Error("Không tìm thấy bài kiểm tra");
-        const data: BaiKiemTra = await res.json();
-        setBai(data);
-      } catch (err) {
-        console.error("Lỗi fetch bài kiểm tra:", err);
-      }
-    };
     fetchDetail();
   }, [idBaiKiemTra]);
 
@@ -286,6 +373,7 @@ useEffect(() => {
                 >
                   Ngân hàng câu hỏi
                 </MenuItem>
+                <MenuItem onClick={() => handleOpenDialog()}>Ngẫu nhiên</MenuItem>
               </Menu>
             </div>
           </Stack>
@@ -451,6 +539,54 @@ useEffect(() => {
           </Box>
         </>
       )}
+
+<Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullWidth maxWidth="sm">
+  <DialogTitle>Tạo câu hỏi ngẫu nhiên</DialogTitle>
+
+  <DialogContent>
+
+    {/* Combobox chọn chương */}
+    <FormControl fullWidth margin="normal">
+      <InputLabel>Chọn chương</InputLabel>
+      <Select
+        value={idChuongChon ?? ""}
+        label="Chọn chương"
+        onChange={(e) => setIdChuongChon(e.target.value)}
+      >
+        {dsChuong.map((ch) => (
+          <MenuItem key={ch.id} value={ch.id}>
+            {ch.tenchuong} — {ch.soluongcauhoi} câu hỏi
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+
+    {/* Lỗi */}
+    {error && (
+      <div style={{ color: "red", marginBottom: 10 }}>
+        {error}
+      </div>
+    )}
+
+    {/* Nhập số lượng */}
+    <TextField
+      label="Số lượng câu hỏi"
+      fullWidth
+      type="number"
+      value={soLuong}
+      onChange={(e) => setSoLuong(e.target.value)}
+      margin="normal"
+    />
+  </DialogContent>
+
+  <DialogActions>
+    <Button onClick={() => setOpenDialog(false)}>Hủy</Button>
+    <Button variant="contained" onClick={taoNgauNhien}>
+      Tạo ngẫu nhiên
+    </Button>
+  </DialogActions>
+</Dialog>
+
     </Box>
   );
 };

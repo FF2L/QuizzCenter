@@ -28,8 +28,13 @@ export class BaiKiemTraController {
   async findAll(@Param('idLopHocPhan',ParseIntPipe) idlopHocPHan: number ,
    @Query('loaiKiemTra') loaiKiemTra?: LoaiKiemTra,
    @Query('skip') skip?: number,
-   @Query('limit') limit?: number){
-    return await this.baiKiemTraService.timTatCaBaiKiemTraTheoIdLopHocPhan(idlopHocPHan, {loaiKiemTra, skip, limit});
+   @Query('limit') limit?: number,
+   @Query('tenBaiKiemTra') tenBaiKiemTra?: string,
+   @Query() query?: any)
+   {
+    console.log('query ne');
+    console.log(query);
+    return await this.baiKiemTraService.timTatCaBaiKiemTraTheoIdLopHocPhan(idlopHocPHan, {loaiKiemTra, skip, limit, tenBaiKiemTra});
   }
 
   //Phát Hành Bài kiểm tra
