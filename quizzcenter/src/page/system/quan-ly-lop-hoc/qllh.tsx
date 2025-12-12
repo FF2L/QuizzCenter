@@ -171,7 +171,7 @@ const handleClickEdit = async (row: any) => {
     setDanhSachGiangVien([]);
   }
 
-  // 🔥 row chỉ có tên học kỳ (hocky), nên phải map ngược lại sang id
+
   const hkMatch = danhSachHocKy.find(
     (hk: any) => hk.tenHocKy === (row.hocky ?? row.hocKy)
   );
@@ -435,6 +435,7 @@ const handleClickEdit = async (row: any) => {
                         select
                         size="small"
                         variant="standard"
+                        disabled
                         sx={{ width: 200, height: 40 }}
                         value={editForm.idMonHoc}
                         onChange={(e) => onEditChange("idMonHoc", e.target.value)}
@@ -454,8 +455,9 @@ const handleClickEdit = async (row: any) => {
                         variant="standard"
                         sx={{ width: 200, height: 40 }}
                         value={editForm.idGiangVien}
+                        disabled
                         onChange={(e) => onEditChange("idGiangVien", e.target.value)}
-                        disabled={(danhSachGiangVien ?? []).length === 0}
+                        // disabled={(danhSachGiangVien ?? []).length === 0}
                       >
                         {(danhSachGiangVien ?? []).map((gv: any) => (
                           <MenuItem key={gv.idnguoidung ?? gv.id} value={gv.idnguoidung ?? gv.id}>
