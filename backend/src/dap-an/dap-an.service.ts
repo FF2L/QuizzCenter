@@ -50,7 +50,8 @@ export class DapAnService {
 
   async timNhieuDapAnTheoIdCauHoi (id:number){
     return await this.dapAnRepo.find({
-      where: {idCauHoi: id}
+      where: {idCauHoi: id},
+      order: {id: 'ASC'}
     })
 
   }

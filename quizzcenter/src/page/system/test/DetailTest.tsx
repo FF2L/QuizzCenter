@@ -68,7 +68,7 @@ const handleOpenDialog = async () => {
   try {
     const accessToken = localStorage.getItem('accessTokenGV');
 
-    const res = await fetch(`http://localhost:3000/chuong/ngau-nhien/bai-kiem-tra/${idBaiKiemTra}`, {
+    const res = await fetch(`${process.env.REACT_APP_BACK_END_URL}/chuong/ngau-nhien/bai-kiem-tra/${idBaiKiemTra}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -109,7 +109,7 @@ const taoNgauNhien = async () => {
   try {
     const accessToken = localStorage.getItem('accessTokenGV');
 
-    const url = `http://localhost:3000/chuong/${idChuongChon}/cau-hoi/so-luong/${soLuongChon}/ngau-nhien/bai-kiem-tra/${idBaiKiemTra}`;
+    const url = `${process.env.REACT_APP_BACK_END_URL}/chuong/${idChuongChon}/cau-hoi/so-luong/${soLuongChon}/ngau-nhien/bai-kiem-tra/${idBaiKiemTra}`;
 
     const res = await fetch(url, {
       method: "POST",
@@ -373,7 +373,7 @@ useEffect(() => {
                 >
                   Ngân hàng câu hỏi
                 </MenuItem>
-                <MenuItem onClick={() => handleOpenDialog()}>Ngẫu nhiên</MenuItem>
+                {/* <MenuItem onClick={() => handleOpenDialog()}>Ngẫu nhiên</MenuItem> */}
               </Menu>
             </div>
           </Stack>
