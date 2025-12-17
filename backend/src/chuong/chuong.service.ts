@@ -43,12 +43,12 @@ export class ChuongService {
                 .innerJoin('lhp.monHoc', 'mh')
                 .innerJoin('mh.chuong', 'c')
                 .innerJoin('c.cauHoi', 'ch')
-                .andWhere('nd.id = :idNguoiDung', { idNguoiDung })
+                .andWhere('c.idGiangVien = :idNguoiDung', { idNguoiDung })
                 .andWhere('bkt.id = :idBaiKiemTra', { idBaiKiemTra })
                 .groupBy('c.id')
                 if(mangId.length > 0)
                  qb.andWhere(`ch.id NOT IN (:...mangId)`, { mangId: mangIdCauHoii }) 
-                
+
                 
     return await qb.select([
       'c.id AS id', 
@@ -85,7 +85,7 @@ export class ChuongService {
     .innerJoin('gv.nguoiDung', 'nd')
     .innerJoin('c.cauHoi', 'ch')
     .where('c.id = :idChuong', { idChuong })
-    .andWhere('nd.id = :idNguoiDung', { idNguoiDung });
+    .andWhere('c.idGiangVien = :idNguoiDung', { idNguoiDung });
 
   // Nếu đã có câu hỏi → loại bỏ
   if (mangIdCauHoii.length > 0) {

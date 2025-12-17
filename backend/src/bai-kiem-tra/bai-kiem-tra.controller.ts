@@ -42,6 +42,11 @@ export class BaiKiemTraController {
   async phatHanhBaiKiemTra(@Param('idBaiKiemTra',ParseIntPipe) idBaiKiemTra: number, @Body() body: {phatHanh: boolean}) {
     return await this.baiKiemTraService.phatHanhBaiKiemTra(idBaiKiemTra, body.phatHanh);
   }
+
+  @Get('/thong-ke/:idBaiKiemTra')
+  async thongKeBaiKiemTra(@Param('idBaiKiemTra',ParseIntPipe) idBaiKiemTra: number) {
+    return await this.baiKiemTraService.thongKeCauHoiTrongBaiKiemTra(idBaiKiemTra);
+  }
   //Sinh viên
     @Get('/sinh-vien/:idLopHocPhan')
   async findAllBaiKiemTraSinhVien(@Param('idLopHocPhan',ParseIntPipe) idlopHocPHan: number ,
