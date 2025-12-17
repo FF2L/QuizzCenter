@@ -1,3 +1,4 @@
+import { BaiLamSinhVien } from './../bai-lam-sinh-vien/entities/bai-lam-sinh-vien.entity';
 import { forwardRef, Module } from '@nestjs/common';
 import { BaiKiemTraService } from './bai-kiem-tra.service';
 import { BaiKiemTraController } from './bai-kiem-tra.controller';
@@ -11,7 +12,7 @@ import { SinhVienModule } from 'src/sinh-vien/sinh-vien.module';
 import { Chuong } from 'src/chuong/entities/chuong.entity';
 
 @Module({
-  imports:[TypeOrmModule.forFeature([BaiKiemTra,ChiTietCauHoiBaiKiemTra,Chuong]),LopHocPhanModule,CauHoiModule,  forwardRef(() => BaiLamSinhVienModule)],
+  imports:[TypeOrmModule.forFeature([BaiKiemTra,ChiTietCauHoiBaiKiemTra,Chuong,BaiLamSinhVien]),LopHocPhanModule,CauHoiModule,  forwardRef(() => BaiLamSinhVienModule)],
   controllers: [BaiKiemTraController],
   providers: [BaiKiemTraService],
   exports: [BaiKiemTraService]

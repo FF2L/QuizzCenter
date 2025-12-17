@@ -3,7 +3,7 @@ import { BadRequestException, ConsoleLogger, forwardRef, Inject, Injectable, Int
 import { CreateBaiKiemTraDto } from './dto/create-bai-kiem-tra.dto';
 import { UpdateBaiKiemTraDto } from './dto/update-bai-kiem-tra.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { LopHocPhanService } from 'src/lop-hoc-phan/lop-hoc-phan.service';
 import { LoaiKiemTra } from 'src/common/enum/loaiKiemTra.enum';
 import { Pagination } from 'src/common/dto/pagination.dto';
@@ -16,6 +16,9 @@ import { BaiLamSinhVienService } from 'src/bai-lam-sinh-vien/bai-lam-sinh-vien.s
 import { Chuong } from 'src/chuong/entities/chuong.entity';
 import { LopHocPhan } from 'src/lop-hoc-phan/entities/lop-hoc-phan.entity';
 import { Console } from 'console';
+import { BaiLamSinhVien } from 'src/bai-lam-sinh-vien/entities/bai-lam-sinh-vien.entity';
+import { ChiTietBaiLam } from 'src/bai-lam-sinh-vien/entities/chi-tiet-bai-lam.entity';
+import { LoaiCauHoi } from 'src/common/enum/loaicauhoi.enum';
 
 @Injectable()
 export class BaiKiemTraService {
@@ -24,7 +27,9 @@ export class BaiKiemTraService {
     @InjectRepository(BaiKiemTra) private baiKiemTraRepo: Repository<BaiKiemTra>,
     @InjectRepository(ChiTietCauHoiBaiKiemTra) private chiTietCauHoiBaiKiemTraRepo: Repository<ChiTietCauHoiBaiKiemTra>,
     @InjectRepository(Chuong) private chuongRepo: Repository<Chuong>,
+    @InjectRepository(BaiLamSinhVien) private baiLamSinhVienRepo: Repository<BaiLamSinhVien>,
     private lopHocPhanService: LopHocPhanService,
+    private dataSource: DataSource,
     private cauHoiService: CauHoiService,
     @Inject(forwardRef(() => BaiLamSinhVienService))
     private baiLamSinhVienService: BaiLamSinhVienService,
@@ -76,6 +81,109 @@ export class BaiKiemTraService {
 
     return { data, total, currentPage, totalPages };
   }
+
+async thongKeCauHoiTrongBaiKiemTra(idBaiKiemTra: number) {
+
+    // 1️⃣ RAW QUERY – KHÔNG DÙNG ENTITY LAZY
+    const rows = await this.dataSource
+      .getRepository(ChiTietBaiLam)
+      .createQueryBuilder('ctbl')
+      .innerJoin('ctbl.cauHoiBaiKiemTra', 'ctch')
+      .innerJoin('ctch.cauHoi', 'ch')
+      .innerJoin('ch.dapAn', 'da')
+      .where('ctch.idBaiKiemTra = :idBaiKiemTra', { idBaiKiemTra })
+      .select([
+        'ctbl.idBaiLamSinhVien AS idBaiLam',   // dùng nội bộ
+        'ctbl.mangIdDapAn AS mangIdDapAn',
+
+        'ch.id AS idCauHoi',
+        'ch.tenHienThi AS tenHienThi',
+        'ch.doKho AS doKho',
+        'ch.loaiCauHoi AS loaiCauHoi',
+
+        'da.id AS idDapAn',                   // dùng nội bộ
+        'da.dapAnDung AS dapAnDung',
+      ])
+      .getRawMany();
+
+    // 2️⃣ XỬ LÝ THỐNG KÊ
+    const thongKeMap = new Map<number, any>();
+
+    for (const row of rows) {
+      const idCauHoi = row.idcauhoi;
+
+      if (!thongKeMap.has(idCauHoi)) {
+        thongKeMap.set(idCauHoi, {
+          idCauHoi,                // ✅ TRẢ VỀ CHO FE
+          tenHienThi: row.tenhienthi,
+          doKho: row.dokho,
+          loaiCauHoi: row.loaicauhoi,
+          luotLam: 0,
+          soLanDung: 0,
+          soLanSai: 0,
+          dapAnDung: [],
+          daTinh: new Set<number>(), // tránh đếm trùng mỗi bài làm
+        });
+      }
+
+      const tk = thongKeMap.get(idCauHoi);
+
+      // Gom đáp án đúng
+      if (row.dapandung) {
+        tk.dapAnDung.push(row.iddapan);
+      }
+
+      const idBaiLam = row.idbailam;
+
+      // Mỗi bài làm chỉ tính 1 lần
+      if (tk.daTinh.has(idBaiLam)) continue;
+      tk.daTinh.add(idBaiLam);
+
+      tk.luotLam++;
+
+      const dapAnChon: number[] = row.mangiddapan ?? [];
+      const dapAnDung: number[] = tk.dapAnDung;
+
+      let isDung = false;
+
+      // ===== LOGIC ĐÚNG / SAI =====
+      if (tk.loaiCauHoi === LoaiCauHoi.MotDung) {
+        isDung =
+          dapAnChon.length === 1 &&
+          dapAnChon[0] === dapAnDung[0];
+      }
+
+      if (tk.loaiCauHoi === LoaiCauHoi.NhieuDung) {
+        // ❗ KHÔNG CHỌN ĐỦ → SAI
+        isDung =
+          dapAnChon.length === dapAnDung.length &&
+          dapAnDung.every(id => dapAnChon.includes(id));
+      }
+
+      if (isDung) {
+        tk.soLanDung++;
+      } else {
+        tk.soLanSai++;
+      }
+    }
+
+    // 3️⃣ TRẢ DATA SẠCH CHO FE
+    return Array.from(thongKeMap.values()).map(
+      ({ dapAnDung, daTinh, ...rest }) => ({
+        ...rest,
+        tiLeDung:
+          rest.luotLam === 0
+            ? 0
+            : Number(((rest.soLanDung / rest.luotLam) * 100).toFixed(1)),
+        tiLeSai:
+          rest.luotLam === 0
+            ? 0
+            : Number(((rest.soLanSai / rest.luotLam) * 100).toFixed(1)),
+      }),
+    );
+  }
+
+
 
   async phatHanhBaiKiemTra(idBaiKiemTra: number, phatHanh: boolean) {
     console.log('phatHanhBaiKiemTra', idBaiKiemTra, phatHanh)

@@ -373,7 +373,7 @@ useEffect(() => {
                 >
                   Ngân hàng câu hỏi
                 </MenuItem>
-                {/* <MenuItem onClick={() => handleOpenDialog()}>Ngẫu nhiên</MenuItem> */}
+                <MenuItem onClick={() => handleOpenDialog()}>Ngẫu nhiên</MenuItem>
               </Menu>
             </div>
           </Stack>
