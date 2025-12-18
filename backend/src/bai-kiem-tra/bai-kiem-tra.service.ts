@@ -84,104 +84,130 @@ export class BaiKiemTraService {
 
 async thongKeCauHoiTrongBaiKiemTra(idBaiKiemTra: number) {
 
-    // 1️⃣ RAW QUERY – KHÔNG DÙNG ENTITY LAZY
-    const rows = await this.dataSource
-      .getRepository(ChiTietBaiLam)
-      .createQueryBuilder('ctbl')
-      .innerJoin('ctbl.cauHoiBaiKiemTra', 'ctch')
-      .innerJoin('ctch.cauHoi', 'ch')
-      .innerJoin('ch.dapAn', 'da')
-      .where('ctch.idBaiKiemTra = :idBaiKiemTra', { idBaiKiemTra })
-      .select([
-        'ctbl.idBaiLamSinhVien AS idBaiLam',   // dùng nội bộ
-        'ctbl.mangIdDapAn AS mangIdDapAn',
+  // ===============================
+  // 1️⃣ RAW QUERY – KHÔNG DÙNG ENTITY LAZY
+  // ===============================
+  const rows = await this.dataSource
+    .getRepository(ChiTietBaiLam)
+    .createQueryBuilder('ctbl')
+    .innerJoin('ctbl.cauHoiBaiKiemTra', 'ctch')
+    .innerJoin('ctch.cauHoi', 'ch')
+    .innerJoin('ch.dapAn', 'da')
+    .where('ctch.idBaiKiemTra = :idBaiKiemTra', { idBaiKiemTra })
+    .select([
+      'ctbl.idBaiLamSinhVien AS idBaiLam',
+      'ctbl.mangIdDapAn AS mangIdDapAn',
 
-        'ch.id AS idCauHoi',
-        'ch.tenHienThi AS tenHienThi',
-        'ch.doKho AS doKho',
-        'ch.loaiCauHoi AS loaiCauHoi',
+      'ch.id AS idCauHoi',
+      'ch.tenHienThi AS tenHienThi',
+      'ch.doKho AS doKho',
+      'ch.loaiCauHoi AS loaiCauHoi',
 
-        'da.id AS idDapAn',                   // dùng nội bộ
-        'da.dapAnDung AS dapAnDung',
-      ])
-      .getRawMany();
+      'da.id AS idDapAn',
+      'da.dapAnDung AS dapAnDung',
+    ])
+    .getRawMany();
 
-    // 2️⃣ XỬ LÝ THỐNG KÊ
-    const thongKeMap = new Map<number, any>();
+  // ===============================
+  // 2️⃣ THỐNG KÊ
+  // ===============================
+  const thongKeMap = new Map<number, any>();
 
-    for (const row of rows) {
-      const idCauHoi = row.idcauhoi;
+  for (const row of rows) {
+    const idCauHoi = row.idcauhoi;
 
-      if (!thongKeMap.has(idCauHoi)) {
-        thongKeMap.set(idCauHoi, {
-          idCauHoi,                // ✅ TRẢ VỀ CHO FE
-          tenHienThi: row.tenhienthi,
-          doKho: row.dokho,
-          loaiCauHoi: row.loaicauhoi,
-          luotLam: 0,
-          soLanDung: 0,
-          soLanSai: 0,
-          dapAnDung: [],
-          daTinh: new Set<number>(), // tránh đếm trùng mỗi bài làm
-        });
-      }
-
-      const tk = thongKeMap.get(idCauHoi);
-
-      // Gom đáp án đúng
-      if (row.dapandung) {
-        tk.dapAnDung.push(row.iddapan);
-      }
-
-      const idBaiLam = row.idbailam;
-
-      // Mỗi bài làm chỉ tính 1 lần
-      if (tk.daTinh.has(idBaiLam)) continue;
-      tk.daTinh.add(idBaiLam);
-
-      tk.luotLam++;
-
-      const dapAnChon: number[] = row.mangiddapan ?? [];
-      const dapAnDung: number[] = tk.dapAnDung;
-
-      let isDung = false;
-
-      // ===== LOGIC ĐÚNG / SAI =====
-      if (tk.loaiCauHoi === LoaiCauHoi.MotDung) {
-        isDung =
-          dapAnChon.length === 1 &&
-          dapAnChon[0] === dapAnDung[0];
-      }
-
-      if (tk.loaiCauHoi === LoaiCauHoi.NhieuDung) {
-        // ❗ KHÔNG CHỌN ĐỦ → SAI
-        isDung =
-          dapAnChon.length === dapAnDung.length &&
-          dapAnDung.every(id => dapAnChon.includes(id));
-      }
-
-      if (isDung) {
-        tk.soLanDung++;
-      } else {
-        tk.soLanSai++;
-      }
+    if (!thongKeMap.has(idCauHoi)) {
+      thongKeMap.set(idCauHoi, {
+        idCauHoi,                  // trả FE
+        tenHienThi: row.tenhienthi,
+        doKho: row.dokho,
+        loaiCauHoi: row.loaicauhoi,
+        luotLam: 0,
+        soLanDung: 0,
+        soLanSai: 0,
+        dapAnDung: [],
+        daTinh: new Set<number>(), // tránh đếm trùng mỗi bài làm
+      });
     }
 
-    // 3️⃣ TRẢ DATA SẠCH CHO FE
-    return Array.from(thongKeMap.values()).map(
-      ({ dapAnDung, daTinh, ...rest }) => ({
-        ...rest,
-        tiLeDung:
-          rest.luotLam === 0
-            ? 0
-            : Number(((rest.soLanDung / rest.luotLam) * 100).toFixed(1)),
-        tiLeSai:
-          rest.luotLam === 0
-            ? 0
-            : Number(((rest.soLanSai / rest.luotLam) * 100).toFixed(1)),
-      }),
+    const tk = thongKeMap.get(idCauHoi);
+
+    // ===============================
+    // GOM ĐÁP ÁN ĐÚNG (KHÔNG TRÙNG)
+    // ===============================
+    if (row.dapandung && !tk.dapAnDung.includes(row.iddapan)) {
+      tk.dapAnDung.push(row.iddapan);
+    }
+
+    const idBaiLam = row.idbailam;
+
+    // ===============================
+    // MỖI BÀI LÀM CHỈ TÍNH 1 LẦN
+    // ===============================
+    if (tk.daTinh.has(idBaiLam)) continue;
+
+    // ❌ CHƯA CÓ ĐÁP ÁN ĐÚNG → KHÔNG CHẤM (TRÁNH undefined)
+    if (tk.dapAnDung.length === 0) continue;
+
+    tk.daTinh.add(idBaiLam);
+    tk.luotLam++;
+
+    const dapAnChon: number[] = row.mangiddapan ?? [];
+    const dapAnDung: number[] = tk.dapAnDung;
+
+    console.log(
+      'dap an da chon', dapAnChon,
+      'dap an dung', dapAnDung
+    );
+
+    let isDung = false;
+
+    // ===============================
+    // LOGIC ĐÚNG / SAI
+    // ===============================
+    if (tk.loaiCauHoi === LoaiCauHoi.MotDung) {
+      isDung =
+        dapAnChon.length === 1 &&
+        dapAnDung.length === 1 &&
+        dapAnChon[0] === dapAnDung[0];
+    }
+
+    if (tk.loaiCauHoi === LoaiCauHoi.NhieuDung) {
+      isDung =
+        dapAnChon.length === dapAnDung.length &&
+        dapAnDung.every(id => dapAnChon.includes(id));
+    }
+
+    if (isDung) {
+      tk.soLanDung++;
+    } else {
+      tk.soLanSai++;
+    }
+
+    console.log(
+      'Dap án chọn:', dapAnChon,
+      '=>', isDung ? 'Đúng' : 'Sai'
     );
   }
+
+  // ===============================
+  // 3️⃣ TRẢ DATA SẠCH CHO FE
+  // ===============================
+  return Array.from(thongKeMap.values()).map(
+    ({ dapAnDung, daTinh, ...rest }) => ({
+      ...rest,
+      tiLeDung:
+        rest.luotLam === 0
+          ? 0
+          : Number(((rest.soLanDung / rest.luotLam) * 100).toFixed(1)),
+      tiLeSai:
+        rest.luotLam === 0
+          ? 0
+          : Number(((rest.soLanSai / rest.luotLam) * 100).toFixed(1)),
+    }),
+  );
+}
+
 
 
 

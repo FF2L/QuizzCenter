@@ -11,7 +11,11 @@ import { UpdateChiTietCauHoiDto } from './dto/update-chi-tiet-cau-hoi.dto';
 @Controller('bai-lam-sinh-vien')
 export class BaiLamSinhVienController {
   constructor(private readonly baiLamSinhVienService: BaiLamSinhVienService) {}
-
+  
+  // @Get('update-bai')
+  // updateBaiLam() {
+  //   return this.baiLamSinhVienService.updateDiem();
+  // }
   //lấy tát cả bài làm sinh viên có trong đề
   @UseGuards(JwtAuthGuard)
   @Get(':idBaiKiemTra')
@@ -19,6 +23,8 @@ export class BaiLamSinhVienController {
     @Param('idBaiKiemTra', ParseIntPipe) idBaiKiemTra: number) {
     return this.baiLamSinhVienService.layBaiLamSinhVien(req.user.id, idBaiKiemTra);
   }
+
+
 
   //tạo bài làm cho sinh viên
   @UseGuards(JwtAuthGuard)
