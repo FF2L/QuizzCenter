@@ -261,5 +261,24 @@ static async thongKeBangDiem(accessToken: string, idLopHocPhan: number, idBaiKie
         return { ok: false, error };
     }
 }
+static async thongKeCauHoiSaiNhieuNhat(
+    accessToken: string,
+    idBaiKiemTra: number
+) {
+    try {
+        const res = await axios.get(
+            `${API_URL}/bai-kiem-tra/thong-ke/${idBaiKiemTra}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            }
+        );
 
+        return { ok: true, data: res.data };
+    } catch (error) {
+        console.error("Error fetching wrong-question statistics:", error);
+        return { ok: false, error };
+    }
+}
 }
