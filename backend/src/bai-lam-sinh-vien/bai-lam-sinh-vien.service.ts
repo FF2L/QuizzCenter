@@ -386,6 +386,92 @@ export class BaiLamSinhVienService {
       };
     }
 
+    async updateDiem() {
+
+      const baiLams = await this.baiLamSinhVienRepo.find();
+      for (const baiLam of baiLams) {
+
+        const idBaiLamSinhVien = baiLam.id;
+        this.dataSource.transaction(async (manager) => {
+        console.log('Nộp bài cho bài làm sinh viên ID:', idBaiLamSinhVien);
+        const baiLam = await manager.findOne(BaiLamSinhVien, {
+          where: { id: idBaiLamSinhVien },
+        });
+
+        if (!baiLam) {
+          throw new NotFoundException('Không tìm thấy bài làm.');
+        }
+        // --- TÍNH ĐIỂM ---
+        const dsChiTiet = await manager.find(ChiTietBaiLam, {
+          where: { idBaiLamSinhVien },
+        });
+
+        const tongCauHoi = dsChiTiet.length;
+        const diemMoiCau = Number((tongCauHoi === 0 ? 0 : 10 / tongCauHoi));
+
+        let tongDapAnDung = 0;
+        const tongDapAnToanBo = await manager
+          .getRepository(ChiTietCauHoiBaiKiemTra)
+          .createQueryBuilder('ctch')
+          .innerJoinAndSelect('ctch.cauHoi', 'cauHoi')
+          .innerJoinAndSelect('cauHoi.dapAn', 'dapAn')
+          .where('ctch."idBaiKiemTra" = :idBaiKiemTra', { idBaiKiemTra: baiLam.idBaiKiemTra })
+          .andWhere('dapAn.dapAnDung = true')
+          .getCount();
+
+        let tongDiem = 0
+
+        for (const ct of dsChiTiet) {
+          const ctch = await manager.findOne(ChiTietCauHoiBaiKiemTra, {
+            where: { id: ct.idCauHoiBaiKiemTra },
+            relations: ['cauHoi', 'cauHoi.dapAn'],
+          });
+
+          const cauHoi = await ctch?.cauHoi;
+          if (!cauHoi) continue;
+
+          const dsDapAn = await cauHoi.dapAn;
+
+          if(cauHoi.loaiCauHoi === 'MotDung' ){
+            const dapAnChon = ct.mangIdDapAn ? ct.mangIdDapAn[0] : null;
+            const dapAnDung = dsDapAn.find(d => d.dapAnDung)?.id;
+            const isDung = dapAnChon === dapAnDung;
+            if (isDung){
+              tongDapAnDung += 1;
+              tongDiem += Number(diemMoiCau);
+              console.log('Câu hỏi đúng, cộng điểm:', diemMoiCau);
+            }
+              
+          }else if(cauHoi.loaiCauHoi === 'NhieuDung'){
+            const dsDapAnDaChon = ct.mangIdDapAn ?? [];
+            const dapAnDung = dsDapAn.filter(d => d.dapAnDung).map(d => d.id);
+            if(dsDapAnDaChon.length === 0){
+              tongDiem += 0;
+              console.log('Câu hỏi nhiều đáp án, không chọn đáp án nào, điểm cộng: 0');
+            } else{
+              if(dsDapAnDaChon.some(id => !dapAnDung.includes(id))){
+                tongDiem += 0;
+                console.log('Câu hỏi nhiều đáp án, chọn sai đáp án, điểm cộng: 0');
+              }else{
+                tongDapAnDung += dsDapAnDaChon.length; 
+                tongDiem += Number((dsDapAnDaChon.length * Number(diemMoiCau) / dapAnDung.length));
+                console.log('Câu hỏi nhiều đáp án, chọn đúng, điểm cộng:', (dsDapAnDaChon.length * Number(diemMoiCau) / dapAnDung.length) );
+              }
+            }
+          }
+          console.log('Tổng điểm hiện tại:', tongDiem);
+
+        }
+        baiLam.tongDiem = Number(tongDiem.toFixed(1));
+
+        await manager.save(baiLam);
+      }
+      );
+    }
+      
+
+    }
+
 
     async tiepTucLamBai(idBaiLamSinhVien: number) {
       return this.dataSource.transaction(async (manager) => {
